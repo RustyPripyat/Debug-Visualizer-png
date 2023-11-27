@@ -26,8 +26,7 @@ def organize_files(source_folder, destination_folder):
         os.makedirs(p_path, exist_ok=True)
 
         # Build the destination path of the file
-        destination_file = os.path.join(p_path, f"a{a}.png")
-
+        destination_file = os.path.join(p_path, file)
         # Copy the file to the destination folder
         shutil.copy(os.path.join(source_folder, file), destination_file)
 
