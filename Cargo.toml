@@ -16,4 +16,4 @@ strum = "0.25.0"
 strum_macros = { version = "0.25.3", features = [] }
 log = "0.4.20"
 image = "0.24.7"
-minifb = "0.25.0"
+viuer = "0.7.1"

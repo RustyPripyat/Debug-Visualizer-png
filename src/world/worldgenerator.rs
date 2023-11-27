@@ -85,3 +85,5 @@ pub fn get_content_percentage(world: &Vec<Vec<Tile>>) -> HashMap<Content, f64> {
 
     percentage_map
 }
+
+

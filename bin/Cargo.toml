@@ -10,4 +10,5 @@ robotics_lib = {path = "../../Robotic-Lib/"}
 rand = "0.8.5"
 strum = "0.25.0"
 image = "0.24.7"
-minifb = "0.25.0"
+noise = "0.8.2"
+worldgen = "0.5.3"

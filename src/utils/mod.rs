@@ -5,11 +5,6 @@ use crate::world::tile::Content;
 use crate::world::World;
 use std::cmp::min;
 
-use minifb::{WindowOptions, Window};
-use image::{Rgb, RgbImage};
-use crate::world::tile::Tile;
-use crate::world::tile::TileType;
-
 /// It contains all the errors that can be returned by the library
 ///
 /// # Variants
@@ -261,93 +256,3 @@ pub(crate) fn can_store(
 }
 
 
-pub fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize)) -> RgbImage {
-    const TILE_SIZE: u32 = 30;
-    let WIDTH: u32 = tiles[0].len() as u32 * TILE_SIZE;
-    let HEIGHT: u32 = tiles.len() as u32 * TILE_SIZE;
-
-    let mut img = RgbImage::new(WIDTH, HEIGHT);
-
-
-    const COLOR_DEEP_WATER: Rgb<u8> = Rgb([0, 0, 255]);       // DeepWater (Blu scuro)
-    const COLOR_SHALLOW_WATER: Rgb<u8> = Rgb([0, 100, 255]);  // ShallowWater (Blu chiaro)
-    const COLOR_SAND: Rgb<u8> = Rgb([255, 255, 0]);           // Sand (Giallo)
-    const COLOR_GRASS: Rgb<u8> = Rgb([0, 255, 0]);            // Grass (Verde)
-    const COLOR_STREET: Rgb<u8> = Rgb([128, 128, 128]);       // Street (Grigio)
-    const COLOR_HILL: Rgb<u8> = Rgb([100, 100, 100]);         // Hill (Grigio scuro)
-    const COLOR_MOUNTAIN: Rgb<u8> = Rgb([169, 169, 169]);     // Mountain (Grigio chiaro)
-    const COLOR_SNOW: Rgb<u8> = Rgb([255, 255, 255]);         // Snow (Bianco)
-    const COLOR_LAVA: Rgb<u8> = Rgb([255, 0, 0]);             // Lava (Rosso)
-
-    for (y, row) in tiles.iter().enumerate() {
-        for (x, tile) in row.iter().enumerate() {
-            let color = match tile.tile_type {
-                TileType::DeepWater => COLOR_DEEP_WATER,
-                TileType::ShallowWater => COLOR_SHALLOW_WATER,
-                TileType::Sand => COLOR_SAND,
-                TileType::Grass => COLOR_GRASS,
-                TileType::Street => COLOR_STREET,
-                TileType::Hill => COLOR_HILL,
-                TileType::Mountain => COLOR_MOUNTAIN,
-                TileType::Snow => COLOR_SNOW,
-                TileType::Lava => COLOR_LAVA,
-            };
-
-            // Disegna la tile sull'immagine
-            for dy in 0..TILE_SIZE {
-                for dx in 0..TILE_SIZE {
-                    img.put_pixel(
-                        x as u32 * TILE_SIZE + dx,
-                        y as u32 * TILE_SIZE + dy,
-                        color,
-                    );
-                }
-            }
-        }
-    }
-
-    // Disegna il simbolo del bot sulla sua posizione (occupando l'intera cella)
-    let (bot_x, bot_y) = bot_position;
-    let bot_color = Rgb([255, 0, 0]); // Ad esempio, rosso per il bot
-
-    for dy in 0..TILE_SIZE {
-        for dx in 0..TILE_SIZE {
-            img.put_pixel(
-                (bot_x as u32 * TILE_SIZE + dx),
-                (bot_y as u32 * TILE_SIZE + dy),
-                bot_color,
-            );
-        }
-    }
-
-    img
-}
-
-pub fn print_world(tiles: &[Vec<Tile>], bot_position: (usize, usize)) {
-    let img = create_image_from_tiles(tiles, bot_position);
-
-    let width = img.width() as usize;
-    let height = img.height() as usize;
-
-    // Crea una finestra per mostrare l'immagine
-    let mut window = Window::new(
-        "Image Viewer",
-        width,
-        height,
-        WindowOptions::default(),
-    )
-        .unwrap_or_else(|e| {
-            panic!("{}", e);
-        });
-
-    let pixels_u32: Vec<u32> = img
-        .pixels()
-        .flat_map(|p| p.0.iter().map(|&channel| channel as u32))
-        .collect();
-
-    while window.is_open() && !window.is_key_down(minifb::Key::Escape) {
-        window
-            .update_with_buffer(&pixels_u32, width, height)
-            .unwrap_or_else(|e| println!("{}", e));
-    }
-}
