@@ -1,9 +1,9 @@
-use std::process::Command;
+
 use image::{Rgb, RgbImage};
 use image::DynamicImage;
 use image::ImageFormat;
 use imageproc::rect::Rect;
-use std::borrow::BorrowMut;
+
 use std::sync::{Arc, Mutex};
 use rayon::prelude::*;
 use robotics_lib::world::tile::*;
@@ -59,8 +59,8 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize)) ->
     for dy in 0..TILE_SIZE {
         for dx in 0..TILE_SIZE {
             img.lock().unwrap().put_pixel(
-                (bot_x as u32 * TILE_SIZE + dx),
-                (bot_y as u32 * TILE_SIZE + dy),
+                bot_x as u32 * TILE_SIZE + dx,
+                bot_y as u32 * TILE_SIZE + dy,
                 bot_color,
             );
         }
@@ -87,16 +87,4 @@ pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_
     // imv è un visualizzatore di immagini, cambia il comando
     // se vuoi usare un altro visualizzatore (eog, se su gnome).
 
-    let output = Command::new("imv")
-        .args(&[file_name])
-        .output()
-        .expect("Failed to execute command");
-
-    if output.status.success() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        println!("Command executed successfully:\n{}", stdout);
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        eprintln!("Error executing command:\n{}", stderr);
-    }
 }
