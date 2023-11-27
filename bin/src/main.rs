@@ -1,4 +1,4 @@
-use noise::{NoiseFn, Perlin, RidgedMulti};
+use noise::{NoiseFn, Perlin, RidgedMulti, Fbm};
 use noise::MultiFractal;
 use noise::Seedable;
 use rand::Rng;
@@ -6,15 +6,12 @@ use rayon::iter::*;
 use strum::IntoEnumIterator;
 
 use robotics_lib::energy::Energy;
-
 use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::runner::backpack::BackPack;
 use robotics_lib::world::coordinates::Coordinate;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Rainy, Sunny};
 use robotics_lib::world::tile::{Content, Tile, TileType};
-
-
 use robotics_lib::world::World;
 use robotics_lib::world::worldgenerator::Generator;
 
@@ -41,7 +38,7 @@ fn main() {
         }
 
 
-        fn generate_rounded_terrain(&self, noise_map: Vec<Vec<f64>>) -> Vec<Vec<Tile>> {
+        fn generate_terrain(&self, noise_map: Vec<Vec<f64>>, min: f64, max: f64 ) -> Vec<Vec<Tile>> {
             // let height = self.size;
             // let width = if height > 0 { noise_map[0].len() } else { 0 };
             let mut world = vec![vec![Tile {
@@ -52,12 +49,12 @@ fn main() {
             for (y, row) in noise_map.iter().enumerate() {
                 for (x, &value) in row.iter().enumerate() {
                     let tile_type = match value {
-                        v if v < -0.8 => TileType::DeepWater,
-                        v if v < -0.7 => TileType::ShallowWater,
-                        v if v < -0.3 => TileType::Sand,
-                        v if v < 0.4 => TileType::Grass,
-                        v if v < 0.75 => TileType::Hill,
-                        v if v < 0.9 => TileType::Mountain,
+                        v if v < percentage(4.0,min, max) => TileType::DeepWater,
+                        v if v < percentage(10.0, min, max) => TileType::ShallowWater,
+                        v if v < percentage(15.0,min,max) => TileType::Sand,
+                        v if v < percentage(45.0,min,max) => TileType::Grass,
+                        v if v < percentage(65.0,min,max) => TileType::Hill,
+                        v if v < percentage(77.5,min,max) => TileType::Mountain,
                         _ => TileType::Snow,
                     };
 
@@ -70,13 +67,15 @@ fn main() {
             world
         }
 
+
+
         fn generate_elevation_map(&self) -> Vec<Vec<f64>> {
-            let noise = RidgedMulti::<Perlin>::new(self.seed).set_octaves(self.octaves).set_frequency(self.frequency).set_lacunarity(self.lacunarity).set_persistence(self.persistence).set_attenuation(self.attenuation);
+            let noise = RidgedMulti::<Fbm<Perlin>>::new(self.seed).set_octaves(self.octaves).set_frequency(self.frequency).set_lacunarity(self.lacunarity).set_persistence(self.persistence).set_attenuation(self.attenuation);
 
             (0..self.size).map(|y| {
                 (0..self.size).into_par_iter().map(|x| {
-                    let x_normalized = x as f64 / (self.size as f64 * self.scale);
-                    let y_normalized = y as f64 / (self.size as f64 * self.scale);
+                    let x_normalized = x as f64 / self.size as f64;
+                    let y_normalized = y as f64 / self.size as f64;
                     noise.get([x_normalized, y_normalized, 0.0])
                 }).collect()
             }).collect()
@@ -146,13 +145,13 @@ fn main() {
             //println!("max value: {}", max_value);
 
             // map from min_value and max_value to [-1,1]
-            noise_map = (0..self.size).map(|y| {
-                (0..self.size).into_par_iter().map(|x| {
-                    map_value_to_range(noise_map[x][y], min_value..max_value, -1.0..1.0)
-                }).collect()
-            }).collect();
+            // noise_map = (0..self.size).map(|y| {
+            //     (0..self.size).into_par_iter().map(|x| {
+            //         map_value_to_range(noise_map[x][y], min_value..max_value, -1.0..1.0)
+            //     }).collect()
+            // }).collect();
 
-            let world = self.generate_rounded_terrain(noise_map);
+            let world = self.generate_terrain(noise_map, min_value, max_value);
             // Return the generated world, dimensions, and environmental conditions
             (world, (0, 0), EnvironmentalConditions::new(&[Sunny, Rainy], 15, 12))
         }
@@ -244,23 +243,38 @@ fn main() {
     let _r = MyRobot(Robot::new());
 
     //genereate wolrd with 0.25 diff for each parameter
+    // (4..12).into_par_iter().for_each(|octave| {
+    //     for frequency in 6..=10 { // 5 salti in padella
+    //         let frequency = f64::from(frequency) * 0.25;
+    //         for lacunarity in 6..=8 {
+    //             let lacunarity = f64::from(lacunarity) * 0.25;
+    //             for persistence in 2..=6 {
+    //                 let persistence = f64::from(persistence) * 0.25;
+    //                 for attenuation in 6..=8 {
+    //                     let attenuation = f64::from(attenuation) * 0.25;
+    //                         let mut generator = WorldGenerator::new(500, 0, octave, frequency, lacunarity, persistence, attenuation, 0.25);
+    //                         let tiles = generator.gen().0;
+    //
+    //                         save_world_image(&tiles, (0, 0), format!("img/o{}-f{}-l{}-p{}-a{}.png", octave, frequency, lacunarity, persistence, attenuation).as_str());
+    //                 }
+    //             }
+    //         }
+    //     }
+    // });
 
-    (4..12).into_par_iter().for_each(|octave| {
-        for frequency in 6..=10 { // 5 salti in padella
-            let frequency = f64::from(frequency) * 0.25;
-            for lacunarity in 6..=8 {
-                let lacunarity = f64::from(lacunarity) * 0.25;
-                for persistence in 2..=6 {
-                    let persistence = f64::from(persistence) * 0.25;
-                    for attenuation in 6..=8 {
-                        let attenuation = f64::from(attenuation) * 0.25;
-                            let mut generator = WorldGenerator::new(500, 0, octave, frequency, lacunarity, persistence, attenuation, 0.25);
-                            let tiles = generator.gen().0;
+    let mut generator = WorldGenerator::new(500, 20, 12, 2.5, 2.0, 1.25, 2.5, 0.25);
+    let tiles = generator.gen().0;
+    save_world_image(&tiles, (0, 0), format!("o{}-f{}-l{}-p{}-a{}.png", generator.octaves, generator.frequency, generator.lacunarity, generator.persistence, generator.attenuation).as_str());
+}
 
-                            save_world_image(&tiles, (0, 0), format!("img/o{}-f{}-l{}-p{}-a{}.png", octave, frequency, lacunarity, persistence, attenuation).as_str());
-                    }
-                }
-            }
-        }
-    });
+
+pub fn percentage(target_percentage: f64, min: f64, max: f64) -> f64 {
+    // MappedValue= [(x-a)/(b-a)]⋅(d−c)+c
+    let x = target_percentage;
+    // let a = 0.0;
+    let b = 100.0;
+    let c = min;
+    let d = max;
+    // ((x - a) / (b - a)) * (d - c) + c
+    ((x/b) * (d - c) + c) //simplified a = 0
 }
