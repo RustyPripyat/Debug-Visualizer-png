@@ -1,0 +1,6 @@
+/target/
+note.md
+.idea/
+/bin/target
+.cargo/
+Cargo.lock
