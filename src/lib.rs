@@ -4,4 +4,3 @@ pub mod runner;
 mod tests;
 pub mod utils;
 pub mod world;
-pub mod visualizer;

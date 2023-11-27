@@ -1,52 +1,63 @@
-use image::{Rgb, RgbImage};
-use noise::{NoiseFn, Perlin};
+use chrono::Utc;
+use noise::{NoiseFn, Perlin, RidgedMulti};
+use noise::MultiFractal;
+use noise::Seedable;
 use rand::{Rng, RngCore};
+use rayon::iter::*;
+use strum::IntoEnumIterator;
+
 use robotics_lib::energy::Energy;
-use robotics_lib::interface::{debug, destroy, look_at_sky};
+use robotics_lib::interface::{debug, look_at_sky};
+use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::runner::backpack::BackPack;
-use robotics_lib::runner::{run, Robot, Runnable};
 use robotics_lib::world::coordinates::Coordinate;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Rainy, Sunny};
+use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::tile::Content::{Bank, Bin, Coin, Crate, Fire, Garbage, Rock, Tree, Water};
 use robotics_lib::world::tile::TileType::{DeepWater, Grass, Hill, Lava, Mountain, Sand, ShallowWater, Snow, Street};
-use robotics_lib::world::tile::{Content, Tile, TileType};
-use robotics_lib::world::worldgenerator::Generator;
 use robotics_lib::world::World;
-use strum::IntoEnumIterator;
-use robotics_lib::visualizer::{save_world_image};
-use std::collections::HashMap;
+use robotics_lib::world::worldgenerator::Generator;
 
+use crate::visualizer::save_world_image;
+
+pub mod visualizer;
 
 fn main() {
     struct MyRobot(Robot);
     struct WorldGenerator {
         size: usize,
+        seed: u32,
+        octaves: usize,
+        frequency: f64,
+        lacunarity: f64,
+        persistence: f64,
+        attenuation: f64,
+        scale: f64,
     }
 
     impl WorldGenerator {
         fn init(size: usize) -> Self {
-            WorldGenerator { size }
+            WorldGenerator { size, seed: 0, octaves: 12, frequency: 2.0, lacunarity: 2.0, persistence: 1.25, attenuation: 1.5, scale: 1.0 }
         }
 
 
         fn generate_rounded_terrain(&self, noise_map: Vec<Vec<f64>>) -> Vec<Vec<Tile>> {
-            let height = noise_map.len();
-            let width = if height > 0 { noise_map[0].len() } else { 0 };
-
+            // let height = self.size;
+            // let width = if height > 0 { noise_map[0].len() } else { 0 };
             let mut world = vec![vec![Tile {
                 tile_type: TileType::Grass,
                 content: Content::None,
-            }; width]; height];
+            }; self.size]; self.size];
 
             for (y, row) in noise_map.iter().enumerate() {
                 for (x, &value) in row.iter().enumerate() {
                     let mut tile_type = match value {
-                        v if v < -0.1 => TileType::DeepWater,
-                        v if v < 0.1 => TileType::ShallowWater,
-                        v if v < 0.3 => TileType::Sand,
-                        v if v < 0.6 => TileType::Grass,
-                        v if v < 0.8 => TileType::Hill,
+                        v if v < -0.8 => TileType::DeepWater,
+                        v if v < -0.7 => TileType::ShallowWater,
+                        v if v < -0.3 => TileType::Sand,
+                        v if v < 0.4 => TileType::Grass,
+                        v if v < 0.75 => TileType::Hill,
                         v if v < 0.9 => TileType::Mountain,
                         _ => TileType::Snow,
                     };
@@ -57,88 +68,96 @@ fn main() {
                     };
                 }
             }
-
             world
         }
 
+        fn generate_elevation_map(&self) -> Vec<Vec<f64>> {
+            let mut noise = RidgedMulti::<Perlin>::new(self.seed).set_octaves(self.octaves).set_frequency(self.frequency).set_lacunarity(self.lacunarity).set_persistence(self.persistence).set_attenuation(self.attenuation);
 
-        fn generate_perlin_noise(&self, width: usize, height: usize, scale: f64) -> Vec<Vec<f64>> {
-            let perlin = Perlin::new(rand::thread_rng().next_u32());
-
-            (0..height)
-                .map(|y| {
-                    (0..width)
-                        .map(|x| {
-                            let x_normalized = x as f64 / (width as f64 * scale);
-                            let y_normalized = y as f64 / (height as f64 * scale);
-                            perlin.get([x_normalized, y_normalized, 0.0])
-                        })
-                        .collect()
-                })
-                .collect()
+            (0..self.size).map(|y| {
+                (0..self.size).into_par_iter().map(|x| {
+                    let x_normalized = x as f64 / (self.size as f64 * self.scale);
+                    let y_normalized = y as f64 / (self.size as f64 * self.scale);
+                    noise.get([x_normalized, y_normalized, 0.0])
+                }).collect()
+            }).collect()
         }
+        pub fn new(size: usize, seed: u32, octaves: usize, frequency: f64, lacunarity: f64, persistence: f64, attenuation: f64, scale: f64) -> Self {
+            Self { size, seed, octaves, frequency, lacunarity, persistence, attenuation, scale }
+        }
+    }
+
+    fn find_min_value(matrix: &Vec<Vec<f64>>) -> Option<f64> {
+        // Ensure the matrix is not empty
+        if matrix.is_empty() || matrix[0].is_empty() {
+            return None;
+        }
+
+        let mut min_value = matrix[0][0];
+
+        for row in matrix {
+            for &value in row {
+                if value < min_value {
+                    min_value = value;
+                }
+            }
+        }
+
+        Some(min_value)
+    }
+
+    fn find_max_value(matix: &Vec<Vec<f64>>) -> Option<f64> {
+        // Ensure the matrix is not empty
+        if matix.is_empty() || matix[0].is_empty() {
+            return None;
+        }
+
+        let mut max_value = matix[0][0];
+
+        for row in matix {
+            for &value in row {
+                if value > max_value {
+                    max_value = value;
+                }
+            }
+        }
+
+        Some(max_value)
+    }
+
+    fn map_value_to_range(value: f64, from: std::ops::Range<f64>, to: std::ops::Range<f64>) -> f64 {
+        let from_min = from.start;
+        let from_max = from.end;
+        let to_min = to.start;
+        let to_max = to.end;
+
+        (value - from_min) * (to_max - to_min) / (from_max - from_min) + to_min
     }
 
     impl Generator for WorldGenerator {
         fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions) {
-            let width = 100; // Set your desired width
-            let height = 100; // Set your desired height
+            let mut noise_map = self.generate_elevation_map();
 
-            let noise_map = self.generate_perlin_noise(width, height, 0.42f64);
+            // get min and max values
+            let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX);
+            // get max value
+            let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN);
+
+            println!("min value: {}", min_value);
+            println!("max value: {}", max_value);
+
+            // map from min_value and max_value to [-1,1]
+            noise_map = (0..self.size).map(|y| {
+                (0..self.size).into_par_iter().map(|x| {
+                    map_value_to_range(noise_map[x][y], min_value..max_value, -1.0..1.0)
+                }).collect()
+            }).collect();
+
             let world = self.generate_rounded_terrain(noise_map);
             // Return the generated world, dimensions, and environmental conditions
-            (world, (width, height), EnvironmentalConditions::new(&vec![Sunny, Rainy], 15, 12))
+            (world, (0, 0), EnvironmentalConditions::new(&vec![Sunny, Rainy], 15, 12))
         }
     }
-
-    // impl WorldGenerator {
-    //     fn init(size: usize) -> Self {
-    //         WorldGenerator { size }
-    //     }
-    // }
-    // impl Generator for WorldGenerator {
-    //     fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions) {
-    //         let mut rng = rand::thread_rng();
-    //         let mut map: Vec<Vec<Tile>> = Vec::new();
-    //         // Initialize the map with default tiles
-    //         for _ in 0..self.size {
-    //             let mut row: Vec<Tile> = Vec::new();
-    //             for _ in 0..self.size {
-    //                 let i_tiletype = rng.gen_range(0..TileType::iter().len());
-    //                 let i_content = rng.gen_range(0..Content::iter().len());
-    //                 let tile_type = match i_tiletype {
-    //                     | 0 => DeepWater,
-    //                     | 1 => ShallowWater,
-    //                     | 2 => Sand,
-    //                     | 3 => Grass,
-    //                     | 4 => Street,
-    //                     | 5 => Hill,
-    //                     | 6 => Mountain,
-    //                     | 7 => Snow,
-    //                     | 8 => Lava,
-    //                     | _ => Grass,
-    //                 };
-    //                 let content = match i_content {
-    //                     | 0 => Rock(0),
-    //                     | 1 => Tree(2),
-    //                     | 2 => Garbage(2),
-    //                     | 3 => Fire,
-    //                     | 4 => Coin(2),
-    //                     | 5 => Bin(2..3),
-    //                     | 6 => Crate(2..3),
-    //                     | 7 => Bank(3..54),
-    //                     | 8 => Content::Water(20),
-    //                     | 9 => Content::None,
-    //                     | _ => Content::None,
-    //                 };
-    //                 row.push(Tile { tile_type, content });
-    //             }
-    //             map.push(row);
-    //         }
-    //         let environmental_conditions = EnvironmentalConditions::new(&vec![Sunny, Rainy], 15, 12);
-    //         (map, (0, 0), environmental_conditions)
-    //     }
-    // }
 
     impl Runnable for MyRobot {
         fn process_tick(&mut self, world: &mut World) {
@@ -198,16 +217,7 @@ fn main() {
                     }
                     println!();
                 }
-                // println!("{:?}, {:?}", a, b);
-                // match ris {
-                //     | Ok(values) => println!("Ok"),
-                //     | Err(e) => println!("{:?}", e),
-                // }
             }
-            // println!(
-            //     "Destroy HERE {:?}",
-            //     destroy(self, world, robotics_lib::interface::Direction::Down)
-            // );
         }
 
         fn get_energy(&self) -> &Energy {
@@ -233,7 +243,33 @@ fn main() {
     }
 
     let mut r = MyRobot(Robot::new());
-    let mut generator = WorldGenerator::init(10);
-    save_world_image(&generator.gen().0, (0, 0), "test.png");
-    // println!("Last print: {:?}", run(&mut r, &mut generator));
+
+    //genereate wolrd with 0.25 diff for each parameter
+    for octave in 1..=12 {
+        for frequency in 1..=16 {
+            let frequency = f64::from(frequency) * 0.25;
+            for lacunarity in 1..=16 {
+                let lacunarity = f64::from(lacunarity) * 0.25;
+                for persistence in 1..=16 {
+                    let persistence = f64::from(persistence) * 0.25;
+                    for attenuation in 1..=16 {
+                        let attenuation = f64::from(attenuation) * 0.25;
+                        for scale in 1..=16 {
+                            let scale = f64::from(scale) * 0.25;
+                            let mut generator = WorldGenerator::new(500, 0, octave, frequency as f64, lacunarity as f64, persistence as f64, attenuation as f64, scale as f64);
+                            let mut start = Utc::now();
+                            let tiles = generator.gen().0;
+                            let mut elapsed = Utc::now() - start;
+                            println!("world generated in: {} ms", elapsed.num_milliseconds());
+
+                            start = Utc::now();
+                            save_world_image(&tiles, (0, 0), format!("{}-{}-{}-{}-{}-{}.png", octave, frequency, lacunarity, persistence, attenuation, scale).as_str());
+                            elapsed = Utc::now() - start;
+                            println!("png generated in: {} ms", elapsed.num_milliseconds());
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

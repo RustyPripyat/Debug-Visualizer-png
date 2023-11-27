@@ -6,9 +6,14 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-robotics_lib = {path = "../../Robotic-Lib/"}
+robotics_lib = {path = "../"}
 rand = "0.8.5"
 strum = "0.25.0"
 image = "0.24.7"
 noise = "0.8.2"
 worldgen = "0.5.3"
+num_cpus = "1.16.0"
+rayon = "1.8.0"
+chrono = "0.4.31"
+imageproc = "0.23.0"
+map-range = "0.1.2"
