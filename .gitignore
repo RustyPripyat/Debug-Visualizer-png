@@ -4,3 +4,4 @@ note.md
 /bin/target
 .cargo/
 Cargo.lock
+*.png

@@ -82,9 +82,4 @@ pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_
     } else {
         println!("Image saved successfully as {}", file_name);
     }
-
-    // letteralmente apre imv con l'immagine come argomento.
-    // imv è un visualizzatore di immagini, cambia il comando
-    // se vuoi usare un altro visualizzatore (eog, se su gnome).
-
 }
