@@ -18,6 +18,8 @@ use robotics_lib::world::worldgenerator::Generator;
 use crate::visualizer::save_world_image;
 
 pub mod visualizer;
+mod content;
+mod tiletype;
 
 fn main() {
     struct MyRobot(Robot);
