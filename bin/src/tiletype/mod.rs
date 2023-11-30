@@ -1,3 +1,3 @@
-mod lava;
-mod street;
+pub(crate) mod lava;
+pub(crate) mod street;
 

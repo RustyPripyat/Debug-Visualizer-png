@@ -9,8 +9,8 @@ use crate::utils::{find_max_value, find_min_value, percentage};
 use noise::MultiFractal;
 use noise::NoiseFn;
 use rayon::iter::*;
+use crate::tiletype::lava::{spawn_lava, get_lowest_neighbour};
 
-use crate::utils::*;
 
 pub(crate) struct NoiseSettings {
     pub(crate) seed: u32,
@@ -21,7 +21,7 @@ pub(crate) struct NoiseSettings {
     pub(crate) attenuation: f64,
     pub(crate) scale: f64,
 }
-
+#[derive(Clone)]
 pub(crate) struct LavaSettings {
     pub(crate) number_of_spawn_points: usize,
     pub(crate) lava_flow_range: Range<usize>,
@@ -44,7 +44,7 @@ pub(crate) struct WorldGenerator {
 }
 
 impl WorldGenerator {
-    fn generate_terrain(&self, noise_map: Vec<Vec<f64>>, min: f64, max: f64) -> Vec<Vec<Tile>> {
+    fn generate_terrain(&self, noise_map: & Vec<Vec<f64>>, min: f64, max: f64) -> Vec<Vec<Tile>> {
         let mut world = vec![vec![Tile {
             tile_type: TileType::Grass,
             content: Content::None,
@@ -98,7 +98,11 @@ impl Generator for WorldGenerator {
         let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN);     // get max value
 
 
-        let world = self.generate_terrain(noise_map, min_value, max_value);
+        let mut world = self.generate_terrain(&noise_map, min_value, max_value);
+
+        // spawn lava
+        spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
+
         // Return the generated world, dimensions, and environmental conditions
         (world, (0, 0), EnvironmentalConditions::new(&[Sunny, Rainy], 15, 12))
     }

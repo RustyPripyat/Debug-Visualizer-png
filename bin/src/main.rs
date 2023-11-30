@@ -45,8 +45,8 @@ fn main() {
     }
 
     let _r = MyRobot(Robot::new());
-
-    let mut generator = WorldGenerator::new(500, NoiseSettings {
+    let size = 500;
+    let mut generator = WorldGenerator::new(size, NoiseSettings {
         seed: 0,
         octaves: 12,
         frequency: 2.5,
@@ -62,8 +62,8 @@ fn main() {
         threshold_hill: 65.0,
         threshold_mountain: 77.5,
     }, LavaSettings {
-        number_of_spawn_points: 10,
-        lava_flow_range: 1..5,
+        number_of_spawn_points: size/25,
+        lava_flow_range: 1..size/25,
     },
     );
     let tiles = generator.gen().0;
