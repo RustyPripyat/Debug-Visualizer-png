@@ -1,8 +1,9 @@
+use std::sync::{Arc, Mutex};
+
+use chrono::Utc;
 use image::{Rgb, RgbImage};
 use image::ImageFormat;
 use imageproc::rect::Rect;
-
-use std::sync::{Arc, Mutex};
 use rayon::prelude::*;
 use robotics_lib::world::tile::*;
 
@@ -23,6 +24,9 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize), ti
     const COLOR_LAVA: Rgb<u8> = Rgb([255, 140, 0]);             // Lava (Arancione acceso)
     const COLOR_GRAY: Rgb<u8> = Rgb([128, 128, 128]);           // Gray (Grigio)
     const COLOR_BLACK: Rgb<u8> = Rgb([0, 0, 0]);                // Black (Nero)
+
+    let start = Utc::now();
+    println!("start loop");
 
     // Parallelize the loop using par_iter()
     tiles.par_iter().enumerate().for_each(|(y, row)| {
@@ -49,11 +53,10 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize), ti
             imageproc::drawing::draw_filled_rect_mut(&mut *img_ref, rect, color.into());
         });
     });
-
-    // Draw the symbol of the bot on its position
+    let t = (Utc::now() - start);
+    print!("finish loop {}", t.num_milliseconds());
     let (bot_x, bot_y) = bot_position;
     let bot_color = Rgb([213, 213, 213]);
-
 
 
     for dy in 0..tile_size {
@@ -79,7 +82,5 @@ pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_
 
     if let Err(e) = img.save_with_format(file_name, ImageFormat::Png) {
         println!("Error saving the image: {}", e);
-    } else {
-        println!("Image saved successfully as {}", file_name);
     }
 }
