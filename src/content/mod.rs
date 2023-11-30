@@ -1,8 +1,9 @@
-mod tree;
-mod fish;
-mod fire;
-mod rock;
-mod garbage;
-mod coin;
-mod bank;
-mod bin;
+pub(crate) mod tree;
+pub(crate) mod fish;
+pub(crate) mod fire;
+pub(crate) mod rock;
+pub(crate) mod garbage;
+pub(crate) mod coin;
+pub(crate) mod bank;
+pub(crate) mod bin;
+pub(crate) mod water;

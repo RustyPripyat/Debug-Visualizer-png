@@ -1,5 +1,5 @@
 use std::ops::Range;
-use std::os::linux::raw::stat;
+// use std::os::linux::raw::stat;
 use chrono::Utc;
 use noise::{Fbm, Perlin, RidgedMulti};
 use rayon::iter::IntoParallelIterator;
@@ -10,8 +10,9 @@ use robotics_lib::world::worldgenerator::Generator;
 use crate::utils::{find_max_value, find_min_value, percentage};
 use noise::MultiFractal;
 use noise::NoiseFn;
+use crate::content::water::add_default_water_content;
 use rayon::iter::*;
-use crate::tiletype::lava::{spawn_lava, get_lowest_neighbour};
+use crate::tiletype::lava::{spawn_lava};
 
 
 pub(crate) struct NoiseSettings {
@@ -55,7 +56,9 @@ impl WorldGenerator {
 
         for (y, row) in noise_map.iter().enumerate() {
             for (x, &value) in row.iter().enumerate() {
-                let tile_type = match value {
+                let elevation = 0;
+                let mut content = Content::None;
+                let mut tile_type = match value {
                     v if v < percentage(self.thresholds.threshold_deep_water, min, max) => TileType::DeepWater,
                     v if v < percentage(self.thresholds.threshold_shallow_water, min, max) => TileType::ShallowWater,
                     v if v < percentage(self.thresholds.threshold_sand, min, max) => TileType::Sand,
@@ -65,10 +68,13 @@ impl WorldGenerator {
                     _ => TileType::Snow,
                 };
 
+                //add Default Water Content on DeepWater and ShallowWater
+                content = add_default_water_content(tile_type);
+
                 world[y][x] = Tile {
                     tile_type,
-                    content: Content::None,
-                    elevation: 0,
+                    content,
+                    elevation,
                 };
             }
         }
