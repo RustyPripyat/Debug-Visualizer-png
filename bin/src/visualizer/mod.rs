@@ -9,10 +9,10 @@ use robotics_lib::world::tile::*;
 
 fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize)) -> RgbImage {
     const TILE_SIZE: u32 = 10;
-    let WIDTH: u32 = tiles[0].len() as u32 * TILE_SIZE;
-    let HEIGHT: u32 = tiles.len() as u32 * TILE_SIZE;
+    let width: u32 = tiles[0].len() as u32 * TILE_SIZE;
+    let height: u32 = tiles.len() as u32 * TILE_SIZE;
 
-    let img = Arc::new(Mutex::new(RgbImage::new(WIDTH, HEIGHT)));
+    let img = Arc::new(Mutex::new(RgbImage::new(width, height)));
 
     const COLOR_DEEP_WATER: Rgb<u8> = Rgb([5, 25, 90]);         // DeepWater (Blu scuro)
     const COLOR_SHALLOW_WATER: Rgb<u8> = Rgb([45, 100, 160]);   // ShallowWater (Blu chiaro)

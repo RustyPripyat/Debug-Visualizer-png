@@ -6,7 +6,7 @@ pub fn percentage(target_percentage: f64, min: f64, max: f64) -> f64 {
     let c = min;
     let d = max;
     // ((x - a) / (b - a)) * (d - c) + c
-    ((x / b) * (d - c) + c) //simplified a = 0
+    (x / b) * (d - c) + c //simplified a = 0
 }
 
 pub fn find_min_value(matrix: &Vec<Vec<f64>>) -> Option<f64> {
