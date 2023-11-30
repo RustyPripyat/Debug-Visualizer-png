@@ -78,25 +78,11 @@ impl WorldGenerator {
     fn generate_elevation_map(&self) -> Vec<Vec<f64>> {
         let noise = RidgedMulti::<Fbm<Perlin>>::new(self.noise_settings.seed).set_octaves(self.noise_settings.octaves).set_frequency(self.noise_settings.frequency).set_lacunarity(self.noise_settings.lacunarity).set_persistence(self.noise_settings.persistence).set_attenuation(self.noise_settings.attenuation);
 
-
-        // let mut elevation_map: Vec<Vec<f64>> = vec![vec![0.0; self.size]; self.size];
-
-        // elevation_map.into_par_iter().enumerate().for_each(|(y, row)| {
-        //     row.iter_mut().enumerate().for_each(|(x, value)| {
-        //         *value = noise.get([x as f64 / self.size as f64, y as f64 / self.size as f64, 0.0]) * self.noise_settings.scale;
-        //     });
-        // });
-
-        // elevation_map.into_par_iter().
-
-
-
-
         (0..self.size).into_par_iter().map(|y| {
             let y_normalized = y as f64 / self.size as f64;
             (0..self.size).map(|x| {
                 let x_normalized = x as f64 / self.size as f64;
-                noise.get([x_normalized, y_normalized, 0.0])
+                noise.get([x_normalized, y_normalized])
             }).collect()
         }).collect()
     }
