@@ -48,6 +48,7 @@ impl WorldGenerator {
         let mut world = vec![vec![Tile {
             tile_type: TileType::Grass,
             content: Content::None,
+            elevation: 0,
         }; self.size]; self.size];
 
         for (y, row) in noise_map.iter().enumerate() {
@@ -65,6 +66,7 @@ impl WorldGenerator {
                 world[y][x] = Tile {
                     tile_type,
                     content: Content::None,
+                    elevation: 0,
                 };
             }
         }
@@ -91,7 +93,7 @@ impl WorldGenerator {
 
 
 impl Generator for WorldGenerator {
-    fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions) {
+    fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32) {
         let noise_map = self.generate_elevation_map();
 
         let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX);     // get min value
@@ -104,6 +106,6 @@ impl Generator for WorldGenerator {
         spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
 
         // Return the generated world, dimensions, and environmental conditions
-        (world, (0, 0), EnvironmentalConditions::new(&[Sunny, Rainy], 15, 12))
+        (world, (0, 0), EnvironmentalConditions::new(&[Sunny, Rainy], 15, 12), 0.0)
     }
 }

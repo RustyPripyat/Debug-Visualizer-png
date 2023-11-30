@@ -1,3 +1,4 @@
+use robotics_lib::event::events::Event;
 use robotics_lib::energy::Energy;
 use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::runner::backpack::BackPack;
@@ -42,6 +43,7 @@ fn main() {
         fn get_backpack_mut(&mut self) -> &mut BackPack {
             &mut self.0.backpack
         }
+        fn handle_event(&mut self, _: Event) { todo!() }
     }
 
     let _r = MyRobot(Robot::new());

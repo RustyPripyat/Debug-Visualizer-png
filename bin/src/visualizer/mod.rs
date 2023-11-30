@@ -1,4 +1,3 @@
-
 use image::{Rgb, RgbImage};
 use image::DynamicImage;
 use image::ImageFormat;
@@ -24,6 +23,8 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize)) ->
     const COLOR_MOUNTAIN: Rgb<u8> = Rgb([160, 160, 160]);       // Mountain (Grigio montagna)
     const COLOR_SNOW: Rgb<u8> = Rgb([255, 255, 255]);           // Snow (Bianco)
     const COLOR_LAVA: Rgb<u8> = Rgb([255, 140, 0]);             // Lava (Arancione acceso)
+    const COLOR_GRAY: Rgb<u8> = Rgb([128, 128, 128]);           // Gray (Grigio)
+    const COLOR_BLACK: Rgb<u8> = Rgb([0, 0, 0]);                // Black (Nero)
 
     // Parallelize the loop using par_iter()
     tiles.par_iter().enumerate().for_each(|(y, row)| {
@@ -38,6 +39,7 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize)) ->
                 TileType::Mountain => COLOR_MOUNTAIN,
                 TileType::Snow => COLOR_SNOW,
                 TileType::Lava => COLOR_LAVA,
+                _ => COLOR_BLACK,
             };
 
             // Inside the inner loop
