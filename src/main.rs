@@ -1,3 +1,4 @@
+use chrono::Utc;
 use robotics_lib::event::events::Event;
 use robotics_lib::energy::Energy;
 use robotics_lib::runner::{Robot, Runnable};
@@ -47,7 +48,7 @@ fn main() {
     }
 
     let _r = MyRobot(Robot::new());
-    let size = 500;
+    let size = 1000;
     let mut generator = WorldGenerator::new(size, NoiseSettings {
         seed: 0,
         octaves: 12,

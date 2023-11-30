@@ -1,4 +1,6 @@
 use std::ops::Range;
+use std::os::linux::raw::stat;
+use chrono::Utc;
 use noise::{Fbm, Perlin, RidgedMulti};
 use rayon::iter::IntoParallelIterator;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
@@ -76,10 +78,24 @@ impl WorldGenerator {
     fn generate_elevation_map(&self) -> Vec<Vec<f64>> {
         let noise = RidgedMulti::<Fbm<Perlin>>::new(self.noise_settings.seed).set_octaves(self.noise_settings.octaves).set_frequency(self.noise_settings.frequency).set_lacunarity(self.noise_settings.lacunarity).set_persistence(self.noise_settings.persistence).set_attenuation(self.noise_settings.attenuation);
 
-        (0..self.size).map(|y| {
-            (0..self.size).into_par_iter().map(|x| {
+
+        // let mut elevation_map: Vec<Vec<f64>> = vec![vec![0.0; self.size]; self.size];
+
+        // elevation_map.into_par_iter().enumerate().for_each(|(y, row)| {
+        //     row.iter_mut().enumerate().for_each(|(x, value)| {
+        //         *value = noise.get([x as f64 / self.size as f64, y as f64 / self.size as f64, 0.0]) * self.noise_settings.scale;
+        //     });
+        // });
+
+        // elevation_map.into_par_iter().
+
+
+
+
+        (0..self.size).into_par_iter().map(|y| {
+            let y_normalized = y as f64 / self.size as f64;
+            (0..self.size).map(|x| {
                 let x_normalized = x as f64 / self.size as f64;
-                let y_normalized = y as f64 / self.size as f64;
                 noise.get([x_normalized, y_normalized, 0.0])
             }).collect()
         }).collect()
@@ -94,16 +110,29 @@ impl WorldGenerator {
 
 impl Generator for WorldGenerator {
     fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32) {
-        let noise_map = self.generate_elevation_map();
 
+        println!("Start: Generate noise map");
+        let mut start = Utc::now();
+        let noise_map = self.generate_elevation_map();
+        println!("Done: Generate noise map: {}", (Utc::now() - start).num_milliseconds());
+
+
+        println!("Start: Calculate min and max value");
+        start = Utc::now();
         let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX);     // get min value
         let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN);     // get max value
+        println!("Done: Calculate min and max value: {}", (Utc::now() - start).num_milliseconds());
 
-
+        println!("Start: Generate terrain");
+        start = Utc::now();
         let mut world = self.generate_terrain(&noise_map, min_value, max_value);
+        println!("Done: Generate terrain: {}", (Utc::now() - start).num_milliseconds());
 
         // spawn lava
+        println!("Start: Spawn lava");
+        start = Utc::now();
         spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
+        println!("Done: Spawn lava: {}", (Utc::now() - start).num_milliseconds());
 
         // Return the generated world, dimensions, and environmental conditions
         (world, (0, 0), EnvironmentalConditions::new(&[Sunny, Rainy], 15, 12), 0.0)

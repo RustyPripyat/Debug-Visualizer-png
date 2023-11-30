@@ -1,19 +1,19 @@
 [package]
-authors = ["Federico Frigerio","Filippo Lollato","Alessio Blascovich","Federico Menegoz","Davide Castellani","Alessio Amiri","mpossamai107","Marco ཀ ʖ̯ ཀ","Andrea Bissoli","Gianluca R.","Praisethefab"]
-name = "robotics_lib"
-version = "0.0.1"
+name = "bin"
+version = "0.1.0"
 edition = "2021"
-exclude = [".*"]
 
-[lib]
-name = "robotics_lib"
-path = "src/lib.rs"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lazy_static = "1.4.0"
-rand = { version = "0.8.5", features = [] }
+robotics_lib = { git = "https://github.com/Advanced-Programming-2023/Robotic-Lib", branch = "master" }
+rand = "0.8.5"
 strum = "0.25.0"
-strum_macros = { version = "0.25.3", features = [] }
-log = "0.4.20"
 image = "0.24.7"
-viuer = "0.7.1"
+noise = "0.8.2"
+worldgen = "0.5.3"
+num_cpus = "1.16.0"
+rayon = "1.8.0"
+chrono = "0.4.31"
+imageproc = "0.23.0"
+map-range = "0.1.2"
