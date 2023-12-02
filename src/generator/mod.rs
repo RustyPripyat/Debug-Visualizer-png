@@ -1,18 +1,17 @@
 use std::ops::Range;
-use std::os::linux::raw::stat;
-use chrono::Utc;
+
 use noise::{Fbm, Perlin, RidgedMulti};
-use rayon::iter::IntoParallelIterator;
-use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
-use robotics_lib::world::environmental_conditions::WeatherType::{Rainy, Sunny};
-use robotics_lib::world::tile::{Content, Tile, TileType};
-use robotics_lib::world::worldgenerator::Generator;
-use crate::utils::{find_max_value, find_min_value, percentage};
 use noise::MultiFractal;
 use noise::NoiseFn;
 use rayon::iter::*;
-use crate::tiletype::lava::{spawn_lava, get_lowest_neighbour};
+use rayon::iter::IntoParallelIterator;
+use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
+use robotics_lib::world::environmental_conditions::WeatherType;
+use robotics_lib::world::tile::{Content, Tile, TileType};
+use robotics_lib::world::worldgenerator::Generator;
 
+use crate::tiletype::lava::spawn_lava;
+use crate::utils::{find_max_value, find_min_value, percentage};
 
 pub(crate) struct NoiseSettings {
     pub(crate) seed: u32,
@@ -23,6 +22,7 @@ pub(crate) struct NoiseSettings {
     pub(crate) attenuation: f64,
     pub(crate) scale: f64,
 }
+
 #[derive(Clone)]
 pub(crate) struct LavaSettings {
     pub(crate) number_of_spawn_points: usize,
@@ -46,7 +46,7 @@ pub(crate) struct WorldGenerator {
 }
 
 impl WorldGenerator {
-    fn generate_terrain(&self, noise_map: & Vec<Vec<f64>>, min: f64, max: f64) -> Vec<Vec<Tile>> {
+    fn generate_terrain(&self, noise_map: &[Vec<f64>], min: f64, max: f64) -> Vec<Vec<Tile>> {
         let mut world = vec![vec![Tile {
             tile_type: TileType::Grass,
             content: Content::None,
@@ -96,31 +96,11 @@ impl WorldGenerator {
 
 impl Generator for WorldGenerator {
     fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32) {
-
-        println!("Start: Generate noise map");
-        let mut start = Utc::now();
         let noise_map = self.generate_elevation_map();
-        println!("Done: Generate noise map: {}", (Utc::now() - start).num_milliseconds());
-
-
-        println!("Start: Calculate min and max value");
-        start = Utc::now();
-        let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX);     // get min value
-        let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN);     // get max value
-        println!("Done: Calculate min and max value: {}", (Utc::now() - start).num_milliseconds());
-
-        println!("Start: Generate terrain");
-        start = Utc::now();
+        let min_value = find_min_value(&noise_map).unwrap_or(f64::MIN);
+        let max_value = find_max_value(&noise_map).unwrap_or(f64::MAX);
         let mut world = self.generate_terrain(&noise_map, min_value, max_value);
-        println!("Done: Generate terrain: {}", (Utc::now() - start).num_milliseconds());
-
-        // spawn lava
-        println!("Start: Spawn lava");
-        start = Utc::now();
         spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
-        println!("Done: Spawn lava: {}", (Utc::now() - start).num_milliseconds());
-
-        // Return the generated world, dimensions, and environmental conditions
-        (world, (0, 0), EnvironmentalConditions::new(&[Sunny, Rainy], 15, 12), 0.0)
+        (world, (0, 0), EnvironmentalConditions::new(&[WeatherType::Rainy], 1, 0).unwrap(), 0.0)
     }
 }

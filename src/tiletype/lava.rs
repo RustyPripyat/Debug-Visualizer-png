@@ -21,7 +21,7 @@ pub(crate) fn flow_from(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>
     //println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
     world[y][x].tile_type = TileType::Lava;
     if remaining_range.start == remaining_range.end {
-        return 0;
+        0
     }
     else {
         // if there is a neighbour with a lower height, flow to it
@@ -54,7 +54,7 @@ pub(crate) fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: u
     // sort by height
     neighbour_heights.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     // return coordinates of the lowest neighbour
-    return (neighbour_heights[0].1, neighbour_heights[0].2);
+    (neighbour_heights[0].1, neighbour_heights[0].2)
 }
 
 // return vector with the coordinates of the mountain tiles in range
@@ -68,5 +68,5 @@ pub(crate) fn get_yx_mountain_tiles(wordl: &mut Vec<Vec<Tile>>) -> Vec<(usize, u
         }
     }
     tiles_in_range.as_mut_slice().shuffle(&mut rand::thread_rng());
-    return  tiles_in_range;
+    tiles_in_range
 }

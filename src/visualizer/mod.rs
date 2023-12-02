@@ -1,13 +1,13 @@
 use image::{Rgb, RgbImage};
 use image::ImageFormat;
-use imageproc::rect::Rect;
 
-use std::sync::{Arc, Mutex};
+
+
 use chrono::Utc;
 use rayon::prelude::*;
 use robotics_lib::world::tile::*;
 
-fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize), tile_size: usize) -> RgbImage {
+fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize, usize), _tile_size: usize) -> RgbImage {
     // let width = tiles[0].len() * tile_size;
     // let height = tiles.len() * tile_size;
 
@@ -104,7 +104,7 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize), ti
 
 pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_name: &str) {
     println!("Start: Saving world image");
-    let mut start = Utc::now();
+    let start = Utc::now();
     let img = create_image_from_tiles(tiles, bot_position, 1);
     println!("Done: Saving world image: {}", (Utc::now() - start).num_milliseconds());
 
