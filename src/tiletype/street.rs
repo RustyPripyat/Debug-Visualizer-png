@@ -1,117 +1,203 @@
-use std::cmp::{max, Ordering};
-use imageproc::contrast::threshold;
+use std::cmp::Ordering;
+use std::collections::HashSet;
+use voronator::{CentroidDiagram, VoronoiDiagram};
+use voronator::delaunator::Point;
 
-struct Coordinate {
-    row: usize,
-    col: usize,
-}
+use crate::utils::{Coordinate, Slice, slice_vec_2d};
 
-struct Slice {
-    start: Coordinate,
-    end: Coordinate,
-}
-
-pub(crate) fn street_spawn(street_quantity:usize, elevation_map: &Vec<Vec<f64>>,n_slice_side:usize,lower_threshold: f64) -> Vec<(usize,usize)>{
+pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_threshold: f64) -> Vec<(usize, usize)> {
     // get local maxima
-    let local_maxima = get_local_maxima(&elevation_map, n_slice_side, lower_threshold);
-    //combine_near_local_maxima(&elevation_map, &local_maxima, n_slice_side)
-    //set combined maxima to black
-    local_maxima
+    let mut local_maxima = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
 
-    // stuff with Voronoi diagram
-    // magically spawn street
-}
+    // combine near local maxima
+    let mut combined_local_maxima = combine_local_maxima(&elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
 
-fn combine_near_local_maxima(
-    elevation_map: &Vec<Vec<f64>>,
-    local_maxima: &Vec<(usize, usize)>,
-    num_of_slice: usize,
-) -> Vec<(usize, usize)> {
-    let mut result: Vec<(usize, usize)> = Vec::new();
-    // slice 2d vector but with initial offset
-    let offset = (elevation_map.len() / num_of_slice) / 2;
+    // convert to (f64,f64) for voronoi
+    let mut points: Vec<(f64,f64)> = Vec::new();
+    for (y, x) in &combined_local_maxima {
+        points.push((*x as f64, *y as f64));
+    }
 
-    for &(row, col) in local_maxima {
-        let mut combined = false;
-        for &existing in &result {
-            if distance(row, col, existing.0, existing.1) < offset {
-                // Combine if they are close
-                let (new_row, new_col) = if elevation_map[row][col] > elevation_map[existing.0][existing.1] {
-                    (row + offset, col + offset)
-                } else {
-                    (existing.0 + offset, existing.1 + offset)
-                };
+    //let diagram = VoronoiDiagram::<Point>::from_tuple(&(0., 0.), &((elevation_map.len()-1) as f64, (elevation_map.len()-1) as f64), &points).unwrap();
+    let diagram = CentroidDiagram::<Point>::from_tuple(&points).unwrap();
+    // make line segments voronoi
+    let mut line_segments: Vec<(usize, usize)> = Vec::new();
+    // for cell in diagram.cells() {
+    //     let p: Vec<(usize, usize)> = cell.points().iter()
+    //         .map(|x| (x.x as usize, x.y as usize))
+    //         .collect();
+    //
+    //     // connect the points
+    //     for i in 0..p.len()-1 {
+    //         line_segments.append(&mut connect_points(p[i], p[i+1]));
+    //     }
+    // }
 
-                result.retain(|&x| x != existing);
-                result.push((new_row, new_col));
-                combined = true;
-                break;
-            }
-        }
-        if !combined {
-            // If not combined with any existing, add as is
-            result.push((row + offset, col + offset));
+    for cell in diagram.cells{
+        let p: Vec<(usize, usize)> = cell.points().iter()
+            .map(|x| (x.x as usize, x.y as usize))
+            .collect();
+
+        // connect the points
+        for i in 0..p.len()-1 {
+            line_segments.append(&mut connect_points(p[i], p[i+1]));
         }
     }
 
-    result
+    // magically spawn streets
+    line_segments
 }
 
-fn distance(x1: usize, y1: usize, x2: usize, y2: usize) -> usize {
-    ((x1 as isize - x2 as isize).abs() + (y1 as isize - y2 as isize).abs()) as usize
+fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usize)> {
+    let mut line_segments: Vec<(usize, usize)> = Vec::new();
+
+    let dx = end.0 as isize - start.0 as isize;
+    let dy = end.1 as isize - start.1 as isize;
+
+    let steps = if dx.abs() > dy.abs() { dx.abs() } else { dy.abs() } as f64;
+
+    let x_increment = dx as f64 / steps;
+    let y_increment = dy as f64 / steps;
+
+    let mut x = start.0 as f64;
+    let mut y = start.1 as f64;
+
+    for _ in 0..=steps as usize {
+        line_segments.push((x as usize, y as usize));
+        x += x_increment;
+        y += y_increment;
+    }
+
+    line_segments
+}
+
+fn combine_local_maxima(elevation_map: &Vec<Vec<f64>>, all_local_maxima: &mut Vec<(usize, usize)>, n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
+    let mut hs: HashSet<(usize, usize)> = HashSet::new();
+    let qnt_per_slice = elevation_map.len() / n_slice_per_side;
+
+    //combine the local maxima in the same slice
+    for index in 1..n_slice_per_side {        //for lower_index in higher_index + 1..local_maxima_in_slice.len() {
+
+        //vertical slices
+        combine_local_maxima_in_same_slice(index,
+                                           get_vertical_slice,
+                                           is_inside_vertical_slice,
+                                           get_delta_x,
+                                           elevation_map,
+                                           all_local_maxima,
+                                           qnt_per_slice,
+                                           band_width)
+            .iter()
+            .for_each(|x| { hs.insert(*x); });
+
+        //horizontal slices
+        combine_local_maxima_in_same_slice(index,
+                                           get_horizontal_slice,
+                                           is_inside_horizontal_slice,
+                                           get_delta_y,
+                                           elevation_map,
+                                           all_local_maxima,
+                                           qnt_per_slice,
+                                           band_width)
+            .iter()
+            .for_each(|x| { hs.insert(*x); });
+    }
+
+    hs.into_iter().collect()
+}
+
+fn combine_local_maxima_in_same_slice(
+    index: usize, get_slice: fn(usize, usize, usize, usize) -> Slice,
+    is_inside_slice: fn(&(usize, usize), &Slice) -> bool,
+    get_delta: fn(&(usize, usize), &(usize, usize)) -> usize,
+    elevation_map: &Vec<Vec<f64>>, all_local_maxima: &mut [(usize, usize)],
+    qnt_per_slice: usize, band_width: usize) -> Vec<(usize, usize)>
+{
+    let slice: Slice = get_slice(elevation_map.len(), index, qnt_per_slice, band_width);
+
+    //get the local maxima in the slice
+    let mut local_maxima_in_slice = Vec::new();
+    for local_maximum in all_local_maxima.iter() {
+        if is_inside_slice(local_maximum, &slice) {
+            local_maxima_in_slice.push(*local_maximum);
+        }
+    }
+
+    //sort the local maxima in the slice by elevation (highest first)
+    local_maxima_in_slice.sort_by(|a, b| elevation_map[b.0][b.1].partial_cmp(&elevation_map[a.0][a.1]).unwrap());
+
+    //if the delta (Δx or Δy) is < band_width, remove the local maxima with the lowest elevation
+    let mut higher_index = 0;
+    let mut lower_index = 1;
+    if local_maxima_in_slice.len() > 1 {
+        while higher_index < local_maxima_in_slice.len() - 1 {
+            lower_index = higher_index + 1;
+            while lower_index < local_maxima_in_slice.len() {
+                if get_delta(&local_maxima_in_slice[higher_index], &local_maxima_in_slice[lower_index]) <= band_width {
+                    local_maxima_in_slice.remove(lower_index); //remove lower local maximum near to higher local maximum
+                }
+                lower_index += 1;
+            }
+            higher_index += 1;
+        }
+    }
+    local_maxima_in_slice
+}
+
+fn get_delta_x(higher: &(usize, usize), lower: &(usize, usize)) -> usize {
+    higher.1.abs_diff(lower.1)
+}
+
+fn get_delta_y(higher: &(usize, usize), lower: &(usize, usize)) -> usize {
+    higher.0.abs_diff(lower.0)
+}
+
+fn is_inside_horizontal_slice(local_maximum: &(usize, usize), slice: &Slice) -> bool {
+    local_maximum.0 >= slice.start.row && local_maximum.0 <= slice.end.row
+}
+
+fn is_inside_vertical_slice(local_maximum: &(usize, usize), slice: &Slice) -> bool {
+    local_maximum.1 >= slice.start.col && local_maximum.1 <= slice.end.col
+}
+
+fn get_horizontal_slice(map_len: usize, row: usize, qnt_per_slice: usize, band_width: usize) -> Slice {
+    Slice {
+        start: Coordinate { row: (row * qnt_per_slice) - (band_width / 2), col: 0 },
+        end: Coordinate { row: (row * qnt_per_slice) + (band_width / 2), col: map_len - 1 },
+    }
+}
+
+fn get_vertical_slice(map_len: usize, col: usize, qnt_per_slice: usize, band_width: usize) -> Slice {
+    Slice {
+        start: Coordinate { row: 0, col: (col * qnt_per_slice) - (band_width / 2) },
+        end: Coordinate { row: map_len - 1, col: (col * qnt_per_slice) + (band_width / 2) },
+    }
 }
 
 fn get_local_maxima(elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_threshold: f64) -> Vec<(usize, usize)> {
     let mut local_maxima: Vec<(usize, usize)> = Vec::new();
-
-    for slice in slice_vec_2d(elevation_map, n_slice_side) {
-        let mut local_maximum_point = (lower_threshold,usize::MAX,usize::MAX);
+    let mut found_local_maximum;
+    let slices = slice_vec_2d(elevation_map, n_slice_side);
+    for slice in slices {
+        found_local_maximum = false;
+        let mut local_maximum_point = (slice.start.row, slice.start.col); // set initially the local maximum to the first point in the slice
         for row_index in slice.start.row..slice.end.row {
             for col_index in slice.start.col..slice.end.col {
-                if elevation_map[row_index][col_index] > local_maximum_point.0 {
-                    local_maximum_point = (elevation_map[row_index][col_index], row_index, col_index);
+                if elevation_map[row_index][col_index] >= elevation_map[local_maximum_point.0][local_maximum_point.1] {
+                    local_maximum_point = (row_index, col_index);
+                    found_local_maximum = true;
                 }
             }
         }
-        local_maxima.push((local_maximum_point.1, local_maximum_point.2));
+        if found_local_maximum && elevation_map[local_maximum_point.0][local_maximum_point.1] > lower_threshold {
+            local_maxima.push((local_maximum_point.0, local_maximum_point.1));
+        }
     }
     local_maxima
 }
 
-fn slice_vec_2d(input: &Vec<Vec<f64>>, n_slice: usize) -> Vec<Slice> {
-    // Calculate the number of rows and columns in each slice
-    let qnt_per_slice = input.len() / n_slice;
-    let mut slice: Vec<Slice> = Vec::new();
-
-    for y in 0..n_slice {
-        let start_row = y * qnt_per_slice;
-        let end_row = if (start_row + qnt_per_slice) < input.len() {
-            start_row + qnt_per_slice - 1
-        } else {
-            input.len()
-        };
-
-        for x in 0..n_slice {
-            let start_col = x * qnt_per_slice;
-            let end_col = if (start_col + qnt_per_slice) < input.len() {
-                start_col + qnt_per_slice - 1
-            } else {
-                input.len()
-            };
-
-            slice.push(Slice{
-                start: Coordinate{row: start_row, col: start_col},
-                end: Coordinate{row: end_row, col: end_col},
-            });
-        }
-
-    }
-
-    slice
-}
-
 // get the maximum value from a slice
-fn get_maximum(slice: &Vec<Vec<f64>>)->(usize,usize){
+fn get_maximum(slice: &Vec<Vec<f64>>) -> (usize, usize) {
     slice.iter().enumerate().flat_map(|(row_index, inner)| {
         inner.iter().enumerate().map(move |(col_index, &value)| (row_index, col_index, value))
     })
