@@ -48,7 +48,7 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &Vec<Vec<f64>>
     line_segments
 }
 
-fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usize)> {
+fn connect_points_diagonal(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usize)> {
     let mut line_segments: Vec<(usize, usize)> = Vec::new();
 
     let dx = end.0 as isize - start.0 as isize;
@@ -70,6 +70,30 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
 
     line_segments
 }
+
+fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usize)> {
+    let mut line_segments: Vec<(usize, usize)> = Vec::new();
+
+    let dx = end.0 as isize - start.0 as isize;
+    let dy = end.1 as isize - start.1 as isize;
+
+    let steps = if dx.abs() > dy.abs() { dx.abs() } else { dy.abs() } as f64;
+
+    let x_increment = dx as f64 / steps;
+    let y_increment = dy as f64 / steps;
+
+    let mut x = start.0 as f64;
+    let mut y = start.1 as f64;
+
+    for _ in 0..=steps as usize {
+        line_segments.push((x.round() as usize, y.round() as usize));
+        x += x_increment;
+        y += y_increment;
+    }
+
+    line_segments
+}
+
 
 fn combine_local_maxima(elevation_map: &Vec<Vec<f64>>, all_local_maxima: &mut Vec<(usize, usize)>, n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
     let mut hs: HashSet<(usize, usize)> = HashSet::new();
