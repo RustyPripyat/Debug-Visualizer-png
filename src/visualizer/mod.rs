@@ -58,7 +58,7 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize), ti
                 TileType::ShallowWater => COLOR_SHALLOW_WATER,
                 TileType::Sand => COLOR_SAND,
                 TileType::Grass => COLOR_GRASS,
-                TileType::Street => COLOR_STREET,
+                TileType::Street => COLOR_BLACK,
                 TileType::Hill => COLOR_HILL,
                 TileType::Mountain => COLOR_MOUNTAIN,
                 TileType::Snow => COLOR_SNOW,

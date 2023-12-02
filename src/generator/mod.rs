@@ -13,6 +13,7 @@ use noise::NoiseFn;
 use crate::content::water::add_default_water_content;
 use rayon::iter::*;
 use crate::tiletype::lava::{spawn_lava};
+use crate::tiletype::street::street_spawn;
 
 
 pub(crate) struct NoiseSettings {
@@ -77,6 +78,12 @@ impl WorldGenerator {
                     elevation,
                 };
             }
+        }
+        //color local maxima black
+        let local_maxima = street_spawn(self.size/250, noise_map, 10, 0.0);
+        for (y, x) in local_maxima {
+            println!("Street in: {};{}", x, y);
+            world[y][x].tile_type = TileType::Street;
         }
         world
     }
