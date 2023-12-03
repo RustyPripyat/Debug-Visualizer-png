@@ -1,6 +1,5 @@
-
-use robotics_lib::event::events::Event;
 use robotics_lib::energy::Energy;
+use robotics_lib::event::events::Event;
 use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::runner::backpack::BackPack;
 use robotics_lib::world::coordinates::Coordinate;
@@ -24,27 +23,27 @@ fn main() {
             // Do nothing
         }
 
+        fn handle_event(&mut self, _: Event) { todo!() }
         fn get_energy(&self) -> &Energy {
             &self.0.energy
         }
+
         fn get_energy_mut(&mut self) -> &mut Energy {
             &mut self.0.energy
         }
-
         fn get_coordinate(&self) -> &Coordinate {
             &self.0.coordinate
         }
+
         fn get_coordinate_mut(&mut self) -> &mut Coordinate {
             &mut self.0.coordinate
         }
-
         fn get_backpack(&self) -> &BackPack {
             &self.0.backpack
         }
         fn get_backpack_mut(&mut self) -> &mut BackPack {
             &mut self.0.backpack
         }
-        fn handle_event(&mut self, _: Event) { todo!() }
     }
 
     let _r = MyRobot(Robot::new());
@@ -65,10 +64,10 @@ fn main() {
         threshold_hill: 65.0,
         threshold_mountain: 77.5,
     }, LavaSettings {
-        number_of_spawn_points: size/25,
-        lava_flow_range: 1..size/25,
+        number_of_spawn_points: size / 25,
+        lava_flow_range: 1..size / 25,
     },
     );
     let tiles = generator.gen().0;
-    save_world_image(&tiles, (0, 0), format!("o{}-f{}-l{}-p{}-a{}.png", generator.noise_settings.octaves, generator.noise_settings.frequency, generator.noise_settings.lacunarity, generator.noise_settings.persistence, generator.noise_settings.attenuation).as_str());
+    save_world_image(&tiles, (0, 0), "img.png", 4);
 }

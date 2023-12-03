@@ -11,7 +11,7 @@ pub(crate) const GRASS: Rgb<u8> = Rgb([74, 111, 40]);
 /// Street color (dark grey)
 pub(crate) const STREET: Rgb<u8> = Rgb([90, 90, 90]);
 /// Hill color (minecraft dirt brown)
-pub(crate) const HILL: Rgb<u8> = Rgb([146, 108, 77]);
+pub(crate) const HILL: Rgb<u8> = Rgb([146, 104, 41]);
 /// Mountain color (minecraft stone grey)
 pub(crate) const MOUNTAIN: Rgb<u8> = Rgb([160, 160, 160]);
 /// Snow color (off white)
