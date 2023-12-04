@@ -1,4 +1,4 @@
-use chrono::Utc;
+// use chrono::Utc;
 use robotics_lib::event::events::Event;
 use robotics_lib::energy::Energy;
 use robotics_lib::runner::{Robot, Runnable};
@@ -49,26 +49,8 @@ fn main() {
 
     let _r = MyRobot(Robot::new());
     let size = 1000;
-    let mut generator = WorldGenerator::new(size, NoiseSettings {
-        seed: 0,
-        octaves: 12,
-        frequency: 2.5,
-        lacunarity: 2.0,
-        persistence: 1.25,
-        attenuation: 2.5,
-        scale: 0.25,
-    }, Thresholds {
-        threshold_deep_water: 4.0,
-        threshold_shallow_water: 10.0,
-        threshold_sand: 15.0,
-        threshold_grass: 45.0,
-        threshold_hill: 65.0,
-        threshold_mountain: 77.5,
-    }, LavaSettings {
-        number_of_spawn_points: size/25,
-        lava_flow_range: 1..size/25,
-    },
-    );
+    let mut generator = WorldGenerator::new(size, NoiseSettings::default(), Thresholds::default(), LavaSettings::default(size));
+
     let tiles = generator.gen().0;
     save_world_image(&tiles, (0, 0), format!("o{}-f{}-l{}-p{}-a{}.png", generator.noise_settings.octaves, generator.noise_settings.frequency, generator.noise_settings.lacunarity, generator.noise_settings.persistence, generator.noise_settings.attenuation).as_str());
 }

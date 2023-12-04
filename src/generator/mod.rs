@@ -13,8 +13,21 @@ use noise::NoiseFn;
 use crate::content::water::add_default_water_content;
 use rayon::iter::*;
 use crate::tiletype::lava::{spawn_lava};
-use crate::tiletype::street::street_spawn;
+use crate::tiletype::street::{get_centeroid_diagram, get_voronoi_diagram, street_spawn};
 
+impl Default for NoiseSettings {
+    fn default() -> Self {
+        NoiseSettings {
+            seed: 0,
+            octaves: 12,
+            frequency: 2.5,
+            lacunarity: 2.0,
+            persistence: 1.25,
+            attenuation: 2.5,
+            scale: 0.25,
+        }
+    }
+}
 
 pub(crate) struct NoiseSettings {
     pub(crate) seed: u32,
@@ -25,10 +38,34 @@ pub(crate) struct NoiseSettings {
     pub(crate) attenuation: f64,
     pub(crate) scale: f64,
 }
+
+impl LavaSettings {
+    // Custom constructor that takes a size parameter
+    pub(crate) fn default(size: usize) -> Self {
+        LavaSettings {
+            number_of_spawn_points: size / 25,
+            lava_flow_range: 1..size / 25,
+        }
+    }
+}
+
 #[derive(Clone)]
 pub(crate) struct LavaSettings {
     pub(crate) number_of_spawn_points: usize,
     pub(crate) lava_flow_range: Range<usize>,
+}
+
+impl Default for Thresholds {
+    fn default() -> Self {
+        Thresholds {
+            threshold_deep_water: 4.0,
+            threshold_shallow_water: 10.0,
+            threshold_sand: 15.0,
+            threshold_grass: 45.0,
+            threshold_hill: 65.0,
+            threshold_mountain: 77.5,
+        }
+    }
 }
 
 pub(crate) struct Thresholds {
@@ -80,7 +117,7 @@ impl WorldGenerator {
             }
         }
         //color local maxima black
-        let local_maxima = street_spawn(self.size/250, noise_map, 10, 0.0);
+        let local_maxima = street_spawn(get_centeroid_diagram ,self.size/250, noise_map, 10, 0.0);
         for (y, x) in local_maxima {
             println!("Street in: {};{}", x, y);
             world[y][x].tile_type = TileType::Street;

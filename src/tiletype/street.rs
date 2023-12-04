@@ -5,33 +5,22 @@ use voronator::delaunator::Point;
 
 use crate::utils::{Coordinate, Slice, slice_vec_2d};
 
-pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_threshold: f64) -> Vec<(usize, usize)> {
+pub(crate) fn street_spawn(get_diagram: fn(elevation_map: &[Vec<f64>],centers: &[(usize,usize)])->Vec<(usize,usize)>, street_quantity: usize, elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_threshold: f64) -> Vec<(usize, usize)> {
     // get local maxima
-    let mut local_maxima = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
+    let mut local_maxima: Vec<(usize,usize)> = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
 
     // combine near local maxima
-    let mut combined_local_maxima = combine_local_maxima(&elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
+    let combined_local_maxima: Vec<(usize,usize)> = combine_local_maxima(elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
 
-    // convert to (f64,f64) for voronoi
-    let mut points: Vec<(f64,f64)> = Vec::new();
-    for (y, x) in &combined_local_maxima {
-        points.push((*x as f64, *y as f64));
-    }
+    get_diagram(elevation_map, &combined_local_maxima)
+}
 
-    //let diagram = VoronoiDiagram::<Point>::from_tuple(&(0., 0.), &((elevation_map.len()-1) as f64, (elevation_map.len()-1) as f64), &points).unwrap();
+pub(crate) fn get_centeroid_diagram(_:&[Vec<f64>], centers: &[(usize, usize)]) ->Vec<(usize, usize)>{
+    // convert centers (f64,f64)
+    let points: Vec<(f64, f64)> = centers.iter().map(|(y, x)| (*x as f64, *y as f64)).collect();
+
     let diagram = CentroidDiagram::<Point>::from_tuple(&points).unwrap();
-    // make line segments voronoi
     let mut line_segments: Vec<(usize, usize)> = Vec::new();
-    // for cell in diagram.cells() {
-    //     let p: Vec<(usize, usize)> = cell.points().iter()
-    //         .map(|x| (x.x as usize, x.y as usize))
-    //         .collect();
-    //
-    //     // connect the points
-    //     for i in 0..p.len()-1 {
-    //         line_segments.append(&mut connect_points(p[i], p[i+1]));
-    //     }
-    // }
 
     for cell in diagram.cells{
         let p: Vec<(usize, usize)> = cell.points().iter()
@@ -44,28 +33,25 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &Vec<Vec<f64>>
         }
     }
 
-    // magically spawn streets
     line_segments
 }
 
-fn connect_points_diagonal(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usize)> {
+pub(crate) fn get_voronoi_diagram(elevation_map: &[Vec<f64>],centers: &[(usize,usize)])->Vec<(usize,usize)>{
+    // convert centers to (f64,f64)
+    let points: Vec<(f64, f64)> = centers.iter().map(|(y, x)| (*x as f64, *y as f64)).collect();
+
+    let diagram = VoronoiDiagram::<Point>::from_tuple(&(0., 0.), &((elevation_map.len()-1) as f64, (elevation_map.len()-1) as f64), &points).unwrap();
     let mut line_segments: Vec<(usize, usize)> = Vec::new();
 
-    let dx = end.0 as isize - start.0 as isize;
-    let dy = end.1 as isize - start.1 as isize;
+    for cell in diagram.cells() {
+        let p: Vec<(usize, usize)> = cell.points().iter()
+            .map(|x| (x.x as usize, x.y as usize))
+            .collect();
 
-    let steps = if dx.abs() > dy.abs() { dx.abs() } else { dy.abs() } as f64;
-
-    let x_increment = dx as f64 / steps;
-    let y_increment = dy as f64 / steps;
-
-    let mut x = start.0 as f64;
-    let mut y = start.1 as f64;
-
-    for _ in 0..=steps as usize {
-        line_segments.push((x as usize, y as usize));
-        x += x_increment;
-        y += y_increment;
+        // connect the points
+        for i in 0..p.len()-1 {
+            line_segments.append(&mut connect_points(p[i], p[i+1]));
+        }
     }
 
     line_segments
@@ -95,7 +81,7 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
 }
 
 
-fn combine_local_maxima(elevation_map: &Vec<Vec<f64>>, all_local_maxima: &mut Vec<(usize, usize)>, n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
+fn combine_local_maxima(elevation_map: &Vec<Vec<f64>>, all_local_maxima: &mut [(usize, usize)], n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
     let mut hs: HashSet<(usize, usize)> = HashSet::new();
     let qnt_per_slice = elevation_map.len() / n_slice_per_side;
 
@@ -221,7 +207,7 @@ fn get_local_maxima(elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_th
 }
 
 // get the maximum value from a slice
-fn get_maximum(slice: &Vec<Vec<f64>>) -> (usize, usize) {
+fn get_maximum(slice: &[Vec<f64>]) -> (usize, usize) {
     slice.iter().enumerate().flat_map(|(row_index, inner)| {
         inner.iter().enumerate().map(move |(col_index, &value)| (row_index, col_index, value))
     })
