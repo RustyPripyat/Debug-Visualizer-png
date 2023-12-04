@@ -13,7 +13,7 @@ use noise::NoiseFn;
 use crate::content::water::add_default_water_content;
 use rayon::iter::*;
 use crate::tiletype::lava::{spawn_lava};
-use crate::tiletype::street::{get_centeroid_diagram, get_voronoi_diagram, street_spawn};
+use crate::tiletype::street::{street_spawn};
 use crate::visualizer::save_world_image;
 
 impl Default for NoiseSettings {
@@ -118,7 +118,7 @@ impl WorldGenerator {
             }
         }
         //color local maxima black
-        let polygons = street_spawn(get_voronoi_diagram ,self.size/250, noise_map, 10, 0.0);
+        let polygons = street_spawn(self.size/250, noise_map, 10, 0.0);
 
         for (index, polygon) in polygons.iter().enumerate() {
             for (y, x) in polygon {
