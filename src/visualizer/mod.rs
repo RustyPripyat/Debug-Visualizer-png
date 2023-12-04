@@ -2,6 +2,31 @@ use image::{ImageFormat, RgbImage};
 use robotics_lib::world::tile::*;
 
 mod colors;
+
+/// Associates each tile content with its color
+macro_rules! get_content_color {
+    ($c:expr) => {
+        match $c {
+           Content::Rock(_) => {}
+           Content::Tree(_) => {}
+           Content::Garbage(_) => {}
+           Content::Fire => {}
+           Content::Coin(_) => {}
+           Content::Bin(_) => {}
+           Content::Crate(_) => {}
+           Content::Bank(_) => {}
+           Content::Water(_) => {}
+           Content::Market(_) => {}
+           Content::Fish(_) => {}
+           Content::Building => {}
+           Content::Bush(_) => {}
+           Content::JollyBlock(_) => {}
+           Content::Scarecrow => {}
+           Content::None => {}
+        }
+    }
+}
+
 /// Associates each tile with its color
 macro_rules! get_tile_color {
     ($t:expr) => {
