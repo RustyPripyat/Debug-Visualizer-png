@@ -1,84 +1,230 @@
 use std::cmp::Ordering;
 use std::collections::HashSet;
+use std::hash::Hash;
+
 use voronator::{CentroidDiagram, VoronoiDiagram};
 use voronator::delaunator::Point;
 
 use crate::utils::{Coordinate, Slice, slice_vec_2d};
 
-pub(crate) fn street_spawn(get_diagram: fn(elevation_map: &[Vec<f64>],centers: &[(usize,usize)])->Vec<(usize,usize)>, street_quantity: usize, elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_threshold: f64) -> Vec<(usize, usize)> {
+#[derive(Debug, Hash)]
+struct Edge {
+    start: (usize, usize),
+    end: (usize, usize),
+}
+
+impl PartialEq for Edge {
+    fn eq(&self, other: &Self) -> bool {
+        (self.start == other.start && self.end == other.end) ||
+            (self.start == other.end && self.end == other.start)
+    }
+}
+
+impl Eq for Edge {}
+
+pub(crate) fn street_spawn(get_diagram: fn(elevation_map: &[Vec<f64>], centers: &[(usize, usize)]) -> Vec<Vec<(usize, usize)>>, street_quantity: usize, elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_threshold: f64) -> Vec<Vec<(usize, usize)>> {
     // get local maxima
-    let mut local_maxima: Vec<(usize,usize)> = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
+    let mut local_maxima: Vec<(usize, usize)> = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
 
     // combine near local maxima
-    let combined_local_maxima: Vec<(usize,usize)> = combine_local_maxima(elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
+    let combined_local_maxima: Vec<(usize, usize)> = combine_local_maxima(elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
 
     get_diagram(elevation_map, &combined_local_maxima)
 }
 
-pub(crate) fn get_centeroid_diagram(_:&[Vec<f64>], centers: &[(usize, usize)]) ->Vec<(usize, usize)>{
+pub(crate) fn get_centeroid_diagram(_: &[Vec<f64>], centers: &[(usize, usize)]) -> Vec<(usize, usize)> {
     // convert centers (f64,f64)
     let points: Vec<(f64, f64)> = centers.iter().map(|(y, x)| (*x as f64, *y as f64)).collect();
 
     let diagram = CentroidDiagram::<Point>::from_tuple(&points).unwrap();
     let mut line_segments: Vec<(usize, usize)> = Vec::new();
 
-    for cell in diagram.cells{
+    for cell in diagram.cells {
         let p: Vec<(usize, usize)> = cell.points().iter()
             .map(|x| (x.x as usize, x.y as usize))
             .collect();
 
         // connect the points
-        for i in 0..p.len()-1 {
-            line_segments.append(&mut connect_points(p[i], p[i+1]));
+        for i in 0..p.len() - 1 {
+            line_segments.append(&mut connect_points(p[i], p[i + 1]));
         }
     }
 
     line_segments
 }
 
-pub(crate) fn get_voronoi_diagram(elevation_map: &[Vec<f64>],centers: &[(usize,usize)])->Vec<(usize,usize)>{
+pub(crate) fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[(usize, usize)]) -> Vec<Vec<(usize, usize)>> {
     // convert centers to (f64,f64)
     let points: Vec<(f64, f64)> = centers.iter().map(|(y, x)| (*x as f64, *y as f64)).collect();
 
-    let diagram = VoronoiDiagram::<Point>::from_tuple(&(0., 0.), &((elevation_map.len()-1) as f64, (elevation_map.len()-1) as f64), &points).unwrap();
-    let mut line_segments: Vec<(usize, usize)> = Vec::new();
+    // vornoi diagram
+    let diagram = VoronoiDiagram::<Point>::from_tuple(&(0., 0.), &((elevation_map.len() - 1) as f64, (elevation_map.len() - 1) as f64), &points).unwrap();
+    let fixed_diagram = fix_diagram(diagram, elevation_map.len() - 1);
 
-    for cell in diagram.cells() {
-        let p: Vec<(usize, usize)> = cell.points().iter()
+    let mut unique_edges: HashSet<Edge> = HashSet::new();
+    for cell in fixed_diagram.cells().iter() {
+        let extremes: Vec<(usize, usize)> = cell.points().iter()
             .map(|x| (x.x as usize, x.y as usize))
             .collect();
 
         // connect the points
-        for i in 0..p.len()-1 {
-            line_segments.append(&mut connect_points(p[i], p[i+1]));
+        for i in 0..extremes.len() - 1 {
+            unique_edges.insert(Edge { start: extremes[i], end: extremes[i + 1] });
         }
+        unique_edges.insert(Edge { start: extremes[0], end: extremes[extremes.len() - 1] });
     }
 
-    line_segments
+
+
+
+    for (index, cell) in diagram.cells().iter().enumerate() {
+        let extremes: Vec<(usize, usize)> = cell.points().iter()
+            .map(|x| (x.x as usize, x.y as usize))
+            .collect();
+
+
+        // println!("\nPOLYGON[{}]", index);
+        // for (i,e) in extremes.iter().enumerate(){
+        //     println!("vertex[{}]: [{};{}]", i, e.0, e.1)
+        // }
+        // print!("perimeter: ");
+        // for (i,e) in extremes.iter().enumerate() {
+        //     print!("[{};{}]", e.0, e.1);
+        //     if i < extremes.len() - 1 {
+        //         print!(" - ");
+        //     }
+        // }
+        // println!();
+
+
+        // if extremes[0].0 == 0 ||
+        //     extremes[0].0 == elevation_map.len() - 1 ||
+        //     extremes[0].1 == 0 ||
+        //     extremes[0].1 == elevation_map.len() - 1 ||
+        //     extremes[extremes.len() - 1].0 == 0 ||
+        //     extremes[extremes.len() - 1].0 == elevation_map.len() - 1 ||
+        //     extremes[extremes.len() - 1].1 == 0 ||
+        //     extremes[extremes.len() - 1].1 == elevation_map.len() - 1{
+        //     println!("cell[{}]: is on the border", index);
+        // }else{println!("cell[{}]: is not on the border", index);}
+
+        let mut perimeter: Vec<(usize, usize)> = Vec::new();
+        // println!("ALL CELL EXTREMES");
+
+        // connect the points
+        for i in 0..extremes.len() - 1 {
+            // Do not connect if the extremes are on the border
+            if !are_extremes_on_border(extremes[i], extremes[i + 1], elevation_map.len() - 1) {
+                // println!("e1-e2: [{};{}] - [{};{}]", extremes[i].0, extremes[i].1, extremes[i + 1].0, extremes[i + 1].1);
+                perimeter.append(&mut connect_points(extremes[i], extremes[i + 1]));
+            }
+        }
+        // println!("e1-e2: [{};{}] - [{};{}]", extremes[0].0, extremes[0].1, extremes[extremes.len() - 1].0, extremes[extremes.len() - 1].1);
+        perimeter.append(&mut connect_points(extremes[0], extremes[extremes.len() - 1]));
+
+        // println!("vs");
+        // println!("ALL DIAGRAM CELL EXTREMES");
+
+        // for i in 0..extremes.len() - 1 {
+        //     println!("e1-e2: [{};{}] - [{};{}]", cell.points()[i].x as usize, cell.points()[i].y as usize, cell.points()[i + 1].x as usize, cell.points()[i + 1].y as usize);
+        // }
+
+    }
+
+    polygons
 }
 
+fn fix_diagram(diagram: VoronoiDiagram<Point>, size: usize) -> VoronoiDiagram<Point> {
+    for cell in diagram.cells().iter_mut() {
+        for point in cell.points().iter_mut() {
+            point.x = if point.x >= ((size as f64) - 1.5) { size as f64 } else { point.x };
+            point.y = if point.y >= ((size as f64) - 1.5) { size as f64 } else { point.y };
+        }
+    }
+    diagram
+}
+
+fn are_extremes_on_border(e1: (usize, usize), e2: (usize, usize), size: usize) -> bool {
+    (e1.0 == 0 && e2.0 == 0) ||
+        (e1.0 == size && e2.0 == size) ||
+        (e1.1 == 0 && e2.1 == 0) ||
+        (e1.1 == size && e2.1 == size)
+}
+
+// Function to connect two points with a line segment using Bresenham's algorithm
 fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usize)> {
+    // Vector to store the points along the line segment
     let mut line_segments: Vec<(usize, usize)> = Vec::new();
 
+    // Calculate the differences in x and y coordinates
     let dx = end.0 as isize - start.0 as isize;
     let dy = end.1 as isize - start.1 as isize;
 
+    // Determine the number of steps needed for the line using the larger of dx and dy
     let steps = if dx.abs() > dy.abs() { dx.abs() } else { dy.abs() } as f64;
 
+    // Calculate the increments for x and y based on the number of steps
     let x_increment = dx as f64 / steps;
     let y_increment = dy as f64 / steps;
 
+    // Initialize starting coordinates
     let mut x = start.0 as f64;
     let mut y = start.1 as f64;
 
-    for _ in 0..=steps as usize {
-        line_segments.push((x.round() as usize, y.round() as usize));
+    // Generate points along the line segment and round them to the nearest integer
+    for index in 0..=steps as usize {
+        let rounded_x = x.round() as usize;
+        let rounded_y = y.round() as usize;
+
+        // avoid diagonal steps
+        // if index > 0 &&
+        //     index < steps as usize &&
+        //     rounded_x != line_segments[line_segments.len() - 1].0 &&
+        //     rounded_y != line_segments[line_segments.len() - 1].1 {
+        //     line_segments.push((rounded_x, line_segments[line_segments.len() - 1].1));
+        //     line_segments.push((line_segments[line_segments.len() - 1].0, rounded_y));
+        // }
+
+        line_segments.push((rounded_x, rounded_y));
+
         x += x_increment;
         y += y_increment;
     }
 
+
+    //get only the first ten points
+    //line_segments.truncate(line_segments.len()/2);
+
+    // Return the vector of points representing the line segment
+    // let mut line_segments: Vec<(usize, usize)> = Vec::new();
+    // line_segments.push((start.0, start.1));
+    // line_segments.push((end.0, end.1));
     line_segments
 }
+
+// fn add_street_between_diagonal_step(line_segments: Vec<(usize, usize)>) -> Vec<(usize, usize)> {
+//     // Vector to store the modified line segments
+//     let mut modified_line_segments: Vec<(usize, usize)> = Vec::new();
+//
+//     // Iterate through each point in the original line_segments
+//     for index in 0..line_segments.len() {
+//         // Add the current point to the modified line_segments
+//         modified_line_segments.push(line_segments[index]);
+//
+//         // Check if the current point is a diagonal step
+//         if index > 0 && index < line_segments.len() - 1 {
+//             let previous_point = line_segments[index - 1];
+//             let next_point = line_segments[index + 1];
+//             if previous_point.0 != next_point.0 && previous_point.1 != next_point.1 {
+//                 // Add the new point between the previous and next point to the modified line_segments
+//                 modified_line_segments.push((next_point.0, previous_point.1));
+//             }
+//         }
+//     }
+//
+//     // Return the vector of modified line segments
+//     modified_line_segments
+// }
 
 
 fn combine_local_maxima(elevation_map: &Vec<Vec<f64>>, all_local_maxima: &mut [(usize, usize)], n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
