@@ -74,12 +74,13 @@ fn main() {
             lava_flow_range: 1..size / 25,
         },
         GarbageSettings {
-            spawn_points_quantity: 50,
-            decreasing_probability: 0.4,
+            spawn_points_quantity: 100,
             distance_from_borders: 4,
             max_amount_on_destroy: 6,
+            spawn_in_near_tiles_probability: 0.8,
+            decrease_probability_by: 0.01,
         },
     );
     let tiles = generator.gen().0;
-    save_world_image(&tiles, (0, 0), "img.png", 4);
+    save_world_image(&tiles, (0, 0), "img.png", 1);
 }

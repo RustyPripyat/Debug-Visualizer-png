@@ -34,9 +34,10 @@ pub(crate) struct LavaSettings {
 #[derive(Clone)]
 pub(crate) struct GarbageSettings {
     pub(crate) spawn_points_quantity: usize,
-    pub(crate) decreasing_probability: f64,
     pub(crate) distance_from_borders: usize,
     pub(crate) max_amount_on_destroy: usize,
+    pub(crate) spawn_in_near_tiles_probability: f64,
+    pub(crate) decrease_probability_by: f64,
 }
 
 pub(crate) struct Thresholds {
@@ -147,6 +148,7 @@ impl Generator for WorldGenerator {
         let mut world = self.generate_terrain(&noise_map, min_value, max_value);
         spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
         spawn_garbage(&mut world, &self.garbage_settings);
+
         (
             world,
             (0, 0),

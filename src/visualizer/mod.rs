@@ -1,6 +1,5 @@
 use image::{ImageFormat, Rgb, RgbImage};
 use rand::Rng;
-use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator};
 use robotics_lib::world::tile::*;
 
 mod colors;
