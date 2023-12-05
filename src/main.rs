@@ -66,6 +66,10 @@ fn main() {
     }, LavaSettings {
         number_of_spawn_points: size / 25,
         lava_flow_range: 1..size / 25,
+    }, GarbageSettings {
+        spawn_points_quantity: 10,
+        decreasing_probability: 0.4,
+        distance_from_borders: 4,
     },
     );
     let tiles = generator.gen().0;

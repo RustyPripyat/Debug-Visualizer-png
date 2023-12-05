@@ -11,6 +11,7 @@ use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::worldgenerator::Generator;
 
 use crate::tiletype::lava::spawn_lava;
+use crate::content::garbage::spawn_garbage;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
 pub(crate) struct NoiseSettings {
@@ -29,6 +30,13 @@ pub(crate) struct LavaSettings {
     pub(crate) lava_flow_range: Range<usize>,
 }
 
+#[derive(Clone)]
+pub(crate) struct GarbageSettings {
+    pub(crate) spawn_points_quantity: usize,
+    pub(crate) decreasing_probability: f64,
+    pub(crate) distance_from_borders: usize,
+}
+
 pub(crate) struct Thresholds {
     pub(crate) threshold_deep_water: f64,
     pub(crate) threshold_shallow_water: f64,
@@ -43,6 +51,7 @@ pub(crate) struct WorldGenerator {
     pub(crate) noise_settings: NoiseSettings,
     pub(crate) thresholds: Thresholds,
     pub(crate) lava_settings: LavaSettings,
+    pub(crate) garbage_settings: GarbageSettings,
 }
 
 impl WorldGenerator {
@@ -87,9 +96,9 @@ impl WorldGenerator {
         }).collect()
     }
 
-    pub fn new(size: usize, noise_settings: NoiseSettings, thresholds: Thresholds, lava_settings: LavaSettings) -> Self
+    pub fn new(size: usize, noise_settings: NoiseSettings, thresholds: Thresholds, lava_settings: LavaSettings, garbage_settings: GarbageSettings) -> Self
     {
-        Self { size, noise_settings, thresholds, lava_settings }
+        Self { size, noise_settings, thresholds, lava_settings, garbage_settings }
     }
 }
 
@@ -101,6 +110,7 @@ impl Generator for WorldGenerator {
         let max_value = find_max_value(&noise_map).unwrap_or(f64::MAX);
         let mut world = self.generate_terrain(&noise_map, min_value, max_value);
         spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
+        spawn_garbage(&mut world, &noise_map, &self.garbage_settings);
         (world, (0, 0), EnvironmentalConditions::new(&[WeatherType::Rainy], 1, 0).unwrap(), 0.0)
     }
 }

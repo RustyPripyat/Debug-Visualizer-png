@@ -2,7 +2,7 @@ mod tree;
 mod fish;
 mod fire;
 mod rock;
-mod garbage;
+pub(crate) mod garbage;
 mod coin;
 mod bank;
 mod bin;
