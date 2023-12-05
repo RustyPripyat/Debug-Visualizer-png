@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::ops::Range;
 
 use noise::MultiFractal;
@@ -131,7 +132,15 @@ impl WorldGenerator {
 }
 
 impl Generator for WorldGenerator {
-    fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32) {
+    fn gen(
+        &mut self,
+    ) -> (
+        Vec<Vec<Tile>>,
+        (usize, usize),
+        EnvironmentalConditions,
+        f32,
+        Option<HashMap<Content, f32>>,
+    ) {
         let noise_map = self.generate_elevation_map();
         let min_value = find_min_value(&noise_map).unwrap_or(f64::MIN);
         let max_value = find_max_value(&noise_map).unwrap_or(f64::MAX);
@@ -143,6 +152,7 @@ impl Generator for WorldGenerator {
             (0, 0),
             EnvironmentalConditions::new(&[WeatherType::Rainy, WeatherType::Sunny, WeatherType::Foggy], 1, 9).unwrap(),
             0.0,
+            None,
         )
     }
 }
