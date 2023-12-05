@@ -1,5 +1,6 @@
 use image::{ImageFormat, Rgb, RgbImage};
 use rand::Rng;
+use rayon::prelude::{IntoParallelIterator, IntoParallelRefIterator};
 use robotics_lib::world::tile::*;
 
 mod colors;
@@ -22,17 +23,17 @@ fn fill_random_pixel_with_color(p: &mut Vec<Rgb<u8>>, n: usize, c: Rgb<u8>) {
 #[inline(always)]
 fn set_tile_color(t: &TileType, v: &mut [Rgb<u8>]) {
     match *t {
-        TileType::DeepWater => v.fill(colors::tile::DEEP_WATER),
-        TileType::ShallowWater => v.fill(colors::tile::SHALLOW_WATER),
-        TileType::Sand => v.fill(colors::tile::SAND),
-        TileType::Grass => v.fill(colors::tile::GRASS),
-        TileType::Street => v.fill(colors::tile::STREET),
-        TileType::Hill => v.fill(colors::tile::HILL),
-        TileType::Mountain => v.fill(colors::tile::MOUNTAIN),
-        TileType::Snow => v.fill(colors::tile::SNOW),
-        TileType::Lava => v.fill(colors::tile::LAVA),
-        TileType::Wall => v.fill(colors::tile::BRICK),
-        _ => v.fill(colors::BLACK),
+        | TileType::DeepWater => v.fill(colors::tile::DEEP_WATER),
+        | TileType::ShallowWater => v.fill(colors::tile::SHALLOW_WATER),
+        | TileType::Sand => v.fill(colors::tile::SAND),
+        | TileType::Grass => v.fill(colors::tile::GRASS),
+        | TileType::Street => v.fill(colors::tile::STREET),
+        | TileType::Hill => v.fill(colors::tile::HILL),
+        | TileType::Mountain => v.fill(colors::tile::MOUNTAIN),
+        | TileType::Snow => v.fill(colors::tile::SNOW),
+        | TileType::Lava => v.fill(colors::tile::LAVA),
+        | TileType::Wall => v.fill(colors::tile::BRICK),
+        | _ => v.fill(colors::BLACK),
     }
 }
 
@@ -40,22 +41,22 @@ fn set_tile_color(t: &TileType, v: &mut [Rgb<u8>]) {
 #[inline(always)]
 fn set_content_color(c: &Content, p: &mut Vec<Rgb<u8>>) {
     match *c {
-        Content::Rock(n) => fill_random_pixel_with_color(p, n, colors::content::ROCK),
-        Content::Tree(n) => fill_random_pixel_with_color(p, n, colors::content::TREE),
-        Content::Garbage(n) => fill_random_pixel_with_color(p, n, colors::content::ROCK),
-        Content::Fire => fill_random_pixel_with_color(p, p.len(), colors::content::FIRE),
-        Content::Coin(n) => fill_random_pixel_with_color(p, n, colors::content::COIN),
-        Content::Bin(_) => fill_random_pixel_with_color(p, p.len(), colors::content::BIN),
-        Content::Crate(_) => fill_random_pixel_with_color(p, p.len(), colors::content::CRATE),
-        Content::Bank(_) => fill_random_pixel_with_color(p, p.len(), colors::content::BANK),
-        Content::Water(n) => fill_random_pixel_with_color(p, n, colors::tile::SHALLOW_WATER),
-        Content::Market(_) => fill_random_pixel_with_color(p, p.len(), colors::content::MARKET),
-        Content::Fish(n) => fill_random_pixel_with_color(p, n, colors::content::FISH),
-        Content::Building => fill_random_pixel_with_color(p, p.len(), colors::content::BUILDING),
-        Content::Bush(n) => fill_random_pixel_with_color(p, n, colors::content::BUSH),
-        Content::JollyBlock(n) => fill_random_pixel_with_color(p, n, colors::content::JOLLYBLOCK),
-        Content::Scarecrow => fill_random_pixel_with_color(p, 1, colors::content::SCARECROW),
-        _ => fill_random_pixel_with_color(p, 1, colors::BLACK),
+        | Content::Rock(n) => fill_random_pixel_with_color(p, n, colors::content::ROCK),
+        | Content::Tree(n) => fill_random_pixel_with_color(p, n, colors::content::TREE),
+        | Content::Garbage(n) => fill_random_pixel_with_color(p, n, colors::BLACK),
+        | Content::Fire => fill_random_pixel_with_color(p, p.len(), colors::content::FIRE),
+        | Content::Coin(n) => fill_random_pixel_with_color(p, n, colors::content::COIN),
+        | Content::Bin(_) => fill_random_pixel_with_color(p, p.len(), colors::content::BIN),
+        | Content::Crate(_) => fill_random_pixel_with_color(p, p.len(), colors::content::CRATE),
+        | Content::Bank(_) => fill_random_pixel_with_color(p, p.len(), colors::content::BANK),
+        | Content::Water(n) => fill_random_pixel_with_color(p, n, colors::tile::SHALLOW_WATER),
+        | Content::Market(_) => fill_random_pixel_with_color(p, p.len(), colors::content::MARKET),
+        | Content::Fish(n) => fill_random_pixel_with_color(p, n, colors::content::FISH),
+        | Content::Building => fill_random_pixel_with_color(p, p.len(), colors::content::BUILDING),
+        | Content::Bush(n) => fill_random_pixel_with_color(p, n, colors::content::BUSH),
+        | Content::JollyBlock(n) => fill_random_pixel_with_color(p, n, colors::content::JOLLYBLOCK),
+        | Content::Scarecrow => fill_random_pixel_with_color(p, 1, colors::content::SCARECROW),
+        | _ => fill_random_pixel_with_color(p, 1, colors::BLACK),
     }
 }
 
@@ -73,7 +74,11 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize, usize), t
 
             for mx in 0..tile_size {
                 for my in 0..tile_size {
-                    img.put_pixel((x * tile_size + mx) as u32, (y * tile_size + my) as u32, pixels[mx * tile_size + my]);
+                    img.put_pixel(
+                        (x * tile_size + mx) as u32,
+                        (y * tile_size + my) as u32,
+                        pixels[mx * tile_size + my],
+                    );
                 }
             }
         }

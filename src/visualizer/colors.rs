@@ -2,8 +2,6 @@ use image::Rgb;
 
 /// Black color (black)
 pub(crate) const BLACK: Rgb<u8> = Rgb([0, 0, 0]);
-/// Gray color (straight grey)
-pub(crate) const GRAY: Rgb<u8> = Rgb([128, 128, 128]);
 
 pub(crate) mod tile {
     use image::Rgb;
@@ -33,8 +31,6 @@ pub(crate) mod tile {
 pub(crate) mod content {
     use image::Rgb;
 
-    /// Garbage color (solid yellow)
-    pub(crate) const GARBAGE: Rgb<u8> = Rgb([255, 232, 28]);
     /// Minecraft oak wood (brown)
     pub(crate) const TREE: Rgb<u8> = Rgb([99, 73, 43]);
     /// Rock color (light brown)
