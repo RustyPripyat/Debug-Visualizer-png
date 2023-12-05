@@ -59,6 +59,6 @@ pub(crate) mod content {
     pub(crate) const SCARECROW: Rgb<u8> = Rgb([218, 197, 134]);
     /// Jolly block (Minecraft chance cube light blue)
     pub(crate) const JOLLYBLOCK: Rgb<u8> = Rgb([79, 120, 143]);
-    /// Crate color (grand  canyon rock red)
-    pub(crate) const CRATE: Rgb<u8> = Rgb([186, 85, 54]);
+    /// Crate color (birch wood light brown)
+    pub(crate) const CRATE: Rgb<u8> = Rgb([228, 199, 148]);
 }
