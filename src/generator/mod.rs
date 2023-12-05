@@ -125,7 +125,7 @@ impl WorldGenerator {
                 // println!("Street in: {};{}", x, y);
                 world[*y][*x].tile_type = TileType::Street;
             }
-            save_world_image(&world, (0, 0), format!("poly_{}.png",index).as_str());
+            //save_world_image(&world, (0, 0), format!("poly_{}.png",index).as_str());
         }
         world
     }

@@ -48,7 +48,7 @@ fn main() {
     }
 
     let _r = MyRobot(Robot::new());
-    let size = 1000;
+    let size = 100;
     let mut generator = WorldGenerator::new(size, NoiseSettings::default(), Thresholds::default(), LavaSettings::default(size));
 
     let tiles = generator.gen().0;
