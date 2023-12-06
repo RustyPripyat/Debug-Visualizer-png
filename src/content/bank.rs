@@ -27,6 +27,6 @@ pub(crate) fn spawn_bank(world: &mut Vec<Vec<Tile>>, bank_settings: BankSettings
     for (y, x) in spawn_points {
         let upper_bound = thread_rng().gen_range(2..=max);
         world[y][x].content = Bank(1 ..upper_bound);
-        println!("spawned bank at {},{} with upper bound {}", x, y, upper_bound)
+        println!("spawned bank at {},{} with upper bound {}", x, y, upper_bound);
     }
 }

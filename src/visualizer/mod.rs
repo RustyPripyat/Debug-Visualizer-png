@@ -1,116 +1,95 @@
-use image::{Rgb, RgbImage};
-use image::ImageFormat;
-use imageproc::rect::Rect;
-
-use std::sync::{Arc, Mutex};
-use chrono::Utc;
-use rayon::prelude::*;
+use image::{ImageFormat, Rgb, RgbImage};
 use robotics_lib::world::tile::*;
 
-fn create_image_from_tiles(tiles: &[Vec<Tile>], bot_position: (usize, usize), tile_size: usize) -> RgbImage {
-    // let width = tiles[0].len() * tile_size;
-    // let height = tiles.len() * tile_size;
+mod colors;
 
-    // let img = Arc::new(Mutex::new(RgbImage::new(tiles.len() as u32, tiles.len() as u32)));
-    let mut img = RgbImage::new(tiles.len() as u32, tiles.len() as u32);
-    const COLOR_DEEP_WATER: Rgb<u8> = Rgb([5, 25, 90]);         // DeepWater (Blu scuro)
-    const COLOR_SHALLOW_WATER: Rgb<u8> = Rgb([45, 100, 160]);   // ShallowWater (Blu chiaro)
-    const COLOR_SAND: Rgb<u8> = Rgb([240, 230, 140]);           // Sand (Giallo sabbia)
-    const COLOR_GRASS: Rgb<u8> = Rgb([50, 205, 50]);            // Grass (Verde prato)
-    const COLOR_STREET: Rgb<u8> = Rgb([100, 100, 100]);         // Street (Grigio asfalto)
-    const COLOR_HILL: Rgb<u8> = Rgb([174, 105, 38]);            // Hill (Marrone)
-    const COLOR_MOUNTAIN: Rgb<u8> = Rgb([160, 160, 160]);       // Mountain (Grigio montagna)
-    const COLOR_SNOW: Rgb<u8> = Rgb([255, 255, 255]);           // Snow (Bianco)
-    const COLOR_LAVA: Rgb<u8> = Rgb([255, 140, 0]);             // Lava (Arancione acceso)
-    const COLOR_GRAY: Rgb<u8> = Rgb([128, 128, 128]);           // Gray (Grigio)
-    const COLOR_BLACK: Rgb<u8> = Rgb([0, 0, 0]);                // Black (Nero)
-
-    // Parallelize the loop using par_iter()
-    // tiles.par_iter().enumerate().for_each(|(y, row)| {
-    //     row.par_iter().enumerate().for_each(|(x, tile)| {
-    //         let color = match tile.tile_type {
-    //             TileType::DeepWater => COLOR_DEEP_WATER,
-    //             TileType::ShallowWater => COLOR_SHALLOW_WATER,
-    //             TileType::Sand => COLOR_SAND,
-    //             TileType::Grass => COLOR_GRASS,
-    //             TileType::Street => COLOR_STREET,
-    //             TileType::Hill => COLOR_HILL,
-    //             TileType::Mountain => COLOR_MOUNTAIN,
-    //             TileType::Snow => COLOR_SNOW,
-    //             TileType::Lava => COLOR_LAVA,
-    //             _ => COLOR_BLACK,
-    //         };
-    //
-    //         // Inside the inner loop
-    //         let rect = Rect::at(x as i32 * tile_size as i32, y as i32 * tile_size as i32)
-    //             .of_size(tile_size as u32, tile_size as u32);
-    //
-    //         // Lock the Mutex to get a mutable reference to the image
-    //         let mut img_ref = img.lock().unwrap();
-    //         imageproc::drawing::draw_filled_rect_mut(&mut *img_ref, rect, color.into());
-    //     });
-    // });
-
-    for y in 0..tiles.len(){
-        for x in 0..tiles[y].len(){
-            let color = match tiles[y][x].tile_type {
-                TileType::DeepWater => COLOR_DEEP_WATER,
-                TileType::ShallowWater => COLOR_SHALLOW_WATER,
-                TileType::Sand => COLOR_SAND,
-                TileType::Grass => COLOR_GRASS,
-                TileType::Street => COLOR_BLACK,
-                TileType::Hill => COLOR_HILL,
-                TileType::Mountain => COLOR_MOUNTAIN,
-                TileType::Snow => COLOR_SNOW,
-                TileType::Lava => COLOR_LAVA,
-                _ => COLOR_BLACK,
-            };
-
-            img.put_pixel(x as u32, y as u32, color);
-            // // Inside the inner loop
-            // let rect = Rect::at(x as i32 * tile_size as i32, y as i32 * tile_size as i32)
-            //     .of_size(tile_size as u32, tile_size as u32);
-
-            // Lock the Mutex to get a mutable reference to the image
-            // let mut img_ref = img.lock().unwrap();
-            //imageproc::drawing::draw_filled_rect_mut(&mut *img_ref, rect, color.into());
+/// Fill random pixels or all based on number of content with the appropriate color
+#[inline(always)]
+fn checkerboard_pattern(p: &mut Vec<Vec<Rgb<u8>>>, c: Rgb<u8>) {
+    let mut b = true;
+    for row in 0..p.len() {
+        b = if p.len() % 2 == 0 { !b } else { b };
+        for col in 0..p.len() {
+            if b {
+                p[row][col] = c;
+            }
+            b = !b;
         }
     }
+}
 
+/// Associates each tile with its color
+#[inline(always)]
+fn choose_tile_color(t: &TileType) -> Rgb<u8> {
+    match *t {
+        | TileType::DeepWater => colors::tile::DEEP_WATER,
+        | TileType::ShallowWater => colors::tile::SHALLOW_WATER,
+        | TileType::Sand => colors::tile::SAND,
+        | TileType::Grass => colors::tile::GRASS,
+        | TileType::Street => colors::tile::STREET,
+        | TileType::Hill => colors::tile::HILL,
+        | TileType::Mountain => colors::tile::MOUNTAIN,
+        | TileType::Snow => colors::tile::SNOW,
+        | TileType::Lava => colors::tile::LAVA,
+        | TileType::Wall => colors::tile::BRICK,
+        | _ => colors::BLACK,
+    }
+}
 
-    // // Draw the symbol of the bot on its position
-    // let (bot_x, bot_y) = bot_position;
-    // let bot_color = Rgb([213, 213, 213]);
-    //
-    // for dy in 0..tile_size {
-    //     for dx in 0..tile_size {
-    //         img.lock().unwrap().put_pixel(
-    //             (bot_x * tile_size + dx) as u32,
-    //             (bot_y * tile_size + dy) as u32,
-    //             bot_color,
-    //         );
-    //     }
-    // }
+/// Associates each tile content with its color
+#[inline(always)]
+fn set_content_color(c: &Content, p: &mut Vec<Vec<Rgb<u8>>>) {
+    match *c {
+        | Content::Rock(_) => checkerboard_pattern(p, colors::content::ROCK),
+        | Content::Tree(_) => checkerboard_pattern(p, colors::content::TREE),
+        | Content::Garbage(_) => checkerboard_pattern(p, colors::BLACK),
+        | Content::Fire => checkerboard_pattern(p, colors::content::FIRE),
+        | Content::Coin(_) => checkerboard_pattern(p, colors::content::COIN),
+        | Content::Bin(_) => checkerboard_pattern(p, colors::content::BIN),
+        | Content::Crate(_) => checkerboard_pattern(p, colors::content::CRATE),
+        | Content::Bank(_) => checkerboard_pattern(p, colors::content::BANK),
+        | Content::Water(_) => checkerboard_pattern(p, colors::tile::SHALLOW_WATER),
+        | Content::Market(_) => checkerboard_pattern(p, colors::content::MARKET),
+        | Content::Fish(_) => checkerboard_pattern(p, colors::content::FISH),
+        | Content::Building => checkerboard_pattern(p, colors::content::BUILDING),
+        | Content::Bush(_) => checkerboard_pattern(p, colors::content::BUSH),
+        | Content::JollyBlock(_) => checkerboard_pattern(p, colors::content::JOLLYBLOCK),
+        | Content::Scarecrow => checkerboard_pattern(p, colors::content::SCARECROW),
+        | _ => checkerboard_pattern(p, colors::BLACK),
+    }
+}
 
-    // // Extract the inner RgbImage from the Arc<Mutex<RgbImage>>
-    // Arc::try_unwrap(img)
-    //     .ok()
-    //     .unwrap()
-    //     .into_inner()
-    //     .unwrap()
+fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize, usize), tile_size: usize) -> RgbImage {
+    // get the image final size
+    let size: u32 = (tile_size * tiles.len()) as u32;
+    let mut img:RgbImage = RgbImage::new(size, size);
 
+    for (y, row) in tiles.iter().enumerate() {
+        for (x, tile) in row.iter().enumerate() {
+            // set the base tile color as tile type color
+            let mut pixels: Vec<Vec<Rgb<u8>>> = vec![vec![choose_tile_color(&tile.tile_type); tile_size]; tile_size];
+
+            // set the content color as checkerboard of the tile
+            if tile.content != Content::None {
+                set_content_color(&tile.content, &mut pixels);
+            }
+
+            for my in 0..tile_size {
+                for mx in 0..tile_size {
+                    img.put_pixel((x * tile_size + mx) as u32, (y * tile_size + my) as u32, pixels[my][mx]);
+                }
+            }
+        }
+    }
     img
 }
 
-pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_name: &str) {
-    println!("Start: Saving world image");
-    let mut start = Utc::now();
-    let img = create_image_from_tiles(tiles, bot_position, 1);
-    println!("Done: Saving world image: {}", (Utc::now() - start).num_milliseconds());
+pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_name: &str, tile_size: usize) {
+    let img = create_image_from_tiles(tiles, bot_position, tile_size);
 
     if let Err(e) = img.save_with_format(file_name, ImageFormat::Png) {
-        println!("Error saving the image: {}", e);
+        println!("Error saving the image, {}", e);
     } else {
-        println!("Image saved successfully as {}", file_name);
+        println!("Image saved successfully, {}", file_name);
     }
 }

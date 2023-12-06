@@ -1,8 +1,9 @@
-use std::cmp::min;
+use crate::generator::LavaSettings;
+use rand::seq::SliceRandom;
 use robotics_lib::world::tile::Tile;
 use robotics_lib::world::tile::TileType;
+use std::cmp::min;
 use std::ops::Range;
-use rand::seq::SliceRandom;
 
 impl LavaSettings {
     // Custom constructor that takes a size parameter
@@ -32,16 +33,27 @@ pub(crate) fn spawn_lava(world : &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f6
 }
 
 //for each x,y flow the lava to the lower neighbour
-pub(crate) fn flow_from(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize> ) -> usize {
+pub(crate) fn flow_from(
+    world: &mut Vec<Vec<Tile>>,
+    elevation_map: &Vec<Vec<f64>>,
+    y: usize,
+    x: usize,
+    remaining_range: Range<usize>
+) -> usize {
     //println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
     world[y][x].tile_type = TileType::Lava;
     if remaining_range.start == remaining_range.end {
-        return 0;
-    }
-    else {
+        0
+    } else {
         // if there is a neighbour with a lower height, flow to it
         let (lowest_neighbour_y, lowest_neighbour_x) = get_lowest_neighbour(elevation_map, y, x);
-        flow_from(world, elevation_map, lowest_neighbour_y, lowest_neighbour_x, remaining_range.start..remaining_range.end - 1)
+        flow_from(
+            world,
+            elevation_map,
+            lowest_neighbour_y,
+            lowest_neighbour_x,
+            remaining_range.start..remaining_range.end - 1,
+        )
         // if elevation_map[lowest_neighbour_y][lowest_neighbour_x] < elevation_map[y][x] {
         //     return flow_from(world, elevation_map, lowest_neighbour_y, lowest_neighbour_x, remaining_range.start..remaining_range.end - 1);
         // }
@@ -69,7 +81,7 @@ pub(crate) fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: u
     // sort by height
     neighbour_heights.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     // return coordinates of the lowest neighbour
-    return (neighbour_heights[0].1, neighbour_heights[0].2);
+    (neighbour_heights[0].1, neighbour_heights[0].2)
 }
 
 // return vector with the coordinates of the mountain tiles in range
@@ -83,5 +95,5 @@ pub(crate) fn get_yx_mountain_tiles(wordl: &mut Vec<Vec<Tile>>) -> Vec<(usize, u
         }
     }
     tiles_in_range.as_mut_slice().shuffle(&mut rand::thread_rng());
-    return  tiles_in_range;
+    tiles_in_range
 }

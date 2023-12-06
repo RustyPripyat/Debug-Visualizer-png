@@ -27,6 +27,6 @@ pub(crate) fn spawn_bin(world: &mut Vec<Vec<Tile>>, bin_settings: BinSettings) {
     for (y, x) in spawn_points {
         let upper_bound = thread_rng().gen_range(2..=max);
         world[y][x].content = Bin(1 ..upper_bound);
-        println!("spawned bin at {},{} with upper bound {}", x, y, upper_bound)
+        println!("spawned bin at {},{} with upper bound {}", x, y, upper_bound);
     }
 }

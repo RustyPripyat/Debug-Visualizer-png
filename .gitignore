@@ -5,3 +5,4 @@ note.md
 .cargo/
 Cargo.lock
 *.png
+Cargo.toml
