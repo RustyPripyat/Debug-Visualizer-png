@@ -17,9 +17,9 @@ impl GarbageSettings {
     pub(crate) fn default(size: usize) -> Self {
         GarbageSettings {
             spawn_points_quantity: size,
-            garbage_pile_size: 1..10,
-            garbage_per_tile_quantity: 1..5,
-            spawn_in_near_tiles_probability: 1.0,
+            garbage_pile_size: 1..size/5,
+            garbage_per_tile_quantity: 1..size/300,
+            spawn_in_near_tiles_probability: 0.8,
             probability_step_by: 0.2,
         }
     }
@@ -35,10 +35,10 @@ pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettin
 
     while i < settings.spawn_points_quantity {
         // Get size of garbage pile
-        let s = rng.gen_range(settings.garbage_pile_size.clone());
+        let pile_range = rng.gen_range(settings.garbage_pile_size.clone());
 
         // Note that the matrix size will be rounded to greater odd number
-        let probability_matrix = generate_prob_matrix(s, settings.probability_step_by);
+        let probability_matrix = generate_prob_matrix(pile_range, settings.probability_step_by);
 
         // get random x and y coordinates, the base indexes where matrix garbage will starts
         let map_range = 0..world.len();
@@ -50,7 +50,7 @@ pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettin
         for (row_index, row) in probability_matrix.iter().enumerate() {
             for col_index in 0..row.len() {
                 // get the random value for the spawn
-                let value: f64 = thread_rng().gen_range(0.0..=settings.spawn_in_near_tiles_probability);
+                let value: f64 = thread_rng().gen_range(0.1..=settings.spawn_in_near_tiles_probability);
 
                 // assign if the probability is satisfied
                 if value > (1. - probability_matrix[row_index][col_index]) {
