@@ -7,3 +7,4 @@ pub(crate) mod coin;
 pub(crate) mod bank;
 pub(crate) mod bin;
 pub(crate) mod water;
+pub(crate) mod wood_crate;

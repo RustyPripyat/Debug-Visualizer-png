@@ -1,3 +1,8 @@
+use rand::Rng;
+use robotics_lib::world::tile::{Content, Tile};
+use robotics_lib::world::World;
+use crate::content::bank::BankSettings;
+
 pub(crate) struct Coordinate {
     pub(crate) row: usize,
     pub(crate) col: usize,
@@ -101,4 +106,21 @@ pub(crate) fn map_value_to_range(value: f64, from: std::ops::Range<f64>, to: std
     let to_max = to.end;
 
     (value - from_min) * (to_max - to_min) / (from_max - from_min) + to_min
+}
+
+pub(crate) fn spawn_content_randomly(world: &mut Vec<Vec<Tile>>, mut number_of_spawn_points: usize, content: Content) -> Vec<(usize, usize)> {
+    let mut rng = rand::thread_rng();
+
+    let mut spawn_points = Vec::new();
+
+    while number_of_spawn_points > 0 {
+        let y = rng.gen_range(0..world.len());
+        let x = rng.gen_range(0..world.len());
+
+        if world[y][x].tile_type.properties().can_hold(&content) && world[y][x].content == Content::None {
+            number_of_spawn_points -= 1;
+            spawn_points.push((y, x));
+        }
+    }
+    spawn_points
 }

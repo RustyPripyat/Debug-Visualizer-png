@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::hash::Hash;
 
-use voronator::{CentroidDiagram, VoronoiDiagram};
+use voronator::{VoronoiDiagram};
 use voronator::delaunator::Point;
 
 use crate::utils::{Coordinate, Slice, slice_vec_2d};

@@ -1,4 +1,5 @@
 // use chrono::Utc;
+use crate::tiletype::lava::LavaSettings;
 use robotics_lib::event::events::Event;
 use robotics_lib::energy::Energy;
 use robotics_lib::runner::{Robot, Runnable};
@@ -6,6 +7,9 @@ use robotics_lib::runner::backpack::BackPack;
 use robotics_lib::world::coordinates::Coordinate;
 use robotics_lib::world::World;
 use robotics_lib::world::worldgenerator::Generator;
+use crate::content::bank::BankSettings;
+use crate::content::bin::BinSettings;
+use crate::content::wood_crate::CrateSettings;
 
 use crate::generator::*;
 use crate::visualizer::save_world_image;
@@ -49,7 +53,7 @@ fn main() {
 
     let _r = MyRobot(Robot::new());
     let size = 100;
-    let mut generator = WorldGenerator::new(size, NoiseSettings::default(), Thresholds::default(), LavaSettings::default(size));
+    let mut generator = WorldGenerator::new(size, NoiseSettings::default(), Thresholds::default(), LavaSettings::default(size), BankSettings::default(size), BinSettings::default(size), CrateSettings::default(size));
 
     let tiles = generator.gen().0;
     save_world_image(&tiles, (0, 0), format!("o{}-f{}-l{}-p{}-a{}.png", generator.noise_settings.octaves, generator.noise_settings.frequency, generator.noise_settings.lacunarity, generator.noise_settings.persistence, generator.noise_settings.attenuation).as_str());

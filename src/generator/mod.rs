@@ -1,20 +1,24 @@
-use std::ops::Range;
+use std::collections::HashMap;
+
 // use std::os::linux::raw::stat;
 use chrono::Utc;
 use noise::{Fbm, Perlin, RidgedMulti};
-use rayon::iter::IntoParallelIterator;
-use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
-use robotics_lib::world::environmental_conditions::WeatherType::{Rainy, Sunny};
-use robotics_lib::world::tile::{Content, Tile, TileType};
-use robotics_lib::world::worldgenerator::Generator;
-use crate::utils::{find_max_value, find_min_value, percentage};
 use noise::MultiFractal;
 use noise::NoiseFn;
-use crate::content::water::add_default_water_content;
 use rayon::iter::*;
-use crate::tiletype::lava::{spawn_lava};
-use crate::tiletype::street::{street_spawn};
-use crate::visualizer::save_world_image;
+use rayon::iter::IntoParallelIterator;
+use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
+use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny};
+use robotics_lib::world::tile::{Content, Tile, TileType};
+use robotics_lib::world::worldgenerator::Generator;
+use crate::content::bank::{BankSettings, spawn_bank};
+use crate::content::bin::{BinSettings, spawn_bin};
+
+use crate::content::water::add_default_water_content;
+use crate::content::wood_crate::{CrateSettings, spawn_crate};
+use crate::tiletype::lava::{LavaSettings, spawn_lava};
+use crate::tiletype::street::street_spawn;
+use crate::utils::{find_max_value, find_min_value, percentage};
 
 impl Default for NoiseSettings {
     fn default() -> Self {
@@ -38,22 +42,6 @@ pub(crate) struct NoiseSettings {
     pub(crate) persistence: f64,
     pub(crate) attenuation: f64,
     pub(crate) scale: f64,
-}
-
-impl LavaSettings {
-    // Custom constructor that takes a size parameter
-    pub(crate) fn default(size: usize) -> Self {
-        LavaSettings {
-            number_of_spawn_points: size / 25,
-            lava_flow_range: 1..size / 25,
-        }
-    }
-}
-
-#[derive(Clone)]
-pub(crate) struct LavaSettings {
-    pub(crate) number_of_spawn_points: usize,
-    pub(crate) lava_flow_range: Range<usize>,
 }
 
 impl Default for Thresholds {
@@ -83,10 +71,13 @@ pub(crate) struct WorldGenerator {
     pub(crate) noise_settings: NoiseSettings,
     pub(crate) thresholds: Thresholds,
     pub(crate) lava_settings: LavaSettings,
+    pub(crate) bank_settings: BankSettings,
+    pub(crate) bin_settings: BinSettings,
+    pub(crate) crate_settings: CrateSettings,
 }
 
 impl WorldGenerator {
-    fn generate_terrain(&self, noise_map: & Vec<Vec<f64>>, min: f64, max: f64) -> Vec<Vec<Tile>> {
+    fn generate_terrain(&self, noise_map: &Vec<Vec<f64>>, min: f64, max: f64) -> Vec<Vec<Tile>> {
         let mut world = vec![vec![Tile {
             tile_type: TileType::Grass,
             content: Content::None,
@@ -118,7 +109,7 @@ impl WorldGenerator {
             }
         }
         //color local maxima black
-        let polygons = street_spawn(self.size/250, noise_map, 10, 0.0);
+        let polygons = street_spawn(self.size / 250, noise_map, 10, 0.0);
 
         for (index, polygon) in polygons.iter().enumerate() {
             for (y, x) in polygon {
@@ -142,16 +133,15 @@ impl WorldGenerator {
         }).collect()
     }
 
-    pub fn new(size: usize, noise_settings: NoiseSettings, thresholds: Thresholds, lava_settings: LavaSettings) -> Self
+    pub fn new(size: usize, noise_settings: NoiseSettings, thresholds: Thresholds, lava_settings: LavaSettings, bank_settings: BankSettings, bin_settings: BinSettings, crate_settings: CrateSettings) -> Self
     {
-        Self { size, noise_settings, thresholds, lava_settings }
+        Self { size, noise_settings, thresholds, lava_settings, bank_settings, bin_settings, crate_settings  }
     }
 }
 
 
 impl Generator for WorldGenerator {
-    fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32) {
-
+    fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
         println!("Start: Generate noise map");
         let mut start = Utc::now();
         let noise_map = self.generate_elevation_map();
@@ -175,7 +165,28 @@ impl Generator for WorldGenerator {
         spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
         println!("Done: Spawn lava: {}", (Utc::now() - start).num_milliseconds());
 
-        // Return the generated world, dimensions, and environmental conditions
-        (world, (0, 0), EnvironmentalConditions::new(&[Sunny, Rainy], 15, 12), 0.0)
+        // spawn bank
+        println!("Start: Spawn bank");
+        start = Utc::now();
+        spawn_bank(&mut world, self.bank_settings.clone());
+
+// spawn bin
+        println!("Start: Spawn bin");
+        start = Utc::now();
+        spawn_bin(&mut world, self.bin_settings.clone());
+
+        // spawn wood_crate
+        println!("Start: Spawn crate");
+        start = Utc::now();
+        spawn_crate(&mut world, self.crate_settings.clone());
+
+
+        (
+            world,
+            (0, 0),
+            EnvironmentalConditions::new(&[Rainy, Sunny, Foggy], 1, 9).unwrap(),
+            0.0,
+            None,
+        )
     }
 }

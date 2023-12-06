@@ -1,9 +1,24 @@
 use std::cmp::min;
 use robotics_lib::world::tile::Tile;
 use robotics_lib::world::tile::TileType;
-use crate::generator::{LavaSettings};
 use std::ops::Range;
 use rand::seq::SliceRandom;
+
+impl LavaSettings {
+    // Custom constructor that takes a size parameter
+    pub(crate) fn default(size: usize) -> Self {
+        LavaSettings {
+            number_of_spawn_points: size / 25,
+            lava_flow_range: 1..size / 25,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct LavaSettings {
+    pub(crate) number_of_spawn_points: usize,
+    pub(crate) lava_flow_range: Range<usize>,
+}
 
 //
 pub(crate) fn spawn_lava(world : &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>>, lava_settings: LavaSettings){
