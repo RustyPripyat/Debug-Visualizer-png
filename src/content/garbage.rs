@@ -70,7 +70,7 @@ pub(crate) fn spawn_garbage_build_up(
             // assign if the probability is satisfied
             if value > (1. - probability_matrix[row_index][col_index]) {
                 // get random amount of garbage fot the tile content
-                let random_amount = rng.gen_range(0..max_garbage_per_tile);
+                let random_amount = rng.gen_range(1..max_garbage_per_tile);
                 if set_content(
                     world,
                     base_y + col_index,
