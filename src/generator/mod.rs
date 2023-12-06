@@ -11,7 +11,7 @@ use robotics_lib::world::environmental_conditions::WeatherType;
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::worldgenerator::Generator;
 
-use crate::content::garbage::spawn_garbage;
+use crate::content::garbage::{spawn_garbage, GarbageSettings};
 use crate::tiletype::lava::spawn_lava;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
@@ -29,15 +29,6 @@ pub(crate) struct NoiseSettings {
 pub(crate) struct LavaSettings {
     pub(crate) number_of_spawn_points: usize,
     pub(crate) lava_flow_range: Range<usize>,
-}
-
-#[derive(Clone)]
-pub(crate) struct GarbageSettings {
-    pub(crate) spawn_points_quantity: usize,
-    pub(crate) distance_from_borders: usize,
-    pub(crate) max_amount_on_destroy: usize,
-    pub(crate) spawn_in_near_tiles_probability: f64,
-    pub(crate) decrease_probability_by: f64,
 }
 
 pub(crate) struct Thresholds {

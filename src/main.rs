@@ -1,3 +1,4 @@
+use rand::Rng;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
 use robotics_lib::runner::backpack::BackPack;
@@ -6,6 +7,7 @@ use robotics_lib::world::coordinates::Coordinate;
 use robotics_lib::world::worldgenerator::Generator;
 use robotics_lib::world::World;
 
+use crate::content::garbage::GarbageSettings;
 use crate::generator::*;
 use crate::visualizer::save_world_image;
 
@@ -50,6 +52,7 @@ fn main() {
 
     let _r = MyRobot(Robot::new());
     let size = 1000;
+    let seed: u32 = rand::thread_rng().gen();
     let mut generator = WorldGenerator::new(
         size,
         NoiseSettings {
@@ -73,13 +76,7 @@ fn main() {
             number_of_spawn_points: size / 25,
             lava_flow_range: 1..size / 25,
         },
-        GarbageSettings {
-            spawn_points_quantity: 100,
-            distance_from_borders: 4,
-            max_amount_on_destroy: 6,
-            spawn_in_near_tiles_probability: 0.8,
-            decrease_probability_by: 0.01,
-        },
+        GarbageSettings::default(size),
     );
     let tiles = generator.gen().0;
     save_world_image(&tiles, (0, 0), "img.png", 1);
