@@ -20,7 +20,7 @@ impl GarbageSettings {
     pub(crate) fn default(size: usize) -> Self {
         GarbageSettings {
             total_garbage_quantity: size,
-            garbage_pile_size: 1..size ,
+            garbage_pile_size: 1..size,
             garbage_per_tile_quantity: 1..size / 100,
             spawn_in_near_tiles_probability: 1.0,
             probability_step_by: 0.2,

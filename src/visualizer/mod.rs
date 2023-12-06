@@ -6,8 +6,9 @@ mod colors;
 /// Fill random pixels or all based on number of content with the appropriate color
 #[inline(always)]
 fn checkerboard_pattern(p: &mut Vec<Vec<Rgb<u8>>>, c: Rgb<u8>) {
-    let mut b = false;
+    let mut b = true;
     for row in 0..p.len() {
+        b = if p.len() % 2 == 0 { !b } else { b };
         for col in 0..p.len() {
             if b {
                 p[row][col] = c;
@@ -35,7 +36,6 @@ fn choose_tile_color(t: &TileType) -> Rgb<u8> {
     }
 }
 
-
 /// Associates each tile content with its color
 #[inline(always)]
 fn set_content_color(c: &Content, p: &mut Vec<Vec<Rgb<u8>>>) {
@@ -62,11 +62,10 @@ fn set_content_color(c: &Content, p: &mut Vec<Vec<Rgb<u8>>>) {
 fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize, usize), tile_size: usize) -> RgbImage {
     // get the image final size
     let size: u32 = (tile_size * tiles.len()) as u32;
-    let mut img = RgbImage::new(size, size);
+    let mut img:RgbImage = RgbImage::new(size, size);
 
     for (y, row) in tiles.iter().enumerate() {
         for (x, tile) in row.iter().enumerate() {
-
             // set the base tile color as tile type color
             let mut pixels: Vec<Vec<Rgb<u8>>> = vec![vec![choose_tile_color(&tile.tile_type); tile_size]; tile_size];
 
