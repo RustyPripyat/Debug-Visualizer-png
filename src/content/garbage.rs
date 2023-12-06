@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 use robotics_lib::world::tile::{Content, Tile};
 
 #[derive(Clone)]
@@ -17,8 +17,8 @@ impl GarbageSettings {
     pub(crate) fn default(size: usize) -> Self {
         GarbageSettings {
             spawn_points_quantity: size,
-            garbage_pile_size: 1..size/5,
-            garbage_per_tile_quantity: 1..size/300,
+            garbage_pile_size: 1..size / 5,
+            garbage_per_tile_quantity: 1..size / 300,
             spawn_in_near_tiles_probability: 0.8,
             probability_step_by: 0.2,
         }
