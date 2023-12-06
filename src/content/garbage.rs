@@ -1,10 +1,10 @@
 use std::cmp::min;
 use std::ops::Range;
 
+use rand::{Rng, thread_rng};
 use rand::prelude::ThreadRng;
-use rand::{thread_rng, Rng};
-use robotics_lib::world::tile::Content::Garbage;
 use robotics_lib::world::tile::{Content, Tile};
+use robotics_lib::world::tile::Content::Garbage;
 
 #[derive(Clone)]
 pub(crate) struct GarbageSettings {
@@ -31,7 +31,7 @@ impl GarbageSettings {
 pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettings) {
     let mut i = 0;
     let mut rng = thread_rng();
-    let max_amount = min(settings.garbage_per_tile_quantity.clone().max().unwrap(), Garbage(0).properties().max());
+    let max_amount = min(settings.garbage_per_tile_quantity.clone().max().unwrap_or(1), Garbage(0).properties().max());
     let spawn_prob = f64::max(0.2, settings.spawn_in_near_tiles_probability);
     while i < settings.total_garbage_quantity {
         spawn_garbage_build_up(world, settings, spawn_prob, &mut i, &mut rng, max_amount);

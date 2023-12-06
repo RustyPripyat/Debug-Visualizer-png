@@ -53,7 +53,7 @@ fn main() {
     }
 
     let _r = MyRobot(Robot::new());
-    let size = 100;
+    let size = 1000;
     let mut generator = WorldGenerator::new(
         size,
         NoiseSettings::default(),
