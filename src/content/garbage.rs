@@ -11,6 +11,8 @@ pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettin
     //TODO: rename max_amount_on_destroy to max_garbage_per_tile (or something like that) (maybe ask for the range?)
     //TODO: implement a default implementation for GarbageSettings with settings based on the world size
     //TODO: convert the body of this function to a method `spawn_garbage_build_up` and call it from here (to spawn multiple build-ups)
+    //TODO: check if at least some of the build-up can spawn (or even the whole build-up) [pls follow the code]
+    //TODO: check if some of the build-ups are overlapping
 
     let mut rng = thread_rng();
 
@@ -48,18 +50,11 @@ fn set_content(world: &mut [Vec<Tile>], y: usize, x: usize, amount: usize) -> bo
         return false;
     }
 
-    match world[y][x].tile_type {
-        | TileType::Sand
-        | TileType::Grass
-        | TileType::Street
-        | TileType::Hill
-        | TileType::Mountain
-        | TileType::Teleport(_) => {
-            world[y][x].content = Content::Garbage(amount);
-            true
-        }
-        | _ => false,
+    if world[y][x].tile_type.properties().can_hold(&Content::Garbage(0)) {
+        world[y][x].content = Content::Garbage(amount);
+        return true;
     }
+    else { return false; }
 }
 
 // probability matrix
