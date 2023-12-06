@@ -62,7 +62,7 @@ fn set_content_color(c: &Content, p: &mut Vec<Vec<Rgb<u8>>>) {
 fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize, usize), tile_size: usize) -> RgbImage {
     // get the image final size
     let size: u32 = (tile_size * tiles.len()) as u32;
-    let mut img:RgbImage = RgbImage::new(size, size);
+    let mut img: RgbImage = RgbImage::new(size, size);
 
     for (y, row) in tiles.iter().enumerate() {
         for (x, tile) in row.iter().enumerate() {

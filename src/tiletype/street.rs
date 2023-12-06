@@ -2,10 +2,10 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::hash::Hash;
 
-use voronator::{VoronoiDiagram};
 use voronator::delaunator::Point;
+use voronator::VoronoiDiagram;
 
-use crate::utils::{Coordinate, Slice, slice_vec_2d};
+use crate::utils::{slice_vec_2d, Coordinate, Slice};
 
 #[derive(Debug, Hash)]
 struct Edge {
@@ -15,19 +15,28 @@ struct Edge {
 
 impl PartialEq for Edge {
     fn eq(&self, other: &Self) -> bool {
-        (self.start == other.start && self.end == other.end) ||
-            (self.start == other.end && self.end == other.start)
+        (self.start == other.start && self.end == other.end) || (self.start == other.end && self.end == other.start)
     }
 }
 
 impl Eq for Edge {}
 
-pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_threshold: f64) -> Vec<Vec<(usize, usize)>> {
+pub(crate) fn street_spawn(
+    street_quantity: usize,
+    elevation_map: &[Vec<f64>],
+    n_slice_side: usize,
+    lower_threshold: f64,
+) -> Vec<Vec<(usize, usize)>> {
     // get local maxima
     let mut local_maxima: Vec<(usize, usize)> = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
 
     // combine near local maxima
-    let combined_local_maxima: Vec<(usize, usize)> = combine_local_maxima(elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
+    let combined_local_maxima: Vec<(usize, usize)> = combine_local_maxima(
+        elevation_map,
+        &mut local_maxima,
+        n_slice_side,
+        elevation_map.len() / 100,
+    );
 
     // get voronoi diagram
     let diagram = get_voronoi_diagram(elevation_map, &combined_local_maxima);
@@ -36,27 +45,31 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &Vec<Vec<f64>>
     let unique_extremes: HashSet<Edge> = get_edges_extremes_from_diagram(diagram);
 
     // fix edges extremes
-    let fixed_extremes = fix_extremes(unique_extremes, elevation_map.len()-1);
+    let fixed_extremes = fix_extremes(unique_extremes, elevation_map.len() - 1);
 
     // trace the streets edges
-    fixed_extremes.iter()
+    fixed_extremes
+        .iter()
         .map(|edge| connect_points(edge.start, edge.end))
         .collect()
-
 }
 
 fn get_edges_extremes_from_diagram(diagram: VoronoiDiagram<Point>) -> HashSet<Edge> {
     let mut unique_extremes: HashSet<Edge> = HashSet::new();
     for cell in diagram.cells().iter() {
-        let extremes: Vec<(usize, usize)> = cell.points().iter()
-            .map(|x| (x.x as usize, x.y as usize))
-            .collect();
+        let extremes: Vec<(usize, usize)> = cell.points().iter().map(|x| (x.x as usize, x.y as usize)).collect();
 
         // connect the points
         for i in 0..extremes.len() - 1 {
-            unique_extremes.insert(Edge { start: extremes[i], end: extremes[i + 1] });
+            unique_extremes.insert(Edge {
+                start: extremes[i],
+                end: extremes[i + 1],
+            });
         }
-        unique_extremes.insert(Edge { start: extremes[0], end: extremes[extremes.len() - 1] });
+        unique_extremes.insert(Edge {
+            start: extremes[0],
+            end: extremes[extremes.len() - 1],
+        });
     }
     unique_extremes
 }
@@ -66,7 +79,12 @@ fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[(usize, usize)]) -
     let points: Vec<(f64, f64)> = centers.iter().map(|(y, x)| (*x as f64, *y as f64)).collect();
 
     // vornoi diagram
-    VoronoiDiagram::<Point>::from_tuple(&(0., 0.), &((elevation_map.len() - 1) as f64, (elevation_map.len() - 1) as f64), &points).unwrap()
+    VoronoiDiagram::<Point>::from_tuple(
+        &(0., 0.),
+        &((elevation_map.len() - 1) as f64, (elevation_map.len() - 1) as f64),
+        &points,
+    )
+    .unwrap()
 }
 
 fn fix_extremes(edges: HashSet<Edge>, size: usize) -> Vec<Edge> {
@@ -81,10 +99,10 @@ fn fix_extremes(edges: HashSet<Edge>, size: usize) -> Vec<Edge> {
 }
 
 fn are_extremes_on_border(e1: (usize, usize), e2: (usize, usize), size: usize) -> bool {
-    (e1.0 == 0 && e2.0 == 0) ||
-        (e1.0 == size && e2.0 == size) ||
-        (e1.1 == 0 && e2.1 == 0) ||
-        (e1.1 == size && e2.1 == size)
+    (e1.0 == 0 && e2.0 == 0)
+        || (e1.0 == size && e2.0 == size)
+        || (e1.1 == 0 && e2.1 == 0)
+        || (e1.1 == size && e2.1 == size)
 }
 
 // Function to connect two points with a line segment using Bresenham's algorithm
@@ -113,10 +131,11 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
         let rounded_y = y.round() as usize;
 
         // avoid diagonal steps
-        if index > 0 &&
-            index < steps as usize &&
-            rounded_x != line_segments[line_segments.len() - 1].0 &&
-            rounded_y != line_segments[line_segments.len() - 1].1 {
+        if index > 0
+            && index < steps as usize
+            && rounded_x != line_segments[line_segments.len() - 1].0
+            && rounded_y != line_segments[line_segments.len() - 1].1
+        {
             line_segments.push((rounded_x, line_segments[line_segments.len() - 1].1));
             line_segments.push((line_segments[line_segments.len() - 1].0, rounded_y));
         }
@@ -126,7 +145,6 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
         x += x_increment;
         y += y_increment;
     }
-
 
     //get only the first ten points
     //line_segments.truncate(line_segments.len()/2);
@@ -138,49 +156,65 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
     line_segments
 }
 
-
-fn combine_local_maxima(elevation_map: &Vec<Vec<f64>>, all_local_maxima: &mut [(usize, usize)], n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
+fn combine_local_maxima(
+    elevation_map: &[Vec<f64>],
+    all_local_maxima: &mut [(usize, usize)],
+    n_slice_per_side: usize,
+    band_width: usize,
+) -> Vec<(usize, usize)> {
     let mut hs: HashSet<(usize, usize)> = HashSet::new();
     let qnt_per_slice = elevation_map.len() / n_slice_per_side;
 
     //combine the local maxima in the same slice
-    for index in 1..n_slice_per_side {        //for lower_index in higher_index + 1..local_maxima_in_slice.len() {
+    for index in 1..n_slice_per_side {
+        //for lower_index in higher_index + 1..local_maxima_in_slice.len() {
 
         //vertical slices
-        combine_local_maxima_in_same_slice(index,
-                                           get_vertical_slice,
-                                           is_inside_vertical_slice,
-                                           get_delta_x,
-                                           elevation_map,
-                                           all_local_maxima,
-                                           qnt_per_slice,
-                                           band_width)
-            .iter()
-            .for_each(|x| { hs.insert(*x); });
+        combine_local_maxima_in_same_slice(
+            index,
+            get_vertical_slice,
+            is_inside_vertical_slice,
+            get_delta_x,
+            elevation_map,
+            all_local_maxima,
+            qnt_per_slice,
+            band_width,
+        )
+        .iter()
+        .for_each(|x| {
+            hs.insert(*x);
+        });
 
         //horizontal slices
-        combine_local_maxima_in_same_slice(index,
-                                           get_horizontal_slice,
-                                           is_inside_horizontal_slice,
-                                           get_delta_y,
-                                           elevation_map,
-                                           all_local_maxima,
-                                           qnt_per_slice,
-                                           band_width)
-            .iter()
-            .for_each(|x| { hs.insert(*x); });
+        combine_local_maxima_in_same_slice(
+            index,
+            get_horizontal_slice,
+            is_inside_horizontal_slice,
+            get_delta_y,
+            elevation_map,
+            all_local_maxima,
+            qnt_per_slice,
+            band_width,
+        )
+        .iter()
+        .for_each(|x| {
+            hs.insert(*x);
+        });
     }
 
     hs.into_iter().collect()
 }
 
 fn combine_local_maxima_in_same_slice(
-    index: usize, get_slice: fn(usize, usize, usize, usize) -> Slice,
+    index: usize,
+    get_slice: fn(usize, usize, usize, usize) -> Slice,
     is_inside_slice: fn(&(usize, usize), &Slice) -> bool,
     get_delta: fn(&(usize, usize), &(usize, usize)) -> usize,
-    elevation_map: &Vec<Vec<f64>>, all_local_maxima: &mut [(usize, usize)],
-    qnt_per_slice: usize, band_width: usize) -> Vec<(usize, usize)>
-{
+    elevation_map: &[Vec<f64>],
+    all_local_maxima: &mut [(usize, usize)],
+    qnt_per_slice: usize,
+    band_width: usize,
+) -> Vec<(usize, usize)> {
     let slice: Slice = get_slice(elevation_map.len(), index, qnt_per_slice, band_width);
 
     //get the local maxima in the slice
@@ -201,7 +235,11 @@ fn combine_local_maxima_in_same_slice(
         while higher_index < local_maxima_in_slice.len() - 1 {
             lower_index = higher_index + 1;
             while lower_index < local_maxima_in_slice.len() {
-                if get_delta(&local_maxima_in_slice[higher_index], &local_maxima_in_slice[lower_index]) <= band_width {
+                if get_delta(
+                    &local_maxima_in_slice[higher_index],
+                    &local_maxima_in_slice[lower_index],
+                ) <= band_width
+                {
                     local_maxima_in_slice.remove(lower_index); //remove lower local maximum near to higher local maximum
                 }
                 lower_index += 1;
@@ -230,19 +268,31 @@ fn is_inside_vertical_slice(local_maximum: &(usize, usize), slice: &Slice) -> bo
 
 fn get_horizontal_slice(map_len: usize, row: usize, qnt_per_slice: usize, band_width: usize) -> Slice {
     Slice {
-        start: Coordinate { row: (row * qnt_per_slice) - (band_width / 2), col: 0 },
-        end: Coordinate { row: (row * qnt_per_slice) + (band_width / 2), col: map_len - 1 },
+        start: Coordinate {
+            row: (row * qnt_per_slice) - (band_width / 2),
+            col: 0,
+        },
+        end: Coordinate {
+            row: (row * qnt_per_slice) + (band_width / 2),
+            col: map_len - 1,
+        },
     }
 }
 
 fn get_vertical_slice(map_len: usize, col: usize, qnt_per_slice: usize, band_width: usize) -> Slice {
     Slice {
-        start: Coordinate { row: 0, col: (col * qnt_per_slice) - (band_width / 2) },
-        end: Coordinate { row: map_len - 1, col: (col * qnt_per_slice) + (band_width / 2) },
+        start: Coordinate {
+            row: 0,
+            col: (col * qnt_per_slice) - (band_width / 2),
+        },
+        end: Coordinate {
+            row: map_len - 1,
+            col: (col * qnt_per_slice) + (band_width / 2),
+        },
     }
 }
 
-fn get_local_maxima(elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_threshold: f64) -> Vec<(usize, usize)> {
+fn get_local_maxima(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<(usize, usize)> {
     let mut local_maxima: Vec<(usize, usize)> = Vec::new();
     let mut found_local_maximum;
     let slices = slice_vec_2d(elevation_map, n_slice_side);
@@ -266,12 +316,16 @@ fn get_local_maxima(elevation_map: &Vec<Vec<f64>>, n_slice_side: usize, lower_th
 
 // get the maximum value from a slice
 fn get_maximum(slice: &[Vec<f64>]) -> (usize, usize) {
-    slice.iter().enumerate().flat_map(|(row_index, inner)| {
-        inner.iter().enumerate().map(move |(col_index, &value)| (row_index, col_index, value))
-    })
+    slice
+        .iter()
+        .enumerate()
+        .flat_map(|(row_index, inner)| {
+            inner
+                .iter()
+                .enumerate()
+                .map(move |(col_index, &value)| (row_index, col_index, value))
+        })
         .max_by(|(_, _, a), (_, _, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
-        .map(|(row_index, col_index, _)| (row_index, col_index)).unwrap()
+        .map(|(row_index, col_index, _)| (row_index, col_index))
+        .unwrap()
 }
-
-
-

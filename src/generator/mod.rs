@@ -1,28 +1,22 @@
 use std::collections::HashMap;
-use std::ops::Range;
 
+use chrono::Utc;
 use noise::MultiFractal;
 use noise::NoiseFn;
 use noise::{Fbm, Perlin, RidgedMulti};
-use noise::MultiFractal;
-use noise::NoiseFn;
-use rayon::iter::*;
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::*;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny};
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::worldgenerator::Generator;
-use crate::content::bank::{BankSettings, spawn_bank};
-use crate::content::bin::{BinSettings, spawn_bin};
 
-use crate::content::water::add_default_water_content;
-use crate::content::wood_crate::{CrateSettings, spawn_crate};
-use crate::tiletype::lava::{LavaSettings, spawn_lava};
-use crate::tiletype::street::street_spawn;
-
+use crate::content::bank::{spawn_bank, BankSettings};
+use crate::content::bin::{spawn_bin, BinSettings};
 use crate::content::garbage::{spawn_garbage, GarbageSettings};
-use crate::tiletype::lava::spawn_lava;
+use crate::content::wood_crate::{spawn_crate, CrateSettings};
+use crate::tiletype::lava::{spawn_lava, LavaSettings};
+use crate::tiletype::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
 impl Default for NoiseSettings {
@@ -177,9 +171,6 @@ impl WorldGenerator {
 }
 
 impl Generator for WorldGenerator {
-    fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
-        println!("Start: Generate noise map");
-        let mut start = Utc::now();
     fn gen(
         &mut self,
     ) -> (
@@ -190,13 +181,17 @@ impl Generator for WorldGenerator {
         Option<HashMap<Content, f32>>,
     ) {
         let noise_map = self.generate_elevation_map();
+        let mut start = Utc::now();
         println!("Done: Generate noise map: {}", (Utc::now() - start).num_milliseconds());
 
         println!("Start: Calculate min and max value");
         start = Utc::now();
-        let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX);     // get min value
-        let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN);     // get max value
-        println!("Done: Calculate min and max value: {}", (Utc::now() - start).num_milliseconds());
+        let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX); // get min value
+        let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN); // get max value
+        println!(
+            "Done: Calculate min and max value: {}",
+            (Utc::now() - start).num_milliseconds()
+        );
 
         println!("Start: Generate terrain");
         start = Utc::now();
@@ -228,8 +223,6 @@ impl Generator for WorldGenerator {
         println!("Start: Spawn garbage");
         start = Utc::now();
         spawn_garbage(&mut world, &self.garbage_settings);
-
-
 
         (
             world,

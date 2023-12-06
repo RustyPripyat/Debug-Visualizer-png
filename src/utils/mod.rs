@@ -1,7 +1,7 @@
+use crate::content::bank::BankSettings;
 use rand::Rng;
 use robotics_lib::world::tile::{Content, Tile};
 use robotics_lib::world::World;
-use crate::content::bank::BankSettings;
 
 pub(crate) struct Coordinate {
     pub(crate) row: usize,
@@ -14,7 +14,7 @@ pub(crate) struct Slice {
 }
 
 //slice a 2d vector into n_slice x n_slice slices (leaving the last slice with the remaining elements)
-pub(crate) fn slice_vec_2d(input: &Vec<Vec<f64>>, n_slice: usize) -> Vec<Slice> {
+pub(crate) fn slice_vec_2d(input: &[Vec<f64>], n_slice: usize) -> Vec<Slice> {
     // Calculate the number of rows and columns in each slice
     let qnt_per_slice = input.len() / n_slice;
     let mut slice: Vec<Slice> = Vec::new();
@@ -35,12 +35,17 @@ pub(crate) fn slice_vec_2d(input: &Vec<Vec<f64>>, n_slice: usize) -> Vec<Slice> 
                 input.len()
             };
 
-            slice.push(Slice{
-                start: Coordinate{row: start_row, col: start_col},
-                end: Coordinate{row: end_row, col: end_col},
+            slice.push(Slice {
+                start: Coordinate {
+                    row: start_row,
+                    col: start_col,
+                },
+                end: Coordinate {
+                    row: end_row,
+                    col: end_col,
+                },
             });
         }
-
     }
 
     slice
@@ -108,7 +113,11 @@ pub(crate) fn map_value_to_range(value: f64, from: std::ops::Range<f64>, to: std
     (value - from_min) * (to_max - to_min) / (from_max - from_min) + to_min
 }
 
-pub(crate) fn spawn_content_randomly(world: &mut Vec<Vec<Tile>>, mut number_of_spawn_points: usize, content: Content) -> Vec<(usize, usize)> {
+pub(crate) fn spawn_content_randomly(
+    world: &mut Vec<Vec<Tile>>,
+    mut number_of_spawn_points: usize,
+    content: Content,
+) -> Vec<(usize, usize)> {
     let mut rng = rand::thread_rng();
 
     let mut spawn_points = Vec::new();

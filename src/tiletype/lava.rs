@@ -1,4 +1,3 @@
-use crate::generator::LavaSettings;
 use rand::seq::SliceRandom;
 use robotics_lib::world::tile::Tile;
 use robotics_lib::world::tile::TileType;
@@ -22,7 +21,7 @@ pub(crate) struct LavaSettings {
 }
 
 //
-pub(crate) fn spawn_lava(world : &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>>, lava_settings: LavaSettings){
+pub(crate) fn spawn_lava(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>>, lava_settings: LavaSettings) {
     let possible_spawn_points = get_yx_mountain_tiles(world);
     let min = min(lava_settings.number_of_spawn_points, possible_spawn_points.len());
     for i in 0..min {
@@ -38,7 +37,7 @@ pub(crate) fn flow_from(
     elevation_map: &Vec<Vec<f64>>,
     y: usize,
     x: usize,
-    remaining_range: Range<usize>
+    remaining_range: Range<usize>,
 ) -> usize {
     //println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
     world[y][x].tile_type = TileType::Lava;
@@ -67,16 +66,16 @@ pub(crate) fn flow_from(
 pub(crate) fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: usize) -> (usize, usize) {
     let mut neighbour_heights = Vec::new();
     if y != 0 {
-        neighbour_heights.push((elevation_map[y-1][x], y-1, x));
+        neighbour_heights.push((elevation_map[y - 1][x], y - 1, x));
     }
     if y != elevation_map.len() - 1 {
-        neighbour_heights.push((elevation_map[y+1][x], y+1, x));
+        neighbour_heights.push((elevation_map[y + 1][x], y + 1, x));
     }
     if x != 0 {
-        neighbour_heights.push((elevation_map[y][x-1], y, x-1));
+        neighbour_heights.push((elevation_map[y][x - 1], y, x - 1));
     }
     if x != elevation_map[0].len() - 1 {
-        neighbour_heights.push((elevation_map[y][x+1], y, x+1));
+        neighbour_heights.push((elevation_map[y][x + 1], y, x + 1));
     }
     // sort by height
     neighbour_heights.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
