@@ -171,15 +171,7 @@ impl WorldGenerator {
 }
 
 impl Generator for WorldGenerator {
-    fn gen(
-        &mut self,
-    ) -> (
-        Vec<Vec<Tile>>,
-        (usize, usize),
-        EnvironmentalConditions,
-        f32,
-        Option<HashMap<Content, f32>>,
-    ) {
+    fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
         let noise_map = self.generate_elevation_map();
         let mut start = Utc::now();
         println!("Done: Generate noise map: {}", (Utc::now() - start).num_milliseconds());
@@ -188,10 +180,7 @@ impl Generator for WorldGenerator {
         start = Utc::now();
         let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX); // get min value
         let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN); // get max value
-        println!(
-            "Done: Calculate min and max value: {}",
-            (Utc::now() - start).num_milliseconds()
-        );
+        println!("Done: Calculate min and max value: {}", (Utc::now() - start).num_milliseconds());
 
         println!("Start: Generate terrain");
         start = Utc::now();
@@ -224,12 +213,6 @@ impl Generator for WorldGenerator {
         start = Utc::now();
         spawn_garbage(&mut world, &self.garbage_settings);
 
-        (
-            world,
-            (0, 0),
-            EnvironmentalConditions::new(&[Rainy, Sunny, Foggy], 1, 9).unwrap(),
-            0.0,
-            None,
-        )
+        (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy], 1, 9).unwrap(), 0.0, None)
     }
 }

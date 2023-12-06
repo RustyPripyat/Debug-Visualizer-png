@@ -1,8 +1,10 @@
-// use rand::Rng;
 use crate::content::bank::BankSettings;
 use crate::content::bin::BinSettings;
+use crate::content::garbage::GarbageSettings;
 use crate::content::wood_crate::CrateSettings;
+use crate::generator::*;
 use crate::tiletype::lava::LavaSettings;
+use crate::visualizer::save_world_image;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
 use robotics_lib::runner::backpack::BackPack;
@@ -10,11 +12,6 @@ use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::world::coordinates::Coordinate;
 use robotics_lib::world::worldgenerator::Generator;
 use robotics_lib::world::World;
-use crate::content::garbage;
-
-use crate::content::garbage::GarbageSettings;
-use crate::generator::*;
-use crate::visualizer::save_world_image;
 
 mod content;
 mod generator;
@@ -57,7 +54,16 @@ fn main() {
 
     let _r = MyRobot(Robot::new());
     let size = 100;
-    let mut generator = WorldGenerator::new(size, NoiseSettings::default(), Thresholds::default(), LavaSettings::default(size), BankSettings::default(size), BinSettings::default(size), CrateSettings::default(size), GarbageSettings::default(size));
+    let mut generator = WorldGenerator::new(
+        size,
+        NoiseSettings::default(),
+        Thresholds::default(),
+        LavaSettings::default(size),
+        BankSettings::default(size),
+        BinSettings::default(size),
+        CrateSettings::default(size),
+        GarbageSettings::default(size),
+    );
 
     let tiles = generator.gen().0;
     save_world_image(&tiles, (0, 0), "img.png", 4);

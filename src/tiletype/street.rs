@@ -21,22 +21,12 @@ impl PartialEq for Edge {
 
 impl Eq for Edge {}
 
-pub(crate) fn street_spawn(
-    street_quantity: usize,
-    elevation_map: &[Vec<f64>],
-    n_slice_side: usize,
-    lower_threshold: f64,
-) -> Vec<Vec<(usize, usize)>> {
+pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<Vec<(usize, usize)>> {
     // get local maxima
     let mut local_maxima: Vec<(usize, usize)> = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
 
     // combine near local maxima
-    let combined_local_maxima: Vec<(usize, usize)> = combine_local_maxima(
-        elevation_map,
-        &mut local_maxima,
-        n_slice_side,
-        elevation_map.len() / 100,
-    );
+    let combined_local_maxima: Vec<(usize, usize)> = combine_local_maxima(elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
 
     // get voronoi diagram
     let diagram = get_voronoi_diagram(elevation_map, &combined_local_maxima);
@@ -48,10 +38,7 @@ pub(crate) fn street_spawn(
     let fixed_extremes = fix_extremes(unique_extremes, elevation_map.len() - 1);
 
     // trace the streets edges
-    fixed_extremes
-        .iter()
-        .map(|edge| connect_points(edge.start, edge.end))
-        .collect()
+    fixed_extremes.iter().map(|edge| connect_points(edge.start, edge.end)).collect()
 }
 
 fn get_edges_extremes_from_diagram(diagram: VoronoiDiagram<Point>) -> HashSet<Edge> {
@@ -79,12 +66,7 @@ fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[(usize, usize)]) -
     let points: Vec<(f64, f64)> = centers.iter().map(|(y, x)| (*x as f64, *y as f64)).collect();
 
     // vornoi diagram
-    VoronoiDiagram::<Point>::from_tuple(
-        &(0., 0.),
-        &((elevation_map.len() - 1) as f64, (elevation_map.len() - 1) as f64),
-        &points,
-    )
-    .unwrap()
+    VoronoiDiagram::<Point>::from_tuple(&(0., 0.), &((elevation_map.len() - 1) as f64, (elevation_map.len() - 1) as f64), &points).unwrap()
 }
 
 fn fix_extremes(edges: HashSet<Edge>, size: usize) -> Vec<Edge> {
@@ -99,10 +81,7 @@ fn fix_extremes(edges: HashSet<Edge>, size: usize) -> Vec<Edge> {
 }
 
 fn are_extremes_on_border(e1: (usize, usize), e2: (usize, usize), size: usize) -> bool {
-    (e1.0 == 0 && e2.0 == 0)
-        || (e1.0 == size && e2.0 == size)
-        || (e1.1 == 0 && e2.1 == 0)
-        || (e1.1 == size && e2.1 == size)
+    (e1.0 == 0 && e2.0 == 0) || (e1.0 == size && e2.0 == size) || (e1.1 == 0 && e2.1 == 0) || (e1.1 == size && e2.1 == size)
 }
 
 // Function to connect two points with a line segment using Bresenham's algorithm
@@ -131,10 +110,7 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
         let rounded_y = y.round() as usize;
 
         // avoid diagonal steps
-        if index > 0
-            && index < steps as usize
-            && rounded_x != line_segments[line_segments.len() - 1].0
-            && rounded_y != line_segments[line_segments.len() - 1].1
+        if index > 0 && index < steps as usize && rounded_x != line_segments[line_segments.len() - 1].0 && rounded_y != line_segments[line_segments.len() - 1].1
         {
             line_segments.push((rounded_x, line_segments[line_segments.len() - 1].1));
             line_segments.push((line_segments[line_segments.len() - 1].0, rounded_y));
@@ -235,11 +211,7 @@ fn combine_local_maxima_in_same_slice(
         while higher_index < local_maxima_in_slice.len() - 1 {
             lower_index = higher_index + 1;
             while lower_index < local_maxima_in_slice.len() {
-                if get_delta(
-                    &local_maxima_in_slice[higher_index],
-                    &local_maxima_in_slice[lower_index],
-                ) <= band_width
-                {
+                if get_delta(&local_maxima_in_slice[higher_index], &local_maxima_in_slice[lower_index]) <= band_width {
                     local_maxima_in_slice.remove(lower_index); //remove lower local maximum near to higher local maximum
                 }
                 lower_index += 1;
@@ -319,12 +291,7 @@ fn get_maximum(slice: &[Vec<f64>]) -> (usize, usize) {
     slice
         .iter()
         .enumerate()
-        .flat_map(|(row_index, inner)| {
-            inner
-                .iter()
-                .enumerate()
-                .map(move |(col_index, &value)| (row_index, col_index, value))
-        })
+        .flat_map(|(row_index, inner)| inner.iter().enumerate().map(move |(col_index, &value)| (row_index, col_index, value)))
         .max_by(|(_, _, a), (_, _, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
         .map(|(row_index, col_index, _)| (row_index, col_index))
         .unwrap()

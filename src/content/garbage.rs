@@ -31,10 +31,7 @@ impl GarbageSettings {
 pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettings) {
     let mut i = 0;
     let mut rng = thread_rng();
-    let max_amount = min(
-        settings.garbage_per_tile_quantity.clone().max().unwrap(),
-        Garbage(0).properties().max(),
-    );
+    let max_amount = min(settings.garbage_per_tile_quantity.clone().max().unwrap(), Garbage(0).properties().max());
     let spawn_prob = f64::max(0.2, settings.spawn_in_near_tiles_probability);
     while i < settings.total_garbage_quantity {
         spawn_garbage_build_up(world, settings, spawn_prob, &mut i, &mut rng, max_amount);
@@ -72,13 +69,7 @@ pub(crate) fn spawn_garbage_build_up(
             if value > (1. - probability_matrix[row_index][col_index]) {
                 // get random amount of garbage fot the tile content
                 let random_amount = rng.gen_range(1..max_garbage_per_tile);
-                if set_content(
-                    world,
-                    base_y + col_index,
-                    base_x + row_index,
-                    random_amount,
-                    probability_matrix.len(),
-                ) {
+                if set_content(world, base_y + col_index, base_x + row_index, random_amount, probability_matrix.len()) {
                     *placed += random_amount;
                 }
             }

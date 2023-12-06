@@ -113,11 +113,7 @@ pub(crate) fn map_value_to_range(value: f64, from: std::ops::Range<f64>, to: std
     (value - from_min) * (to_max - to_min) / (from_max - from_min) + to_min
 }
 
-pub(crate) fn spawn_content_randomly(
-    world: &mut Vec<Vec<Tile>>,
-    mut number_of_spawn_points: usize,
-    content: Content,
-) -> Vec<(usize, usize)> {
+pub(crate) fn spawn_content_randomly(world: &mut Vec<Vec<Tile>>, mut number_of_spawn_points: usize, content: Content) -> Vec<(usize, usize)> {
     let mut rng = rand::thread_rng();
 
     let mut spawn_points = Vec::new();
