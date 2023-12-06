@@ -79,5 +79,5 @@ fn main() {
         GarbageSettings::default(size),
     );
     let tiles = generator.gen().0;
-    save_world_image(&tiles, (0, 0), "img.png", 1);
+    save_world_image(&tiles, (0, 0), "img.png", 4);
 }

@@ -35,7 +35,7 @@ pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettin
         settings.garbage_per_tile_quantity.clone().max().unwrap(),
         Garbage(0).properties().max(),
     );
-
+    let spawn_prob = f64::min(0.1, settings.spawn_in_near_tiles_probability);
     while i < settings.total_garbage_quantity {
         spawn_garbage_build_up(world, settings, &mut i, &mut rng, max_amount);
     }
