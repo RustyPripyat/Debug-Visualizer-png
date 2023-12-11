@@ -30,7 +30,6 @@ impl Default for NoiseSettings {
             lacunarity: 2.0,
             persistence: 1.25,
             attenuation: 2.5,
-            scale: 0.25,
         }
     }
 }
@@ -42,7 +41,6 @@ pub struct NoiseSettings {
     pub(crate) lacunarity: f64,
     pub(crate) persistence: f64,
     pub(crate) attenuation: f64,
-    pub(crate) scale: f64,
 }
 
 impl Default for Thresholds {
@@ -79,7 +77,7 @@ pub struct WorldGenerator {
 }
 
 impl WorldGenerator {
-    fn generate_terrain(&self, noise_map: &[Vec<f64>], min: f64, max: f64) -> Vec<Vec<Tile>> {
+    fn generate_terrain(&self, noise_map: &[Vec<f64>], min: f64, max: f64) -> World {
         let mut world = vec![vec![Tile { tile_type: TileType::Grass, content: Content::None, elevation: 0 }; self.size]; self.size];
 
         for (y, row) in noise_map.iter().enumerate() {
@@ -160,8 +158,11 @@ impl WorldGenerator {
     }
 }
 
+pub type World = Vec<Vec<Tile>>;
+pub type Coordinates = (usize, usize);
+
 impl Generator for WorldGenerator {
-    fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
+    fn gen(&mut self) -> (World, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
         let tot = Utc::now();
         debug_println!("Start: Noise map generation");
         let mut start = Utc::now();

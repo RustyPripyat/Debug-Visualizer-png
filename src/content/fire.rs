@@ -1,8 +1,9 @@
 use nannou_core::math::{deg_to_rad, map_range};
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
-use robotics_lib::world::tile::{Content, Tile};
+use robotics_lib::world::tile::Content;
 
+use crate::generator::World;
 use crate::utils::{Coordinate, get_random_seeded_noise};
 
 pub(crate) struct Fire {
@@ -161,7 +162,7 @@ impl Fire {
     }
 }
 
-pub fn spawn_fires(world: &mut Vec<Vec<Tile>>) {
+pub fn spawn_fires(world: &mut World) {
     let fire = Fire::default(world.len(), 40., 0.1);
     for point in fire.points {
         world[point.row][point.col].content = Content::Fire;

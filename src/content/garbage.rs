@@ -6,6 +6,8 @@ use rand::prelude::ThreadRng;
 use robotics_lib::world::tile::{Content, Tile};
 use robotics_lib::world::tile::Content::Garbage;
 
+use crate::generator::World;
+
 #[derive(Clone)]
 pub struct GarbageSettings {
     pub(crate) total_garbage_quantity: usize,
@@ -28,7 +30,7 @@ impl GarbageSettings {
     }
 }
 
-pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettings) {
+pub(crate) fn spawn_garbage(world: &mut World, settings: &GarbageSettings) {
     let mut i = 0;
     let mut rng = thread_rng();
     let max_amount = min(settings.garbage_per_tile_quantity.clone().max().unwrap_or(1), Garbage(0).properties().max());
@@ -39,7 +41,7 @@ pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettin
 }
 
 #[inline(always)]
-pub(crate) fn spawn_garbage_build_up(world: &mut Vec<Vec<Tile>>, garbage_pile_size: Range<usize>, probability_step_by: f64, spawn_prob: f64, placed: &mut usize, rng: &mut ThreadRng, max_garbage_per_tile: usize) {
+pub(crate) fn spawn_garbage_build_up(world: &mut World, garbage_pile_size: Range<usize>, probability_step_by: f64, spawn_prob: f64, placed: &mut usize, rng: &mut ThreadRng, max_garbage_per_tile: usize) {
     // Get size of garbage pile
     let pile_range = rng.gen_range(garbage_pile_size);
 

@@ -10,7 +10,7 @@ use exclusion_zone::content::bank::BankSettings;
 use exclusion_zone::content::bin::BinSettings;
 use exclusion_zone::content::garbage::GarbageSettings;
 use exclusion_zone::content::wood_crate::CrateSettings;
-use exclusion_zone::generator::{NoiseSettings, Thresholds};
+use exclusion_zone::generator::{NoiseSettings, Thresholds, WorldGenerator};
 use exclusion_zone::tile_type::lava::LavaSettings;
 
 mod visualizer;
@@ -50,7 +50,7 @@ fn main() {
 
     let _r = MyRobot(Robot::new());
     let size = 1000;
-    let mut generator = exclusion_zone::generator::WorldGenerator::new(
+    let mut generator = WorldGenerator::new(
         size,
         NoiseSettings::default(),
         Thresholds::default(),

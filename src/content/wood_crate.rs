@@ -1,8 +1,7 @@
-use debug_print::debug_println;
 use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Crate;
-use robotics_lib::world::tile::Tile;
 
+use crate::generator::World;
 use crate::utils::spawn_content_randomly;
 
 impl CrateSettings {
@@ -19,7 +18,7 @@ pub struct CrateSettings {
     pub(crate) number_of_spawn_points: usize,
 }
 
-pub(crate) fn spawn_crate(world: &mut Vec<Vec<Tile>>, crate_settings: CrateSettings) {
+pub(crate) fn spawn_crate(world: &mut World, crate_settings: CrateSettings) {
     let max = Crate(0..0).properties().max();
     let spawn_points = spawn_content_randomly(world, crate_settings.number_of_spawn_points, Crate(0..0));
 

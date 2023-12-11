@@ -1,8 +1,7 @@
-use debug_print::debug_println;
 use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bin;
-use robotics_lib::world::tile::Tile;
 
+use crate::generator::World;
 // spawn bin randomly in the world
 use crate::utils::spawn_content_randomly;
 
@@ -20,7 +19,7 @@ pub struct BinSettings {
     pub(crate) number_of_spawn_points: usize,
 }
 
-pub(crate) fn spawn_bin(world: &mut Vec<Vec<Tile>>, bin_settings: BinSettings) {
+pub(crate) fn spawn_bin(world: &mut World, bin_settings: BinSettings) {
     let max = Bin(0..0).properties().max();
     let spawn_points = spawn_content_randomly(world, bin_settings.number_of_spawn_points, Bin(0..0));
 
