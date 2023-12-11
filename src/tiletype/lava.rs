@@ -33,7 +33,7 @@ pub(crate) fn spawn_lava(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64
 
 //for each x,y flow the lava to the lower neighbour
 pub(crate) fn flow_from(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize>) -> usize {
-    //println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
+    //debug_println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
     world[y][x].tile_type = TileType::Lava;
     if remaining_range.start == remaining_range.end {
         0

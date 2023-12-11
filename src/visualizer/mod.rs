@@ -1,3 +1,4 @@
+use debug_print::debug_println;
 use image::{ImageFormat, Rgb, RgbImage};
 use robotics_lib::world::tile::*;
 
@@ -88,8 +89,8 @@ pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_
     let img = create_image_from_tiles(tiles, bot_position, tile_size);
 
     if let Err(e) = img.save_with_format(file_name, ImageFormat::Png) {
-        println!("Error saving the image, {}", e);
+        debug_println!("Error saving the image, {}", e);
     } else {
-        println!("Image saved successfully, {}", file_name);
+        debug_println!("Image saved successfully, {}", file_name);
     }
 }

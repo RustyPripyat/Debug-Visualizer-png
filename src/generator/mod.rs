@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
+use debug_print::debug_println;
 use noise::MultiFractal;
 use noise::NoiseFn;
 use noise::{Fbm, Perlin, RidgedMulti};
@@ -117,7 +118,7 @@ impl WorldGenerator {
 
         for (index, polygon) in polygons.iter().enumerate() {
             for (y, x) in polygon {
-                // println!("Street in: {};{}", x, y);
+                // debug_println!("Street in: {};{}", x, y);
                 world[*y][*x].tile_type = TileType::Street;
             }
             //save_world_image(&world, (0, 0), format!("poly_{}.png",index).as_str());
@@ -174,42 +175,42 @@ impl Generator for WorldGenerator {
     fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
         let noise_map = self.generate_elevation_map();
         let mut start = Utc::now();
-        println!("Done: Generate noise map: {}", (Utc::now() - start).num_milliseconds());
+        debug_println!("Done: Generate noise map: {}", (Utc::now() - start).num_milliseconds());
 
-        println!("Start: Calculate min and max value");
+        debug_println!("Start: Calculate min and max value");
         start = Utc::now();
         let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX); // get min value
         let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN); // get max value
-        println!("Done: Calculate min and max value: {}", (Utc::now() - start).num_milliseconds());
+        debug_println!("Done: Calculate min and max value: {}", (Utc::now() - start).num_milliseconds());
 
-        println!("Start: Generate terrain");
+        debug_println!("Start: Generate terrain");
         start = Utc::now();
         let mut world = self.generate_terrain(&noise_map, min_value, max_value);
-        println!("Done: Generate terrain: {}", (Utc::now() - start).num_milliseconds());
+        debug_println!("Done: Generate terrain: {}", (Utc::now() - start).num_milliseconds());
 
         // spawn lava
-        println!("Start: Spawn lava");
+        debug_println!("Start: Spawn lava");
         start = Utc::now();
         spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
-        println!("Done: Spawn lava: {}", (Utc::now() - start).num_milliseconds());
+        debug_println!("Done: Spawn lava: {}", (Utc::now() - start).num_milliseconds());
 
         // spawn bank
-        println!("Start: Spawn bank");
+        debug_println!("Start: Spawn bank");
         start = Utc::now();
         spawn_bank(&mut world, self.bank_settings.clone());
 
         // spawn bin
-        println!("Start: Spawn bin");
+        debug_println!("Start: Spawn bin");
         start = Utc::now();
         spawn_bin(&mut world, self.bin_settings.clone());
 
         // spawn wood_crate
-        println!("Start: Spawn crate");
+        debug_println!("Start: Spawn crate");
         start = Utc::now();
         spawn_crate(&mut world, self.crate_settings.clone());
 
         // spawn garbage
-        println!("Start: Spawn garbage");
+        debug_println!("Start: Spawn garbage");
         start = Utc::now();
         spawn_garbage(&mut world, &self.garbage_settings);
 

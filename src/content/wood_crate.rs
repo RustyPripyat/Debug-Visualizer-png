@@ -1,3 +1,4 @@
+use debug_print::debug_println;
 // spawn crate randomly in the world
 use crate::utils::spawn_content_randomly;
 use rand::{thread_rng, Rng};
@@ -26,6 +27,6 @@ pub(crate) fn spawn_crate(world: &mut Vec<Vec<Tile>>, crate_settings: CrateSetti
     for (y, x) in spawn_points {
         let upper_bound = thread_rng().gen_range(2..=max);
         world[y][x].content = Crate(1..upper_bound);
-        println!("spawned crate at {},{} with upper bound {}", x, y, upper_bound)
+        debug_println!("spawned crate at {},{} with upper bound {}", x, y, upper_bound)
     }
 }
