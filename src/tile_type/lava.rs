@@ -7,7 +7,8 @@ use robotics_lib::world::tile::TileType;
 use crate::generator::{Coordinates, World};
 
 impl LavaSettings {
-    // Custom constructor that takes a size parameter
+    /// Custom version of default that provides an instance of `LavaSettings` with the
+    /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         LavaSettings {
             number_of_spawn_points: size / 25,
@@ -16,13 +17,21 @@ impl LavaSettings {
     }
 }
 
+/// Settings defining the behavior of lava generation within the world.
+///
+/// This struct represents the configuration for lava, including the number of spawn points
+/// and the range of lava flow.
 #[derive(Clone)]
 pub struct LavaSettings {
+    /// The number of spawn points for lava within the world.
     pub(crate) number_of_spawn_points: usize,
+    /// The range representing the potential flow distance of lava.
+    ///
+    /// This range defines the minimum and maximum possible distance that lava can flow from
+    /// its source point.
     pub(crate) lava_flow_range: Range<usize>,
 }
 
-//
 pub(crate) fn spawn_lava(world: &mut World, elevation_map: &Vec<Vec<f64>>, lava_settings: LavaSettings) {
     let possible_spawn_points = get_yx_mountain_tiles(world);
     let min = min(lava_settings.number_of_spawn_points, possible_spawn_points.len());
