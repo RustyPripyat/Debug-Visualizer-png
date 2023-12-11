@@ -22,6 +22,7 @@ use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
 impl Default for NoiseSettings {
+    ///
     fn default() -> Self {
         NoiseSettings {
             seed: 0,

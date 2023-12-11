@@ -16,16 +16,10 @@ path = "bin/main.rs"
 [dependencies]
 robotics_lib = { git = "ssh://git@github.com/Advanced-Programming-2023/Robotic-Lib.git", branch = "master" }
 rand = "0.8.5"
-strum = "0.25.0"
-image = "0.24.7"
 noise = "0.8.2"
-worldgen = "0.5.3"
-num_cpus = "1.16.0"
 rayon = "1.8.0"
-chrono = "0.4.31"
-imageproc = "0.23.0"
-map-range = "0.1.2"
-voronoi = "0.1.4"
+chrono = "0.4.31" # Only for debug porpouse
 voronator = "0.2.1"
-debug_print = "1.0.0"
+debug_print = "1.0.0"# Only for debug porpouse
 nannou_core = "0.18.0"
+image = "0.24.7"
