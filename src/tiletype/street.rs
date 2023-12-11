@@ -110,8 +110,7 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
         let rounded_y = y.round() as usize;
 
         // avoid diagonal steps
-        if index > 0 && index < steps as usize && rounded_x != line_segments[line_segments.len() - 1].0 && rounded_y != line_segments[line_segments.len() - 1].1
-        {
+        if index > 0 && index < steps as usize && rounded_x != line_segments[line_segments.len() - 1].0 && rounded_y != line_segments[line_segments.len() - 1].1 {
             line_segments.push((rounded_x, line_segments[line_segments.len() - 1].1));
             line_segments.push((line_segments[line_segments.len() - 1].0, rounded_y));
         }
@@ -132,12 +131,7 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
     line_segments
 }
 
-fn combine_local_maxima(
-    elevation_map: &[Vec<f64>],
-    all_local_maxima: &mut [(usize, usize)],
-    n_slice_per_side: usize,
-    band_width: usize,
-) -> Vec<(usize, usize)> {
+fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [(usize, usize)], n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
     let mut hs: HashSet<(usize, usize)> = HashSet::new();
     let qnt_per_slice = elevation_map.len() / n_slice_per_side;
 

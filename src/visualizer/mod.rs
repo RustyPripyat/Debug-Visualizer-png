@@ -90,7 +90,5 @@ pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_
 
     if let Err(e) = img.save_with_format(file_name, ImageFormat::Png) {
         debug_println!("Error saving the image, {}", e);
-    } else {
-        debug_println!("Image saved successfully, {}", file_name);
     }
 }

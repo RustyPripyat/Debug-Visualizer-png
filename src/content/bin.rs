@@ -1,5 +1,5 @@
 use debug_print::debug_println;
-use rand::{Rng, thread_rng};
+use rand::{thread_rng, Rng};
 use robotics_lib::world::tile::Content::Bin;
 use robotics_lib::world::tile::Tile;
 

@@ -1,6 +1,6 @@
 // spawn bank randomly in the world
-use debug_print::{debug_println};
 use crate::utils::spawn_content_randomly;
+use debug_print::debug_println;
 use rand::{thread_rng, Rng};
 use robotics_lib::world::tile::Content::Bank;
 use robotics_lib::world::tile::Tile;

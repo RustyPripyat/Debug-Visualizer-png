@@ -1,10 +1,5 @@
-use crate::content::bank::BankSettings;
-use crate::content::bin::BinSettings;
-use crate::content::garbage::GarbageSettings;
-use crate::content::wood_crate::CrateSettings;
-use crate::generator::*;
-use crate::tiletype::lava::LavaSettings;
-use crate::visualizer::save_world_image;
+use chrono::Utc;
+use debug_print::debug_println;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
 use robotics_lib::runner::backpack::BackPack;
@@ -12,6 +7,14 @@ use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::world::coordinates::Coordinate;
 use robotics_lib::world::world_generator::Generator;
 use robotics_lib::world::World;
+
+use crate::content::bank::BankSettings;
+use crate::content::bin::BinSettings;
+use crate::content::garbage::GarbageSettings;
+use crate::content::wood_crate::CrateSettings;
+use crate::generator::*;
+use crate::tiletype::lava::LavaSettings;
+use crate::visualizer::save_world_image;
 
 mod content;
 mod generator;
@@ -66,5 +69,8 @@ fn main() {
     );
 
     let tiles = generator.gen().0;
+    debug_println!("Start: saving world as png");
+    let start = Utc::now();
     save_world_image(&tiles, (0, 0), "img.png", 4);
+    debug_println!("Done: saving world as png {}ms", (Utc::now() - start).num_milliseconds());
 }

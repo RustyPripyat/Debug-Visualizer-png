@@ -19,9 +19,9 @@ impl GarbageSettings {
     /// Initialize the struct with optimal parameters given the world size
     pub(crate) fn default(size: usize) -> Self {
         GarbageSettings {
-            total_garbage_quantity: size,
-            garbage_pile_size: 1..size,
-            garbage_per_tile_quantity: 1..size / 100,
+            total_garbage_quantity: size / 2,
+            garbage_pile_size: 1..size / 10,
+            garbage_per_tile_quantity: 1..Garbage(0).properties().max(),
             spawn_in_near_tiles_probability: 1.0,
             probability_step_by: 0.2,
         }
@@ -34,24 +34,17 @@ pub(crate) fn spawn_garbage(world: &mut Vec<Vec<Tile>>, settings: &GarbageSettin
     let max_amount = min(settings.garbage_per_tile_quantity.clone().max().unwrap_or(1), Garbage(0).properties().max());
     let spawn_prob = f64::max(0.2, settings.spawn_in_near_tiles_probability);
     while i < settings.total_garbage_quantity {
-        spawn_garbage_build_up(world, settings, spawn_prob, &mut i, &mut rng, max_amount);
+        spawn_garbage_build_up(world, settings.garbage_pile_size.clone(), settings.probability_step_by, spawn_prob, &mut i, &mut rng, max_amount);
     }
 }
 
 #[inline(always)]
-pub(crate) fn spawn_garbage_build_up(
-    world: &mut Vec<Vec<Tile>>,
-    settings: &GarbageSettings,
-    spawn_prob: f64,
-    placed: &mut usize,
-    rng: &mut ThreadRng,
-    max_garbage_per_tile: usize,
-) {
+pub(crate) fn spawn_garbage_build_up(world: &mut Vec<Vec<Tile>>, garbage_pile_size: Range<usize>, probability_step_by: f64, spawn_prob: f64, placed: &mut usize, rng: &mut ThreadRng, max_garbage_per_tile: usize) {
     // Get size of garbage pile
-    let pile_range = rng.gen_range(settings.garbage_pile_size.clone());
+    let pile_range = rng.gen_range(garbage_pile_size);
 
     // Note that the matrix size will be rounded to greater odd number
-    let probability_matrix = generate_prob_matrix(pile_range, settings.probability_step_by);
+    let probability_matrix = generate_prob_matrix(pile_range, probability_step_by);
 
     // get random x and y coordinates, the base indexes where matrix garbage will starts
     let map_range = 0..world.len();

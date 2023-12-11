@@ -21,19 +21,11 @@ pub(crate) fn slice_vec_2d(input: &[Vec<f64>], n_slice: usize) -> Vec<Slice> {
 
     for y in 0..n_slice {
         let start_row = y * qnt_per_slice;
-        let end_row = if (start_row + qnt_per_slice) < input.len() {
-            start_row + qnt_per_slice - 1
-        } else {
-            input.len()
-        };
+        let end_row = if (start_row + qnt_per_slice) < input.len() { start_row + qnt_per_slice - 1 } else { input.len() };
 
         for x in 0..n_slice {
             let start_col = x * qnt_per_slice;
-            let end_col = if (start_col + qnt_per_slice) < input.len() {
-                start_col + qnt_per_slice - 1
-            } else {
-                input.len()
-            };
+            let end_col = if (start_col + qnt_per_slice) < input.len() { start_col + qnt_per_slice - 1 } else { input.len() };
 
             slice.push(Slice {
                 start: Coordinate {

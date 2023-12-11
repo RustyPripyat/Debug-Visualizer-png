@@ -40,13 +40,7 @@ pub(crate) fn flow_from(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>
     } else {
         // if there is a neighbour with a lower height, flow to it
         let (lowest_neighbour_y, lowest_neighbour_x) = get_lowest_neighbour(elevation_map, y, x);
-        flow_from(
-            world,
-            elevation_map,
-            lowest_neighbour_y,
-            lowest_neighbour_x,
-            remaining_range.start..remaining_range.end - 1,
-        )
+        flow_from(world, elevation_map, lowest_neighbour_y, lowest_neighbour_x, remaining_range.start..remaining_range.end - 1)
         // if elevation_map[lowest_neighbour_y][lowest_neighbour_x] < elevation_map[y][x] {
         //     return flow_from(world, elevation_map, lowest_neighbour_y, lowest_neighbour_x, remaining_range.start..remaining_range.end - 1);
         // }
