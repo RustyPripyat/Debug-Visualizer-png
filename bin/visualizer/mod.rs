@@ -1,3 +1,4 @@
+use chrono::Utc;
 use debug_print::debug_println;
 use image::{ImageFormat, Rgb, RgbImage};
 use robotics_lib::world::tile::*;
@@ -86,9 +87,12 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize, usize), t
 }
 
 pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_name: &str, tile_size: usize) {
+    debug_println!("Start: saving world as png");
+    let start = Utc::now();
     let img = create_image_from_tiles(tiles, bot_position, tile_size);
 
     if let Err(e) = img.save_with_format(file_name, ImageFormat::Png) {
-        debug_println!("Error saving the image, {}", e);
+        panic!("Error saving the image, {}", e);
     }
+    debug_println!("Done: saving world as png {}ms", (Utc::now() - start).num_milliseconds());
 }

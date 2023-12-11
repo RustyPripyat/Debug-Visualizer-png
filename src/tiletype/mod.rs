@@ -1,2 +1,2 @@
-pub(crate) mod lava;
-pub(crate) mod street;
+pub mod lava;
+pub mod street;

@@ -7,7 +7,7 @@ use robotics_lib::world::tile::{Content, Tile};
 use robotics_lib::world::tile::Content::Garbage;
 
 #[derive(Clone)]
-pub(crate) struct GarbageSettings {
+pub struct GarbageSettings {
     pub(crate) total_garbage_quantity: usize,
     pub(crate) garbage_pile_size: Range<usize>,
     pub(crate) garbage_per_tile_quantity: Range<usize>,
@@ -17,7 +17,7 @@ pub(crate) struct GarbageSettings {
 
 impl GarbageSettings {
     /// Initialize the struct with optimal parameters given the world size
-    pub(crate) fn default(size: usize) -> Self {
+    pub fn default(size: usize) -> Self {
         GarbageSettings {
             total_garbage_quantity: size / 2,
             garbage_pile_size: 1..size / 10,

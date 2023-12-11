@@ -7,7 +7,7 @@ use robotics_lib::world::tile::Tile;
 
 impl BankSettings {
     // Custom constructor that takes a size parameter
-    pub(crate) fn default(size: usize) -> Self {
+    pub fn default(size: usize) -> Self {
         BankSettings {
             number_of_spawn_points: size / 25,
         }
@@ -15,7 +15,7 @@ impl BankSettings {
 }
 
 #[derive(Clone)]
-pub(crate) struct BankSettings {
+pub struct BankSettings {
     pub(crate) number_of_spawn_points: usize,
 }
 

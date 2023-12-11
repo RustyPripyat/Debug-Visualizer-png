@@ -1,26 +1,19 @@
-use chrono::Utc;
-use debug_print::debug_println;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
-use robotics_lib::runner::backpack::BackPack;
 use robotics_lib::runner::{Robot, Runnable};
+use robotics_lib::runner::backpack::BackPack;
 use robotics_lib::world::coordinates::Coordinate;
-use robotics_lib::world::world_generator::Generator;
 use robotics_lib::world::World;
+use robotics_lib::world::world_generator::Generator;
 
-use crate::content::bank::BankSettings;
-use crate::content::bin::BinSettings;
-use crate::content::garbage::GarbageSettings;
-use crate::content::wood_crate::CrateSettings;
-use crate::generator::*;
-use crate::tiletype::lava::LavaSettings;
-use crate::visualizer::save_world_image;
+use exclusion_zone::content::bank::BankSettings;
+use exclusion_zone::content::bin::BinSettings;
+use exclusion_zone::content::garbage::GarbageSettings;
+use exclusion_zone::content::wood_crate::CrateSettings;
+use exclusion_zone::generator::{NoiseSettings, Thresholds};
+use exclusion_zone::tiletype::lava::LavaSettings;
 
-mod content;
-mod generator;
-mod tiletype;
-mod utils;
-pub mod visualizer;
+mod visualizer;
 
 fn main() {
     struct MyRobot(Robot);
@@ -57,7 +50,7 @@ fn main() {
 
     let _r = MyRobot(Robot::new());
     let size = 1000;
-    let mut generator = WorldGenerator::new(
+    let mut generator = exclusion_zone::generator::WorldGenerator::new(
         size,
         NoiseSettings::default(),
         Thresholds::default(),
@@ -69,8 +62,6 @@ fn main() {
     );
 
     let tiles = generator.gen().0;
-    debug_println!("Start: saving world as png");
-    let start = Utc::now();
-    save_world_image(&tiles, (0, 0), "img.png", 4);
-    debug_println!("Done: saving world as png {}ms", (Utc::now() - start).num_milliseconds());
+
+    visualizer::save_world_image(&tiles, (0, 0), "img.png", 4);
 }

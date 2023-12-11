@@ -1,12 +1,13 @@
-use rand::seq::SliceRandom;
-use robotics_lib::world::tile::Tile;
-use robotics_lib::world::tile::TileType;
 use std::cmp::min;
 use std::ops::Range;
 
+use rand::seq::SliceRandom;
+use robotics_lib::world::tile::Tile;
+use robotics_lib::world::tile::TileType;
+
 impl LavaSettings {
     // Custom constructor that takes a size parameter
-    pub(crate) fn default(size: usize) -> Self {
+    pub fn default(size: usize) -> Self {
         LavaSettings {
             number_of_spawn_points: size / 25,
             lava_flow_range: 1..size / 25,
@@ -15,7 +16,7 @@ impl LavaSettings {
 }
 
 #[derive(Clone)]
-pub(crate) struct LavaSettings {
+pub struct LavaSettings {
     pub(crate) number_of_spawn_points: usize,
     pub(crate) lava_flow_range: Range<usize>,
 }

@@ -34,7 +34,7 @@ impl Default for NoiseSettings {
     }
 }
 
-pub(crate) struct NoiseSettings {
+pub struct NoiseSettings {
     pub(crate) seed: u32,
     pub(crate) octaves: usize,
     pub(crate) frequency: f64,
@@ -57,7 +57,7 @@ impl Default for Thresholds {
     }
 }
 
-pub(crate) struct Thresholds {
+pub struct Thresholds {
     pub(crate) threshold_deep_water: f64,
     pub(crate) threshold_shallow_water: f64,
     pub(crate) threshold_sand: f64,
@@ -66,15 +66,15 @@ pub(crate) struct Thresholds {
     pub(crate) threshold_mountain: f64,
 }
 
-pub(crate) struct WorldGenerator {
-    pub(crate) size: usize,
-    pub(crate) noise_settings: NoiseSettings,
-    pub(crate) thresholds: Thresholds,
-    pub(crate) lava_settings: LavaSettings,
-    pub(crate) bank_settings: BankSettings,
-    pub(crate) bin_settings: BinSettings,
-    pub(crate) crate_settings: CrateSettings,
-    pub(crate) garbage_settings: GarbageSettings,
+pub struct WorldGenerator {
+    pub size: usize,
+    pub noise_settings: NoiseSettings,
+    pub thresholds: Thresholds,
+    pub lava_settings: LavaSettings,
+    pub bank_settings: BankSettings,
+    pub bin_settings: BinSettings,
+    pub crate_settings: CrateSettings,
+    pub garbage_settings: GarbageSettings,
 }
 
 impl WorldGenerator {

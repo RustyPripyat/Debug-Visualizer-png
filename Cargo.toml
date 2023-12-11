@@ -1,9 +1,16 @@
 [package]
-name = "bin"
+name = "rusty_pripyat"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "exclusion_zone"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bin"
+path = "bin/main.rs"
 
 [dependencies]
 robotics_lib = { git = "ssh://git@github.com/Advanced-Programming-2023/Robotic-Lib.git", branch = "master" }

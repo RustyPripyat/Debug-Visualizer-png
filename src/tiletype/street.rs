@@ -71,7 +71,7 @@ fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[(usize, usize)]) -
 
 fn fix_extremes(edges: HashSet<Edge>, size: usize) -> Vec<Edge> {
     let mut edges: Vec<Edge> = edges.into_iter().collect();
-    for mut edge in edges.iter_mut() {
+    for edge in edges.iter_mut() {
         edge.start.0 = if edge.start.0 >= size - 2 { size } else { edge.start.0 };
         edge.start.1 = if edge.start.1 >= size - 2 { size } else { edge.start.1 };
         edge.end.0 = if edge.end.0 >= size - 2 { size } else { edge.end.0 };
@@ -200,7 +200,7 @@ fn combine_local_maxima_in_same_slice(
 
     //if the delta (Δx or Δy) is < band_width, remove the local maxima with the lowest elevation
     let mut higher_index = 0;
-    let mut lower_index = 1;
+    let mut lower_index;
     if local_maxima_in_slice.len() > 1 {
         while higher_index < local_maxima_in_slice.len() - 1 {
             lower_index = higher_index + 1;

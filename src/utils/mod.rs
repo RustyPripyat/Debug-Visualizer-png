@@ -1,7 +1,5 @@
-use crate::content::bank::BankSettings;
 use rand::Rng;
 use robotics_lib::world::tile::{Content, Tile};
-use robotics_lib::world::World;
 
 pub(crate) struct Coordinate {
     pub(crate) row: usize,

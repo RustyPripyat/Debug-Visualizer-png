@@ -8,7 +8,7 @@ use crate::utils::spawn_content_randomly;
 
 impl BinSettings {
     // Custom constructor that takes a size parameter
-    pub(crate) fn default(size: usize) -> Self {
+    pub fn default(size: usize) -> Self {
         BinSettings {
             number_of_spawn_points: size / 25,
         }
@@ -16,7 +16,7 @@ impl BinSettings {
 }
 
 #[derive(Clone)]
-pub(crate) struct BinSettings {
+pub struct BinSettings {
     pub(crate) number_of_spawn_points: usize,
 }
 
