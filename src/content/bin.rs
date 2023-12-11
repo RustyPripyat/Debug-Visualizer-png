@@ -1,5 +1,5 @@
 use debug_print::debug_println;
-use rand::{thread_rng, Rng};
+use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bin;
 use robotics_lib::world::tile::Tile;
 
@@ -27,6 +27,5 @@ pub(crate) fn spawn_bin(world: &mut Vec<Vec<Tile>>, bin_settings: BinSettings) {
     for (y, x) in spawn_points {
         let upper_bound = thread_rng().gen_range(2..=max);
         world[y][x].content = Bin(1..upper_bound);
-        debug_println!("spawned bin at {},{} with upper bound {}", x, y, upper_bound);
     }
 }

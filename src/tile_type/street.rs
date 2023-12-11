@@ -5,7 +5,7 @@ use std::hash::Hash;
 use voronator::delaunator::Point;
 use voronator::VoronoiDiagram;
 
-use crate::utils::{slice_vec_2d, Coordinate, Slice};
+use crate::utils::{Coordinate, Slice, slice_vec_2d};
 
 #[derive(Debug, Hash)]
 struct Edge {
@@ -150,10 +150,10 @@ fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [(usi
             qnt_per_slice,
             band_width,
         )
-        .iter()
-        .for_each(|x| {
-            hs.insert(*x);
-        });
+            .iter()
+            .for_each(|x| {
+                hs.insert(*x);
+            });
 
         //horizontal slices
         combine_local_maxima_in_same_slice(
@@ -166,10 +166,10 @@ fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [(usi
             qnt_per_slice,
             band_width,
         )
-        .iter()
-        .for_each(|x| {
-            hs.insert(*x);
-        });
+            .iter()
+            .for_each(|x| {
+                hs.insert(*x);
+            });
     }
 
     hs.into_iter().collect()

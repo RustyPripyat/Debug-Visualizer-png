@@ -15,8 +15,8 @@ pub(crate) struct Fire {
 }
 
 impl Fire {
-    pub(crate) fn new(size: usize, radius: f32, variation: f32) -> Self {
-        let mut fire = Fire::default(size);
+    pub fn default(size: usize, radius: f32, variation: f32) -> Self {
+        let mut fire = Fire::new();
 
         // set the radius
         fire.radius = radius;
@@ -30,11 +30,11 @@ impl Fire {
         // get the center of the fire
         let mut rng = rand::thread_rng();
         let max_radius = (radius.ceil() + variation.ceil()) as usize;
-        let x = rng.gen_range(0 + max_radius..size - max_radius);
-        let y = rng.gen_range(0 + max_radius..size - max_radius);
+        let x = rng.gen_range(max_radius..size - max_radius);
+        let y = rng.gen_range(max_radius..size - max_radius);
         fire.center = Coordinate { row: y, col: x };
 
-        // set boerder points
+        // set boarder points
         fire.border_points =
             (0..=360).map(|i| { // Map over an array of integers from 0 to 360 to represent the degrees in a circle.
                 // Convert each degree to radians.
@@ -73,7 +73,7 @@ impl Fire {
         (min_row, min_col, max_row, max_col)
     }
 
-    pub(crate) fn default(size: usize) -> Self {
+    pub(crate) fn new() -> Self {
         Fire {
             points: vec![],
             noise: Perlin::new(0),
@@ -98,9 +98,9 @@ impl Fire {
         }
 
         let mut stack: Vec<Coordinate> = Vec::new();
-        stack.push(Coordinate{row:self.center.row - upper_border, col:self.center.col - left_border });
+        stack.push(Coordinate { row: self.center.row - upper_border, col: self.center.col - left_border });
         // mark center as visited
-        visited[self.center.row-upper_border][self.center.col-left_border] = true;
+        visited[self.center.row - upper_border][self.center.col - left_border] = true;
         while !stack.is_empty()
         {
             if let Some(current) = stack.pop()
@@ -109,7 +109,7 @@ impl Fire {
                 let y = current.row;
 
                 // upper left
-                if x > 0 && y > 0 && !visited[y - 1][x - 1] && !visited[y-1][x] && !visited[y][x-1] {
+                if x > 0 && y > 0 && !visited[y - 1][x - 1] && !visited[y - 1][x] && !visited[y][x - 1] {
                     visited[y - 1][x - 1] = true;
                     stack.push(Coordinate { row: y - 1, col: x - 1 });
                 }
@@ -119,17 +119,17 @@ impl Fire {
                     stack.push(Coordinate { row: y - 1, col: x });
                 }
                 // upper right
-                if x < rect_width - 1 && y > 0 && !visited[y - 1][x + 1] && !visited[y-1][x] && !visited[y][x+1]{
+                if x < rect_width - 1 && y > 0 && !visited[y - 1][x + 1] && !visited[y - 1][x] && !visited[y][x + 1] {
                     visited[y - 1][x + 1] = true;
                     stack.push(Coordinate { row: y - 1, col: x + 1 });
                 }
                 // right center
-                if x < rect_width - 1 && !visited[y][x +  1]{
+                if x < rect_width - 1 && !visited[y][x + 1] {
                     visited[y][x + 1] = true;
                     stack.push(Coordinate { row: y, col: x + 1 });
                 }
                 // lower right
-                if x < rect_width - 1 && y < rect_height - 1 && !visited[y + 1][x + 1] && !visited[y+1][x] && !visited[y][x+1]{
+                if x < rect_width - 1 && y < rect_height - 1 && !visited[y + 1][x + 1] && !visited[y + 1][x] && !visited[y][x + 1] {
                     visited[y + 1][x + 1] = true;
                     stack.push(Coordinate { row: y + 1, col: x + 1 });
                 }
@@ -139,7 +139,7 @@ impl Fire {
                     stack.push(Coordinate { row: y + 1, col: x });
                 }
                 // lower left
-                if x > 0 && y < rect_height - 1 && !visited[y + 1][x - 1] && !visited[y+1][x] && !visited[y][x-1]{
+                if x > 0 && y < rect_height - 1 && !visited[y + 1][x - 1] && !visited[y + 1][x] && !visited[y][x - 1] {
                     visited[y + 1][x - 1] = true;
                     stack.push(Coordinate { row: y + 1, col: x - 1 });
                 }
@@ -162,7 +162,7 @@ impl Fire {
 }
 
 pub fn spawn_fires(world: &mut Vec<Vec<Tile>>) {
-    let fire = Fire::new(world.len(), 40., 0.1);
+    let fire = Fire::default(world.len(), 40., 0.1);
     for point in fire.points {
         world[point.row][point.col].content = Content::Fire;
     }

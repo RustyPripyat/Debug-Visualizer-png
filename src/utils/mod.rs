@@ -1,9 +1,6 @@
 use noise::Perlin;
-use crate::content::bank::BankSettings;
-use rand::{Rng, RngCore};
+use rand::Rng;
 use robotics_lib::world::tile::{Content, Tile};
-use robotics_lib::world::World;
-use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub(crate) struct Coordinate {
@@ -125,10 +122,10 @@ pub(crate) fn spawn_content_randomly(world: &mut Vec<Vec<Tile>>, mut number_of_s
     spawn_points
 }
 
-pub(crate) fn get_random_seeded_noise() -> Perlin{
+pub(crate) fn get_random_seeded_noise() -> Perlin {
     // setting noise with random seed
     let mut rng = rand::thread_rng();
-    let mut  noise = Perlin::new(rng.gen());
+    let mut noise = Perlin::new(rng.gen());
     noise
 }
 
