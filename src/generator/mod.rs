@@ -1,23 +1,24 @@
 use std::collections::HashMap;
 
 use chrono::Utc;
+use debug_print::debug_println;
+use noise::{Fbm, Perlin, RidgedMulti};
 use noise::MultiFractal;
 use noise::NoiseFn;
-use noise::{Fbm, Perlin, RidgedMulti};
-use rayon::iter::IntoParallelIterator;
 use rayon::iter::*;
+use rayon::iter::IntoParallelIterator;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny};
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::world_generator::Generator;
 
-use crate::content::bank::{spawn_bank, BankSettings};
-use crate::content::bin::{spawn_bin, BinSettings};
+use crate::content::bank::{BankSettings, spawn_bank};
+use crate::content::bin::{BinSettings, spawn_bin};
 use crate::content::fire::spawn_fires;
-use crate::content::garbage::{spawn_garbage, GarbageSettings};
-use crate::content::wood_crate::{spawn_crate, CrateSettings};
-use crate::tiletype::lava::{spawn_lava, LavaSettings};
-use crate::tiletype::street::street_spawn;
+use crate::content::garbage::{GarbageSettings, spawn_garbage};
+use crate::content::wood_crate::{CrateSettings, spawn_crate};
+use crate::tile_type::lava::{LavaSettings, spawn_lava};
+use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
 impl Default for NoiseSettings {
@@ -34,7 +35,7 @@ impl Default for NoiseSettings {
     }
 }
 
-pub(crate) struct NoiseSettings {
+pub struct NoiseSettings {
     pub(crate) seed: u32,
     pub(crate) octaves: usize,
     pub(crate) frequency: f64,
@@ -57,7 +58,7 @@ impl Default for Thresholds {
     }
 }
 
-pub(crate) struct Thresholds {
+pub struct Thresholds {
     pub(crate) threshold_deep_water: f64,
     pub(crate) threshold_shallow_water: f64,
     pub(crate) threshold_sand: f64,
@@ -66,30 +67,20 @@ pub(crate) struct Thresholds {
     pub(crate) threshold_mountain: f64,
 }
 
-pub(crate) struct WorldGenerator {
-    pub(crate) size: usize,
-    pub(crate) noise_settings: NoiseSettings,
-    pub(crate) thresholds: Thresholds,
-    pub(crate) lava_settings: LavaSettings,
-    pub(crate) bank_settings: BankSettings,
-    pub(crate) bin_settings: BinSettings,
-    pub(crate) crate_settings: CrateSettings,
-    pub(crate) garbage_settings: GarbageSettings,
+pub struct WorldGenerator {
+    pub size: usize,
+    pub noise_settings: NoiseSettings,
+    pub thresholds: Thresholds,
+    pub lava_settings: LavaSettings,
+    pub bank_settings: BankSettings,
+    pub bin_settings: BinSettings,
+    pub crate_settings: CrateSettings,
+    pub garbage_settings: GarbageSettings,
 }
 
 impl WorldGenerator {
     fn generate_terrain(&self, noise_map: &[Vec<f64>], min: f64, max: f64) -> Vec<Vec<Tile>> {
-        let mut world = vec![
-            vec![
-                Tile {
-                    tile_type: TileType::Grass,
-                    content: Content::None,
-                    elevation: 0,
-                };
-                self.size
-            ];
-            self.size
-        ];
+        let mut world = vec![vec![Tile { tile_type: TileType::Grass, content: Content::None, elevation: 0 }; self.size]; self.size];
 
         for (y, row) in noise_map.iter().enumerate() {
             for (x, &value) in row.iter().enumerate() {
@@ -116,12 +107,11 @@ impl WorldGenerator {
         //color local maxima black
         let polygons = street_spawn(self.size / 250, noise_map, 10, 0.0);
 
-        for (index, polygon) in polygons.iter().enumerate() {
+        for polygon in polygons.iter() {
             for (y, x) in polygon {
-                // println!("Street in: {};{}", x, y);
+                debug_println!("Street in: {};{}", x, y);
                 world[*y][*x].tile_type = TileType::Street;
             }
-            //save_world_image(&world, (0, 0), format!("poly_{}.png",index).as_str());
         }
         world
     }
@@ -175,52 +165,50 @@ impl Generator for WorldGenerator {
     fn gen(&mut self) -> (Vec<Vec<Tile>>, (usize, usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
         let noise_map = self.generate_elevation_map();
         let mut start = Utc::now();
-        println!("Done: Generate noise map: {}", (Utc::now() - start).num_milliseconds());
+        debug_println!("Done: Generate noise map: {}", (Utc::now() - start).num_milliseconds());
 
-        println!("Start: Calculate min and max value");
+        debug_println!("Start: Calculate min and max value");
         start = Utc::now();
         let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX); // get min value
-        let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN); // get max value
-        println!("Done: Calculate min and max value: {}", (Utc::now() - start).num_milliseconds());
+        let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN);
+        // get max value
+        debug_println!("Done: Calculate min and max value: {}", (Utc::now() - start).num_milliseconds());
 
-        println!("Start: Generate terrain");
+        debug_println!("Start: Generate terrain");
         start = Utc::now();
         let mut world = self.generate_terrain(&noise_map, min_value, max_value);
-        println!("Done: Generate terrain: {}", (Utc::now() - start).num_milliseconds());
+        debug_println!("Done: Generate terrain: {}", (Utc::now() - start).num_milliseconds());
 
         // spawn lava
-        println!("Start: Spawn lava");
+        debug_println!("Start: Spawn lava");
         start = Utc::now();
         spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
-        println!("Done: Spawn lava: {}", (Utc::now() - start).num_milliseconds());
+        debug_println!("Done: Spawn lava: {}", (Utc::now() - start).num_milliseconds());
 
         // spawn bank
-        println!("Start: Spawn bank");
-        start = Utc::now();
+        debug_println!("Start: Spawn bank");
         spawn_bank(&mut world, self.bank_settings.clone());
 
         // spawn bin
-        println!("Start: Spawn bin");
-        start = Utc::now();
+        debug_println!("Start: Spawn bin");
         spawn_bin(&mut world, self.bin_settings.clone());
 
         // spawn wood_crate
-        println!("Start: Spawn crate");
-        start = Utc::now();
+        debug_println!("Start: Spawn crate");
         spawn_crate(&mut world, self.crate_settings.clone());
 
         // spawn garbage
-        println!("Start: Spawn garbage");
+        debug_println!("Start: Spawn garbage");
         start = Utc::now();
         spawn_garbage(&mut world, &self.garbage_settings);
-        
+        debug_println!("Done: Spawn garbage in {}ms", (Utc::now() - start).num_milliseconds());
+
         // spawn fires
-        println!("Start: Spawn fires");
+        debug_println!("Start: Spawn fire");
         start = Utc::now();
         spawn_fires(&mut world);
+        debug_println!("Done: Spawn fire in {}ms", (Utc::now() - start).num_milliseconds());
 
         (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy], 1, 9).unwrap(), 0.0, None)
     }
 }
-
-

@@ -1,12 +1,13 @@
-use rand::seq::SliceRandom;
-use robotics_lib::world::tile::Tile;
-use robotics_lib::world::tile::TileType;
 use std::cmp::min;
 use std::ops::Range;
 
+use rand::seq::SliceRandom;
+use robotics_lib::world::tile::Tile;
+use robotics_lib::world::tile::TileType;
+
 impl LavaSettings {
     // Custom constructor that takes a size parameter
-    pub(crate) fn default(size: usize) -> Self {
+    pub fn default(size: usize) -> Self {
         LavaSettings {
             number_of_spawn_points: size / 25,
             lava_flow_range: 1..size / 25,
@@ -15,7 +16,7 @@ impl LavaSettings {
 }
 
 #[derive(Clone)]
-pub(crate) struct LavaSettings {
+pub struct LavaSettings {
     pub(crate) number_of_spawn_points: usize,
     pub(crate) lava_flow_range: Range<usize>,
 }
@@ -33,20 +34,14 @@ pub(crate) fn spawn_lava(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64
 
 //for each x,y flow the lava to the lower neighbour
 pub(crate) fn flow_from(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize>) -> usize {
-    //println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
+    //debug_println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
     world[y][x].tile_type = TileType::Lava;
     if remaining_range.start == remaining_range.end {
         0
     } else {
         // if there is a neighbour with a lower height, flow to it
         let (lowest_neighbour_y, lowest_neighbour_x) = get_lowest_neighbour(elevation_map, y, x);
-        flow_from(
-            world,
-            elevation_map,
-            lowest_neighbour_y,
-            lowest_neighbour_x,
-            remaining_range.start..remaining_range.end - 1,
-        )
+        flow_from(world, elevation_map, lowest_neighbour_y, lowest_neighbour_x, remaining_range.start..remaining_range.end - 1)
         // if elevation_map[lowest_neighbour_y][lowest_neighbour_x] < elevation_map[y][x] {
         //     return flow_from(world, elevation_map, lowest_neighbour_y, lowest_neighbour_x, remaining_range.start..remaining_range.end - 1);
         // }

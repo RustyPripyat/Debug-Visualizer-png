@@ -71,7 +71,7 @@ fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[(usize, usize)]) -
 
 fn fix_extremes(edges: HashSet<Edge>, size: usize) -> Vec<Edge> {
     let mut edges: Vec<Edge> = edges.into_iter().collect();
-    for mut edge in edges.iter_mut() {
+    for edge in edges.iter_mut() {
         edge.start.0 = if edge.start.0 >= size - 2 { size } else { edge.start.0 };
         edge.start.1 = if edge.start.1 >= size - 2 { size } else { edge.start.1 };
         edge.end.0 = if edge.end.0 >= size - 2 { size } else { edge.end.0 };
@@ -110,8 +110,7 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
         let rounded_y = y.round() as usize;
 
         // avoid diagonal steps
-        if index > 0 && index < steps as usize && rounded_x != line_segments[line_segments.len() - 1].0 && rounded_y != line_segments[line_segments.len() - 1].1
-        {
+        if index > 0 && index < steps as usize && rounded_x != line_segments[line_segments.len() - 1].0 && rounded_y != line_segments[line_segments.len() - 1].1 {
             line_segments.push((rounded_x, line_segments[line_segments.len() - 1].1));
             line_segments.push((line_segments[line_segments.len() - 1].0, rounded_y));
         }
@@ -132,12 +131,7 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
     line_segments
 }
 
-fn combine_local_maxima(
-    elevation_map: &[Vec<f64>],
-    all_local_maxima: &mut [(usize, usize)],
-    n_slice_per_side: usize,
-    band_width: usize,
-) -> Vec<(usize, usize)> {
+fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [(usize, usize)], n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
     let mut hs: HashSet<(usize, usize)> = HashSet::new();
     let qnt_per_slice = elevation_map.len() / n_slice_per_side;
 
@@ -206,7 +200,7 @@ fn combine_local_maxima_in_same_slice(
 
     //if the delta (Δx or Δy) is < band_width, remove the local maxima with the lowest elevation
     let mut higher_index = 0;
-    let mut lower_index = 1;
+    let mut lower_index;
     if local_maxima_in_slice.len() > 1 {
         while higher_index < local_maxima_in_slice.len() - 1 {
             lower_index = higher_index + 1;
