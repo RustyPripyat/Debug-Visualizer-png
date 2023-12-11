@@ -13,6 +13,7 @@ use robotics_lib::world::world_generator::Generator;
 
 use crate::content::bank::{spawn_bank, BankSettings};
 use crate::content::bin::{spawn_bin, BinSettings};
+use crate::content::fire::spawn_fires;
 use crate::content::garbage::{spawn_garbage, GarbageSettings};
 use crate::content::wood_crate::{spawn_crate, CrateSettings};
 use crate::tiletype::lava::{spawn_lava, LavaSettings};
@@ -212,7 +213,14 @@ impl Generator for WorldGenerator {
         println!("Start: Spawn garbage");
         start = Utc::now();
         spawn_garbage(&mut world, &self.garbage_settings);
+        
+        // spawn fires
+        println!("Start: Spawn fires");
+        start = Utc::now();
+        spawn_fires(&mut world);
 
         (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy], 1, 9).unwrap(), 0.0, None)
     }
 }
+
+
