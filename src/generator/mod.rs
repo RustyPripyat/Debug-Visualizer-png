@@ -16,8 +16,8 @@ use crate::content::bank::{BankSettings, spawn_bank};
 use crate::content::bin::{BinSettings, spawn_bin};
 use crate::content::garbage::{GarbageSettings, spawn_garbage};
 use crate::content::wood_crate::{CrateSettings, spawn_crate};
-use crate::tiletype::lava::{LavaSettings, spawn_lava};
-use crate::tiletype::street::street_spawn;
+use crate::tile_type::lava::{LavaSettings, spawn_lava};
+use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
 impl Default for NoiseSettings {

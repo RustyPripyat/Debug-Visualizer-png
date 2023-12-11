@@ -11,7 +11,7 @@ use exclusion_zone::content::bin::BinSettings;
 use exclusion_zone::content::garbage::GarbageSettings;
 use exclusion_zone::content::wood_crate::CrateSettings;
 use exclusion_zone::generator::{NoiseSettings, Thresholds};
-use exclusion_zone::tiletype::lava::LavaSettings;
+use exclusion_zone::tile_type::lava::LavaSettings;
 
 mod visualizer;
 
