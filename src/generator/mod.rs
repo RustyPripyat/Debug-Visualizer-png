@@ -8,7 +8,7 @@ use noise::NoiseFn;
 use rayon::iter::*;
 use rayon::iter::IntoParallelIterator;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
-use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny};
+use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny, TrentinoSnow, TropicalMonsoon};
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::world_generator::Generator;
 
@@ -22,7 +22,7 @@ use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
 impl Default for NoiseSettings {
-    ///
+    /// Provides an instance of `NoiseSettings` with the default parameters
     fn default() -> Self {
         NoiseSettings {
             seed: 0,
@@ -35,8 +35,11 @@ impl Default for NoiseSettings {
     }
 }
 
+/// Defines the settings that the noise generator uses to give rise to the noise map
 pub struct NoiseSettings {
+    /// define the world generator seed, used to build the noise map, normally a random value
     pub(crate) seed: u32,
+    //TODO how am i supposed to document this?
     pub(crate) octaves: usize,
     pub(crate) frequency: f64,
     pub(crate) lacunarity: f64,
@@ -45,6 +48,7 @@ pub struct NoiseSettings {
 }
 
 impl Default for Thresholds {
+    /// Provides an instance of `Thresholds` with the default parameters
     fn default() -> Self {
         Thresholds {
             threshold_deep_water: 4.0,
@@ -57,23 +61,39 @@ impl Default for Thresholds {
     }
 }
 
+/// Define the thresholds within which tile types are assigned
 pub struct Thresholds {
+    /// define at what depth the land will be considered deep water
     pub(crate) threshold_deep_water: f64,
+    /// define at what depth the land will be considered shallow water
     pub(crate) threshold_shallow_water: f64,
+    /// define at what height the land will be considered sand
     pub(crate) threshold_sand: f64,
+    /// define at what height the land will be considered grass
     pub(crate) threshold_grass: f64,
+    /// define at what height the land will be considered hill
     pub(crate) threshold_hill: f64,
+    /// define at what height the land will be considered mountain
     pub(crate) threshold_mountain: f64,
 }
 
+/// Groups all sub-module settings of the world generator, allowing the various aspects to be customised
 pub struct WorldGenerator {
+    /// the world side dimension, final size will be size²
     pub size: usize,
+    /// settings of the noise generator uses to give rise to the noise map
     pub noise_settings: NoiseSettings,
+    /// thresholds within which tile types are assigned
     pub thresholds: Thresholds,
+    /// define how the lava will spawn
     pub lava_settings: LavaSettings,
+    /// define how banks will spawn
     pub bank_settings: BankSettings,
+    /// define how bin will spawn
     pub bin_settings: BinSettings,
+    /// define how wood crate will spawn
     pub crate_settings: CrateSettings,
+    /// define how garbage will spawn
     pub garbage_settings: GarbageSettings,
 }
 
@@ -136,6 +156,48 @@ impl WorldGenerator {
             .collect()
     }
 
+    /// Provides an instance of `WorldGenerator` given the world settings
+    ///
+    /// # Arguments
+    ///
+    /// * `size` - The world side dimension, final size will be size²
+    /// * `noise_settings` - settings of the noise generator uses to give rise to the noise map
+    /// * `thresholds` - thresholds within which tile types are assigned
+    /// * `lava_settings` - define how the lava will spawn
+    /// * `bank_settings` - define how banks will spawn
+    /// * `bin_settings` - define how bin will spawn
+    /// * `crate_settings` - define how wood crate will spawn
+    /// * `garbage_settings` - define how garbage will spawn
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `WorldGenerator` initialized with the provided settings.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings};
+    ///
+    /// let world_size = 1000;
+    /// let noise_settings = NoiseSettings::default();
+    /// let thresholds = Thresholds::default();
+    /// let lava_settings = LavaSettings::default(world_size);
+    /// let bank_settings = BankSettings::default(world_size);
+    /// let bin_settings = BinSettings::default(world_size);
+    /// let crate_settings = CrateSettings::default(world_size);
+    /// let garbage_settings = GarbageSettings::default(world_size);
+    ///
+    /// let instance = WorldGenerator::new(
+    ///     world_size,
+    ///     noise_settings,
+    ///     thresholds,
+    ///     lava_settings,
+    ///     bank_settings,
+    ///     bin_settings,
+    ///     crate_settings,
+    ///     garbage_settings,
+    /// );
+    /// ```
     pub fn new(
         size: usize,
         noise_settings: NoiseSettings,
@@ -159,10 +221,55 @@ impl WorldGenerator {
     }
 }
 
+/// Alias for `Vec<Vec<Tile>>` which is the Tile matrix representing the world
 pub type World = Vec<Vec<Tile>>;
+
+/// Alias for `(usize, usize)` which are 2D coordinates, in x, y order
 pub type Coordinates = (usize, usize);
 
 impl Generator for WorldGenerator {
+    /// Generates a new world based on the specified settings.
+    ///
+    /// This method generates a new world using the settings specified in the `WorldGenerator` instance.
+    ///
+    /// # Returns
+    ///
+    /// Returns a tuple containing the generated world represented as a matrix of `Tile` of type `World`,
+    /// initial robot coordinates of type `Coordinates`, the environmental conditions,
+    /// a floating-point value representing the max score of the world and optional score_table
+    /// used in score.rs. If None is provided, uses default score_table..
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use robotics_lib::world::world_generator::Generator;
+    /// use exclusion_zone::generator::{
+    ///     WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings,
+    ///     BinSettings, CrateSettings, GarbageSettings
+    /// };
+    ///
+    /// let world_size = 1000;
+    /// let noise_settings = NoiseSettings::default();
+    /// let thresholds = Thresholds::default();
+    /// let lava_settings = LavaSettings::default(world_size);
+    /// let bank_settings = BankSettings::default(world_size);
+    /// let bin_settings = BinSettings::default(world_size);
+    /// let crate_settings = CrateSettings::default(world_size);
+    /// let garbage_settings = GarbageSettings::default(world_size);
+    ///
+    /// let mut world_generator = WorldGenerator::new(
+    ///     world_size,
+    ///     noise_settings,
+    ///     thresholds,
+    ///     lava_settings,
+    ///     bank_settings,
+    ///     bin_settings,
+    ///     crate_settings,
+    ///     garbage_settings,
+    /// );
+    ///
+    /// let generated = world_generator.gen();
+    /// ```
     fn gen(&mut self) -> (World, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
         let tot = Utc::now();
         debug_println!("Start: Noise map generation");
@@ -219,6 +326,6 @@ impl Generator for WorldGenerator {
         debug_println!("Done: Spawn fire in {} ms", (Utc::now() - start).num_milliseconds());
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
-        (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy], 1, 9).unwrap(), 0.0, None)
+        (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 1, 9).unwrap(), 0.0, None)
     }
 }
