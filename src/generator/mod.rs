@@ -9,7 +9,7 @@ use rayon::iter::*;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny};
 use robotics_lib::world::tile::{Content, Tile, TileType};
-use robotics_lib::world::worldgenerator::Generator;
+use robotics_lib::world::world_generator::Generator;
 
 use crate::content::bank::{spawn_bank, BankSettings};
 use crate::content::bin::{spawn_bin, BinSettings};

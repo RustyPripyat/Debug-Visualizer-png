@@ -10,7 +10,7 @@ use robotics_lib::event::events::Event;
 use robotics_lib::runner::backpack::BackPack;
 use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::world::coordinates::Coordinate;
-use robotics_lib::world::worldgenerator::Generator;
+use robotics_lib::world::world_generator::Generator;
 use robotics_lib::world::World;
 
 mod content;
