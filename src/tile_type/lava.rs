@@ -43,6 +43,7 @@ pub(crate) fn spawn_lava(world: &mut World, elevation_map: &Vec<Vec<f64>>, lava_
 }
 
 //for each x,y flow the lava to the lower neighbour
+/// fatina ricorsina
 pub(crate) fn flow_from(world: &mut World, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize>) -> usize {
     //debug_println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
     world[y][x].tile_type = TileType::Lava;

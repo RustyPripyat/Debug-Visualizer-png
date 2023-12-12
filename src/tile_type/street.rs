@@ -8,7 +8,9 @@ use voronator::VoronoiDiagram;
 use crate::generator::Coordinates;
 use crate::utils::{Coordinate, Slice, slice_vec_2d};
 
-#[derive(Debug, Hash)]
+// TODO doc street
+
+#[derive(Debug, Eq, Hash)]
 struct Edge {
     start: Coordinates,
     end: Coordinates,
@@ -19,8 +21,6 @@ impl PartialEq for Edge {
         (self.start == other.start && self.end == other.end) || (self.start == other.end && self.end == other.start)
     }
 }
-
-impl Eq for Edge {}
 
 pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<Vec<Coordinates>> {
     // get local maxima
