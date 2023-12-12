@@ -1,13 +1,12 @@
-use debug_print::debug_println;
 use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bank;
-use robotics_lib::world::tile::Tile;
 
-// spawn bank randomly in the world
+use crate::generator::World;
 use crate::utils::spawn_content_randomly;
 
 impl BankSettings {
-    // Custom constructor that takes a size parameter
+    /// Custom version of default that provides an instance of `BankSettings` with the
+    /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         BankSettings {
             number_of_spawn_points: size / 25,
@@ -15,12 +14,14 @@ impl BankSettings {
     }
 }
 
+/// Settings defining the behavior of bank spawn,
+/// such as the number of spawn points
 #[derive(Clone)]
 pub struct BankSettings {
     pub(crate) number_of_spawn_points: usize,
 }
 
-pub(crate) fn spawn_bank(world: &mut Vec<Vec<Tile>>, bank_settings: BankSettings) {
+pub(crate) fn spawn_bank(world: &mut World, bank_settings: BankSettings) {
     thread_rng();
     let max = Bank(0..0).properties().max();
     let spawn_points = spawn_content_randomly(world, bank_settings.number_of_spawn_points, Bank(0..0));

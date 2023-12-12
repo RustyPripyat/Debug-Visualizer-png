@@ -3,10 +3,13 @@ use std::ops::Range;
 use nannou_core::math::{deg_to_rad, map_range};
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
-use robotics_lib::world::tile::{Content, Tile};
-
+use robotics_lib::world::tile::Content;
+use worldgen::world::World;
 use crate::utils::{Coordinate, get_random_seeded_noise};
-
+/// Settings defining the behavior of fire spawn.
+///
+/// This struct represents the configuration for fire, including the total quantity
+/// of garbage, pile sizes, quantity per tile and the likelihood that it will spawn a pile.
 #[derive(Clone)]
 pub struct FireSettings {
     pub(crate) num_fire_tiles: Option<Range<usize>>,
@@ -25,6 +28,33 @@ pub(crate) struct Blaze {
 
 
 impl FireSettings {
+    /// Creates a new instance of `Fire` with optimal settings based on the provided parameters
+    ///
+    /// This method initializes a `Fire` instance with default parameters, including the size,
+    /// radius, and variation of the fire. It generates a fire centered randomly within the specified
+    /// `size`, setting the radius and variation, and determining the border points of the fire.
+    ///
+    /// # Arguments
+    ///
+    /// * `size` - The size of the game map.
+    /// * `radius` - The radius of the fire.
+    /// * `variation` - The variation in the fire's radius.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `Fire` initialized with optimal settings based on the provided arguments.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use robotics_lib::world::tile::Content::Fire;
+    ///
+    /// let size = 1000; // Example size of the game map
+    /// let radius = 40.0; // Example radius of the fire
+    /// let variation = 0.1; // Example variation in the fire's radius
+    ///
+    /// let default_fire = Fire::default(size, radius, variation);
+    /// ```
     pub fn default(size: usize) -> Self {
         FireSettings {
             num_fire_tiles: None,
@@ -35,7 +65,7 @@ impl FireSettings {
 }
 
 impl Blaze {
-    pub fn default(world: &[Vec<Tile>], size: usize, radius: f32, variation: f32) -> Self {
+    pub fn default(world: &World, size: usize, radius: f32, variation: f32) -> Self {
         let mut blaze = Blaze::new();
 
         // set the radius

@@ -2,11 +2,13 @@ use std::cmp::min;
 use std::ops::Range;
 
 use rand::seq::SliceRandom;
-use robotics_lib::world::tile::Tile;
 use robotics_lib::world::tile::TileType;
 
+use crate::generator::{Coordinates, World};
+
 impl LavaSettings {
-    // Custom constructor that takes a size parameter
+    /// Custom version of default that provides an instance of `LavaSettings` with the
+    /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         LavaSettings {
             number_of_spawn_points: size / 25,
@@ -15,14 +17,22 @@ impl LavaSettings {
     }
 }
 
+/// Settings defining the behavior of lava generation within the world.
+///
+/// This struct represents the configuration for lava, including the number of spawn points
+/// and the range of lava flow.
 #[derive(Clone)]
 pub struct LavaSettings {
+    /// The number of spawn points for lava within the world.
     pub(crate) number_of_spawn_points: usize,
+    /// The range representing the potential flow distance of lava.
+    ///
+    /// This range defines the minimum and maximum possible distance that lava can flow from
+    /// its source point.
     pub(crate) lava_flow_range: Range<usize>,
 }
 
-//
-pub(crate) fn spawn_lava(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>>, lava_settings: LavaSettings) {
+pub(crate) fn spawn_lava(world: &mut World, elevation_map: &Vec<Vec<f64>>, lava_settings: LavaSettings) {
     let possible_spawn_points = get_yx_mountain_tiles(world);
     let min = min(lava_settings.number_of_spawn_points, possible_spawn_points.len());
     for i in 0..min {
@@ -33,7 +43,8 @@ pub(crate) fn spawn_lava(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64
 }
 
 //for each x,y flow the lava to the lower neighbour
-pub(crate) fn flow_from(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize>) -> usize {
+/// fatina ricorsina
+pub(crate) fn flow_from(world: &mut World, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize>) -> usize {
     //debug_println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
     world[y][x].tile_type = TileType::Lava;
     if remaining_range.start == remaining_range.end {
@@ -52,7 +63,7 @@ pub(crate) fn flow_from(world: &mut Vec<Vec<Tile>>, elevation_map: &Vec<Vec<f64>
 }
 
 // return the coordinates of the lowest neighbour
-pub(crate) fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: usize) -> (usize, usize) {
+pub(crate) fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: usize) -> Coordinates {
     let mut neighbour_heights = Vec::new();
     if y != 0 {
         neighbour_heights.push((elevation_map[y - 1][x], y - 1, x));
@@ -73,7 +84,7 @@ pub(crate) fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: u
 }
 
 // return vector with the coordinates of the mountain tiles in range
-pub(crate) fn get_yx_mountain_tiles(wordl: &mut Vec<Vec<Tile>>) -> Vec<(usize, usize)> {
+pub(crate) fn get_yx_mountain_tiles(wordl: &mut World) -> Vec<Coordinates> {
     let mut tiles_in_range = Vec::new();
     for (y, row) in wordl.iter().enumerate() {
         for (x, tile) in row.iter().enumerate() {

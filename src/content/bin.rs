@@ -1,13 +1,12 @@
-use debug_print::debug_println;
 use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bin;
-use robotics_lib::world::tile::Tile;
 
-// spawn bin randomly in the world
+use crate::generator::World;
 use crate::utils::spawn_content_randomly;
 
 impl BinSettings {
-    // Custom constructor that takes a size parameter
+    /// Custom version of default that provides an instance of `BinSettings` with the
+    /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         BinSettings {
             number_of_spawn_points: size / 25,
@@ -15,12 +14,14 @@ impl BinSettings {
     }
 }
 
+/// Settings defining the behavior of bins spawn,
+/// such as the number of spawn points
 #[derive(Clone)]
 pub struct BinSettings {
     pub(crate) number_of_spawn_points: usize,
 }
 
-pub(crate) fn spawn_bin(world: &mut Vec<Vec<Tile>>, bin_settings: BinSettings) {
+pub(crate) fn spawn_bin(world: &mut World, bin_settings: BinSettings) {
     let max = Bin(0..0).properties().max();
     let spawn_points = spawn_content_randomly(world, bin_settings.number_of_spawn_points, Bin(0..0));
 

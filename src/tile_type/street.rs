@@ -5,12 +5,15 @@ use std::hash::Hash;
 use voronator::delaunator::Point;
 use voronator::VoronoiDiagram;
 
+use crate::generator::Coordinates;
 use crate::utils::{Coordinate, Slice, slice_vec_2d};
 
-#[derive(Debug, Hash)]
+// TODO doc street
+
+#[derive(Debug, Eq, Hash)]
 struct Edge {
-    start: (usize, usize),
-    end: (usize, usize),
+    start: Coordinates,
+    end: Coordinates,
 }
 
 impl PartialEq for Edge {
@@ -19,14 +22,12 @@ impl PartialEq for Edge {
     }
 }
 
-impl Eq for Edge {}
-
-pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<Vec<(usize, usize)>> {
+pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<Vec<Coordinates>> {
     // get local maxima
-    let mut local_maxima: Vec<(usize, usize)> = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
+    let mut local_maxima: Vec<Coordinates> = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
 
     // combine near local maxima
-    let combined_local_maxima: Vec<(usize, usize)> = combine_local_maxima(elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
+    let combined_local_maxima: Vec<Coordinates> = combine_local_maxima(elevation_map, &mut local_maxima, n_slice_side, elevation_map.len() / 100);
 
     // get voronoi diagram
     let diagram = get_voronoi_diagram(elevation_map, &combined_local_maxima);
@@ -44,7 +45,7 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n
 fn get_edges_extremes_from_diagram(diagram: VoronoiDiagram<Point>) -> HashSet<Edge> {
     let mut unique_extremes: HashSet<Edge> = HashSet::new();
     for cell in diagram.cells().iter() {
-        let extremes: Vec<(usize, usize)> = cell.points().iter().map(|x| (x.x as usize, x.y as usize)).collect();
+        let extremes: Vec<Coordinates> = cell.points().iter().map(|x| (x.x as usize, x.y as usize)).collect();
 
         // connect the points
         for i in 0..extremes.len() - 1 {
@@ -61,7 +62,7 @@ fn get_edges_extremes_from_diagram(diagram: VoronoiDiagram<Point>) -> HashSet<Ed
     unique_extremes
 }
 
-fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[(usize, usize)]) -> VoronoiDiagram<Point> {
+fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[Coordinates]) -> VoronoiDiagram<Point> {
     // convert centers to (f64,f64)
     let points: Vec<(f64, f64)> = centers.iter().map(|(y, x)| (*x as f64, *y as f64)).collect();
 
@@ -80,14 +81,14 @@ fn fix_extremes(edges: HashSet<Edge>, size: usize) -> Vec<Edge> {
     edges
 }
 
-fn are_extremes_on_border(e1: (usize, usize), e2: (usize, usize), size: usize) -> bool {
+fn are_extremes_on_border(e1: Coordinates, e2: Coordinates, size: usize) -> bool {
     (e1.0 == 0 && e2.0 == 0) || (e1.0 == size && e2.0 == size) || (e1.1 == 0 && e2.1 == 0) || (e1.1 == size && e2.1 == size)
 }
 
 // Function to connect two points with a line segment using Bresenham's algorithm
-fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usize)> {
+fn connect_points(start: Coordinates, end: Coordinates) -> Vec<Coordinates> {
     // Vector to store the points along the line segment
-    let mut line_segments: Vec<(usize, usize)> = Vec::new();
+    let mut line_segments: Vec<Coordinates> = Vec::new();
 
     // Calculate the differences in x and y coordinates
     let dx = end.0 as isize - start.0 as isize;
@@ -125,14 +126,14 @@ fn connect_points(start: (usize, usize), end: (usize, usize)) -> Vec<(usize, usi
     //line_segments.truncate(line_segments.len()/2);
 
     // Return the vector of points representing the line segment
-    // let mut line_segments: Vec<(usize, usize)> = Vec::new();
+    // let mut line_segments: Vec<Coordinates> = Vec::new();
     // line_segments.push((start.0, start.1));
     // line_segments.push((end.0, end.1));
     line_segments
 }
 
-fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [(usize, usize)], n_slice_per_side: usize, band_width: usize) -> Vec<(usize, usize)> {
-    let mut hs: HashSet<(usize, usize)> = HashSet::new();
+fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [Coordinates], n_slice_per_side: usize, band_width: usize) -> Vec<Coordinates> {
+    let mut hs: HashSet<Coordinates> = HashSet::new();
     let qnt_per_slice = elevation_map.len() / n_slice_per_side;
 
     //combine the local maxima in the same slice
@@ -178,13 +179,13 @@ fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [(usi
 fn combine_local_maxima_in_same_slice(
     index: usize,
     get_slice: fn(usize, usize, usize, usize) -> Slice,
-    is_inside_slice: fn(&(usize, usize), &Slice) -> bool,
-    get_delta: fn(&(usize, usize), &(usize, usize)) -> usize,
+    is_inside_slice: fn(&Coordinates, &Slice) -> bool,
+    get_delta: fn(&Coordinates, &Coordinates) -> usize,
     elevation_map: &[Vec<f64>],
-    all_local_maxima: &mut [(usize, usize)],
+    all_local_maxima: &mut [Coordinates],
     qnt_per_slice: usize,
     band_width: usize,
-) -> Vec<(usize, usize)> {
+) -> Vec<Coordinates> {
     let slice: Slice = get_slice(elevation_map.len(), index, qnt_per_slice, band_width);
 
     //get the local maxima in the slice
@@ -216,19 +217,19 @@ fn combine_local_maxima_in_same_slice(
     local_maxima_in_slice
 }
 
-fn get_delta_x(higher: &(usize, usize), lower: &(usize, usize)) -> usize {
+fn get_delta_x(higher: &Coordinates, lower: &Coordinates) -> usize {
     higher.1.abs_diff(lower.1)
 }
 
-fn get_delta_y(higher: &(usize, usize), lower: &(usize, usize)) -> usize {
+fn get_delta_y(higher: &Coordinates, lower: &Coordinates) -> usize {
     higher.0.abs_diff(lower.0)
 }
 
-fn is_inside_horizontal_slice(local_maximum: &(usize, usize), slice: &Slice) -> bool {
+fn is_inside_horizontal_slice(local_maximum: &Coordinates, slice: &Slice) -> bool {
     local_maximum.0 >= slice.start.row && local_maximum.0 <= slice.end.row
 }
 
-fn is_inside_vertical_slice(local_maximum: &(usize, usize), slice: &Slice) -> bool {
+fn is_inside_vertical_slice(local_maximum: &Coordinates, slice: &Slice) -> bool {
     local_maximum.1 >= slice.start.col && local_maximum.1 <= slice.end.col
 }
 
@@ -258,8 +259,8 @@ fn get_vertical_slice(map_len: usize, col: usize, qnt_per_slice: usize, band_wid
     }
 }
 
-fn get_local_maxima(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<(usize, usize)> {
-    let mut local_maxima: Vec<(usize, usize)> = Vec::new();
+fn get_local_maxima(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<Coordinates> {
+    let mut local_maxima: Vec<Coordinates> = Vec::new();
     let mut found_local_maximum;
     let slices = slice_vec_2d(elevation_map, n_slice_side);
     for slice in slices {
@@ -281,7 +282,7 @@ fn get_local_maxima(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_thres
 }
 
 // get the maximum value from a slice
-fn get_maximum(slice: &[Vec<f64>]) -> (usize, usize) {
+fn get_maximum(slice: &[Vec<f64>]) -> Coordinates {
     slice
         .iter()
         .enumerate()
