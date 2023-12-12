@@ -36,7 +36,7 @@ pub(crate) mod content {
     /// Rock color (light brown)
     pub(crate) const ROCK: Rgb<u8> = Rgb([240, 223, 206]);
     /// Fire color (pastel orange)
-    pub(crate) const FIRE: Rgb<u8> = Rgb([242, 125, 12]);
+    pub(crate) const FIRE: Rgb<u8> = Rgb([255, 0, 0]);
     /// Coin color (Nintendo gold coin)
     pub(crate) const COIN: Rgb<u8> = Rgb([243, 199, 13]);
     /// Bin color (black cast iron)

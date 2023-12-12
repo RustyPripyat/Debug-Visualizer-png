@@ -14,7 +14,7 @@ use robotics_lib::world::world_generator::Generator;
 
 use crate::content::bank::{BankSettings, spawn_bank};
 use crate::content::bin::{BinSettings, spawn_bin};
-use crate::content::fire::spawn_fires;
+use crate::content::fire::{FireSettings, spawn_fires};
 use crate::content::garbage::{GarbageSettings, spawn_garbage};
 use crate::content::wood_crate::{CrateSettings, spawn_crate};
 use crate::tile_type::lava::{LavaSettings, spawn_lava};
@@ -76,6 +76,7 @@ pub struct WorldGenerator {
     pub bin_settings: BinSettings,
     pub crate_settings: CrateSettings,
     pub garbage_settings: GarbageSettings,
+    pub fire_settings: FireSettings,
 }
 
 impl WorldGenerator {
@@ -146,6 +147,7 @@ impl WorldGenerator {
         bin_settings: BinSettings,
         crate_settings: CrateSettings,
         garbage_settings: GarbageSettings,
+        fire_settings: FireSettings,
     ) -> Self {
         Self {
             size,
@@ -156,6 +158,7 @@ impl WorldGenerator {
             bin_settings,
             crate_settings,
             garbage_settings,
+            fire_settings,
         }
     }
 }
@@ -213,7 +216,7 @@ impl Generator for WorldGenerator {
         // spawn fires
         debug_println!("Start: Spawn fire");
         start = Utc::now();
-        spawn_fires(&mut world);
+        spawn_fires(&mut world, &self.fire_settings);
         debug_println!("Done: Spawn fire in {} ms", (Utc::now() - start).num_milliseconds());
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());

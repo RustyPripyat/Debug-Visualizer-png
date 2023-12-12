@@ -8,6 +8,7 @@ use robotics_lib::world::world_generator::Generator;
 
 use exclusion_zone::content::bank::BankSettings;
 use exclusion_zone::content::bin::BinSettings;
+use exclusion_zone::content::fire::FireSettings;
 use exclusion_zone::content::garbage::GarbageSettings;
 use exclusion_zone::content::wood_crate::CrateSettings;
 use exclusion_zone::generator::{NoiseSettings, Thresholds};
@@ -59,6 +60,7 @@ fn main() {
         BinSettings::default(size),
         CrateSettings::default(size),
         GarbageSettings::default(size),
+        FireSettings::default(size),
     );
 
     let tiles = generator.gen().0;
