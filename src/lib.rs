@@ -6,7 +6,9 @@
 //! the order in which the various Tile types and Tile content are generated, allowing you to define
 //! priorities. To ensure the best possible performance, multi-threading is exploited wherever possible.
 //!
-//! We recommend a size of at least 1000.
+//! There are methods to pre-generate the world, save it as a binary file and load it later.
+//!
+//! We recommend a size of at least <b>1000</b>.
 //!
 
 

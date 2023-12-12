@@ -14,9 +14,12 @@ use crate::utils::{Coordinate, get_random_seeded_noise};
 /// of fire tiles, the radius of the range and the number of blaze.
 #[derive(Clone)]
 pub struct FireSettings {
-    pub(crate) num_fire_tiles: Option<Range<usize>>,
-    pub(crate) radius_range: Option<Range<f32>>,
-    pub(crate) num_of_blazes: Option<Range<usize>>,
+    /// optional parameter defining the range of the number of fires to be spawn
+    pub num_fire_tiles: Option<Range<usize>>,
+    /// optional parameter defining the range of radius the fires form the center
+    pub radius_range: Option<Range<f32>>,
+    /// optional parameter defining the range of number of blaze for each fire
+    pub num_of_blazes: Option<Range<usize>>,
 }
 
 pub(crate) struct Blaze {
@@ -57,6 +60,32 @@ impl FireSettings {
             num_fire_tiles: None,
             radius_range: Some(5.0..size as f32 / 50.0),
             num_of_blazes: Some(1..size / 100),
+        }
+    }
+
+    /// Creates a new instance of `FireSettings` with given parameters
+    ///
+    /// # Arguments
+    ///
+    /// * `num_fire_tiles`: optional parameter defining the range of the number of fires to be spawn
+    /// * `radius_range`: optional parameter defining the range of radius the fires form the center
+    /// * `num_of_blazes`: optional parameter defining the range of number of blaze for each fire
+    ///
+    /// # Returns
+    /// A new instance of `FireSettings` initialized with the argument passed
+    ///
+    /// # Examples
+    ///
+    /// ```
+    ///use exclusion_zone::content::fire::FireSettings;
+    /// let fire_settings = FireSettings::new(Some(5..10), Some(3.0..8.0), None);
+    /// ```
+    pub fn new(num_fire_tiles: Option<Range<usize>>, radius_range: Option<Range<f32>>, num_of_blazes: Option<Range<usize>>) -> Self {
+        Self
+        {
+            num_fire_tiles,
+            radius_range,
+            num_of_blazes,
         }
     }
 }

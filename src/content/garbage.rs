@@ -14,11 +14,11 @@ use crate::generator::TileMatrix;
 /// of garbage, pile sizes, quantity per tile and the likelihood that it will spawn a pile.
 #[derive(Clone)]
 pub struct GarbageSettings {
-    pub(crate) total_garbage_quantity: usize,
-    pub(crate) garbage_pile_size: Range<usize>,
-    pub(crate) garbage_per_tile_quantity: Range<usize>,
-    pub(crate) spawn_in_near_tiles_probability: f64,
-    pub(crate) probability_step_by: f64,
+    pub total_garbage_quantity: usize,
+    pub garbage_pile_size: Range<usize>,
+    pub garbage_per_tile_quantity: Range<usize>,
+    pub spawn_in_near_tiles_probability: f64,
+    pub probability_step_by: f64,
 }
 
 impl GarbageSettings {
@@ -32,6 +32,50 @@ impl GarbageSettings {
             garbage_per_tile_quantity: 1..Garbage(0).properties().max(),
             spawn_in_near_tiles_probability: 1.0,
             probability_step_by: 0.2,
+        }
+    }
+
+    /// Creates a new instance of `GarbageSettings` with the provided parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `total_garbage_quantity` - The total quantity of garbage.
+    /// * `garbage_pile_size` - The range representing pile sizes.
+    /// * `garbage_per_tile_quantity` - The range representing quantity per tile.
+    /// * `spawn_in_near_tiles_probability` - Likelihood that garbage will spawn in near tiles.
+    /// * `probability_step_by` - Step by which probability increases/decreases.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `GarbageSettings` initialized with the provided parameters.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use std::ops::Range;
+    /// use exclusion_zone::content::garbage::GarbageSettings;
+    ///
+    /// let settings = GarbageSettings::with_parameters(
+    ///     1000,
+    ///     5..=10,
+    ///     1..=3,
+    ///     0.7,
+    ///     0.1,
+    /// );
+    /// ```
+    pub fn new(
+        total_garbage_quantity: usize,
+        garbage_pile_size: Range<usize>,
+        garbage_per_tile_quantity: Range<usize>,
+        spawn_in_near_tiles_probability: f64,
+        probability_step_by: f64,
+    ) -> Self {
+        GarbageSettings {
+            total_garbage_quantity,
+            garbage_pile_size,
+            garbage_per_tile_quantity,
+            spawn_in_near_tiles_probability,
+            probability_step_by,
         }
     }
 }

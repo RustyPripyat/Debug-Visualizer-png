@@ -4,6 +4,14 @@ use robotics_lib::world::tile::Content::Bank;
 use crate::generator::TileMatrix;
 use crate::utils::spawn_content_randomly;
 
+/// Settings defining the behavior of bank spawn,
+/// such as the number of spawn points
+#[derive(Clone)]
+pub struct BankSettings {
+    /// the number of banks to spawn
+    pub number_of_spawn_points: usize,
+}
+
 impl BankSettings {
     /// Custom version of default that provides an instance of `BankSettings` with the
     /// optimal parameters for the given world size
@@ -12,13 +20,29 @@ impl BankSettings {
             number_of_spawn_points: size / 25,
         }
     }
-}
 
-/// Settings defining the behavior of bank spawn,
-/// such as the number of spawn points
-#[derive(Clone)]
-pub struct BankSettings {
-    pub(crate) number_of_spawn_points: usize,
+    /// Creates a new instance of `BankSettings` with the given number of spawn points.
+    ///
+    /// # Arguments
+    ///
+    /// * `number_of_spawn_points` - The number of banks to spawn within the world.
+    ///
+    /// # Returns
+    ///
+    /// A new `BankSettings` instance with the specified number of spawn points.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use exclusion_zone::content::bank::BankSettings;
+    ///
+    /// let settings = BankSettings::new(10);
+    /// ```
+    pub fn new(number_of_spawn_points: usize) -> Self {
+        BankSettings {
+            number_of_spawn_points,
+        }
+    }
 }
 
 pub(crate) fn spawn_bank(world: &mut TileMatrix, bank_settings: BankSettings) {

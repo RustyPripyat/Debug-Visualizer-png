@@ -1,3 +1,8 @@
+//! This module contains all the sub module, one for each content present in the library
+//!
+//! each submodule contains struct providing setting about the spawn of the specific
+//! content and method to instance it.
+
 /// Contains structures and functions related to the spawn of banks
 pub mod bank;
 /// Contains structures and functions related to the spawn of bins

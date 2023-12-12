@@ -5,6 +5,7 @@ use debug_print::debug_println;
 use noise::{Fbm, Perlin, RidgedMulti};
 use noise::MultiFractal;
 use noise::NoiseFn;
+use rand::{RngCore, thread_rng};
 use rayon::iter::*;
 use rayon::iter::IntoParallelIterator;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
@@ -21,11 +22,23 @@ use crate::tile_type::lava::{LavaSettings, spawn_lava};
 use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
-impl Default for NoiseSettings {
-    /// Provides an instance of `NoiseSettings` with the default parameters
-    fn default() -> Self {
-        NoiseSettings {
-            seed: 0,
+impl NoiseSettings {
+    /// Provides an instance of `NoiseSettings` with the default parameters, seed is generated randomly
+    pub fn default() -> Self {
+        Self {
+            seed: thread_rng().next_u32(),
+            octaves: 12,
+            frequency: 2.5,
+            lacunarity: 2.0,
+            persistence: 1.25,
+            attenuation: 2.5,
+        }
+    }
+
+    /// Provides an instance of `NoiseSettings` with the default parameter and give seed
+    pub fn from_seed(seed: u32) -> Self {
+        Self {
+            seed,
             octaves: 12,
             frequency: 2.5,
             lacunarity: 2.0,
@@ -38,13 +51,13 @@ impl Default for NoiseSettings {
 /// Defines the settings that the noise generator uses to give rise to the noise map
 pub struct NoiseSettings {
     /// define the world generator seed, used to build the noise map, normally a random value
-    pub(crate) seed: u32,
+    seed: u32,
     //TODO how am i supposed to document this?
-    pub(crate) octaves: usize,
-    pub(crate) frequency: f64,
-    pub(crate) lacunarity: f64,
-    pub(crate) persistence: f64,
-    pub(crate) attenuation: f64,
+    pub octaves: usize,
+    pub frequency: f64,
+    pub lacunarity: f64,
+    pub persistence: f64,
+    pub attenuation: f64,
 }
 
 impl Default for Thresholds {
@@ -64,17 +77,17 @@ impl Default for Thresholds {
 /// Define the thresholds within which tile types are assigned
 pub struct Thresholds {
     /// define at what depth the land will be considered deep water
-    pub(crate) threshold_deep_water: f64,
+    pub threshold_deep_water: f64,
     /// define at what depth the land will be considered shallow water
-    pub(crate) threshold_shallow_water: f64,
+    pub threshold_shallow_water: f64,
     /// define at what height the land will be considered sand
-    pub(crate) threshold_sand: f64,
+    pub threshold_sand: f64,
     /// define at what height the land will be considered grass
-    pub(crate) threshold_grass: f64,
+    pub threshold_grass: f64,
     /// define at what height the land will be considered hill
-    pub(crate) threshold_hill: f64,
+    pub threshold_hill: f64,
     /// define at what height the land will be considered mountain
-    pub(crate) threshold_mountain: f64,
+    pub threshold_mountain: f64,
 }
 
 /// Groups all sub-module settings of the world generator, allowing the various aspects to be customised
@@ -178,17 +191,20 @@ impl WorldGenerator {
     /// # Example
     ///
     /// ```
+    /// use rand::{RngCore, thread_rng};
+    /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings};
     ///
     /// let world_size = 1000;
-    /// let noise_settings = NoiseSettings::default();
+    /// let noise_settings = NoiseSettings::from_seed(thread_rng().next_u32());
     /// let thresholds = Thresholds::default();
     /// let lava_settings = LavaSettings::default(world_size);
     /// let bank_settings = BankSettings::default(world_size);
     /// let bin_settings = BinSettings::default(world_size);
     /// let crate_settings = CrateSettings::default(world_size);
     /// let garbage_settings = GarbageSettings::default(world_size);
-    ///
+    /// let fire_settings = FireSettings::default(world_size);
+    /// let world = WorldGenerator::new(world_size,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings);
     /// ```
     pub fn new(
         size: usize,
@@ -211,6 +227,37 @@ impl WorldGenerator {
             crate_settings,
             garbage_settings,
             fire_settings,
+        }
+    }
+
+    /// Provides an instance of `WorldGenerator` with optimal parameters for the given world size
+    ///
+    /// # Arguments
+    ///
+    /// * `size`: The size of one side of the world
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `WorldGenerator` initialized with the optimal parameters for the given world size
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use exclusion_zone::generator::WorldGenerator;
+    /// let world_size = 1000;
+    /// let world = WorldGenerator::default(world_size);
+    /// ```
+    pub fn default(size: usize) -> Self {
+        Self {
+            size,
+            noise_settings: NoiseSettings::default(),
+            thresholds: Thresholds::default(),
+            lava_settings: LavaSettings::default(size),
+            bank_settings: BankSettings::default(size),
+            bin_settings: BinSettings::default(size),
+            crate_settings: CrateSettings::default(size),
+            garbage_settings: GarbageSettings::default(size),
+            fire_settings: FireSettings::default(size),
         }
     }
 }
