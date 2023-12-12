@@ -6,6 +6,8 @@
 //! the order in which the various Tile types and Tile content are generated, allowing you to define
 //! priorities. To ensure the best possible performance, multi-threading is exploited wherever possible.
 //!
+//! We recommend a size of at least 1000.
+//!
 
 
 /// Contains a sub module for each tile content present in the common crate, each of which has a struct

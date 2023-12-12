@@ -8,6 +8,10 @@ use robotics_lib::world::tile::Content::Garbage;
 
 use crate::generator::World;
 
+/// Settings defining the behavior of garbage spawn.
+///
+/// This struct represents the configuration for garbage spawn, including the total quantity
+/// of garbage, pile sizes, quantity per tile and the likelihood that it will spawn a pile.
 #[derive(Clone)]
 pub struct GarbageSettings {
     pub(crate) total_garbage_quantity: usize,
@@ -18,7 +22,9 @@ pub struct GarbageSettings {
 }
 
 impl GarbageSettings {
-    /// Initialize the struct with optimal parameters given the world size
+    /// Custom version of default that provides an instance of `GarbageSettings` with the
+    /// optimal parameters for the given world size. Setting a size too large may lead to
+    /// loss in speed generation
     pub fn default(size: usize) -> Self {
         GarbageSettings {
             total_garbage_quantity: size / 2,

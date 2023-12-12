@@ -2,11 +2,11 @@ use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bin;
 
 use crate::generator::World;
-// spawn bin randomly in the world
 use crate::utils::spawn_content_randomly;
 
 impl BinSettings {
-    // Custom constructor that takes a size parameter
+    /// Custom version of default that provides an instance of `BinSettings` with the
+    /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         BinSettings {
             number_of_spawn_points: size / 25,
@@ -14,6 +14,8 @@ impl BinSettings {
     }
 }
 
+/// Settings defining the behavior of bins spawn,
+/// such as the number of spawn points
 #[derive(Clone)]
 pub struct BinSettings {
     pub(crate) number_of_spawn_points: usize,

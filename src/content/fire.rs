@@ -6,7 +6,11 @@ use robotics_lib::world::tile::Content;
 use crate::generator::World;
 use crate::utils::{Coordinate, get_random_seeded_noise};
 
-pub(crate) struct Fire {
+/// Settings defining the behavior of fire spawn.
+///
+/// This struct represents the configuration for fire, including the total quantity
+/// of garbage, pile sizes, quantity per tile and the likelihood that it will spawn a pile.
+pub struct Fire {
     pub(crate) points: Vec<Coordinate>,
     pub(crate) noise: Perlin,
     pub(crate) border_points: Vec<Coordinate>,
@@ -16,6 +20,33 @@ pub(crate) struct Fire {
 }
 
 impl Fire {
+    /// Creates a new instance of `Fire` with optimal settings based on the provided parameters
+    ///
+    /// This method initializes a `Fire` instance with default parameters, including the size,
+    /// radius, and variation of the fire. It generates a fire centered randomly within the specified
+    /// `size`, setting the radius and variation, and determining the border points of the fire.
+    ///
+    /// # Arguments
+    ///
+    /// * `size` - The size of the game map.
+    /// * `radius` - The radius of the fire.
+    /// * `variation` - The variation in the fire's radius.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `Fire` initialized with optimal settings based on the provided arguments.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use robotics_lib::world::tile::Content::Fire;
+    ///
+    /// let size = 1000; // Example size of the game map
+    /// let radius = 40.0; // Example radius of the fire
+    /// let variation = 0.1; // Example variation in the fire's radius
+    ///
+    /// let default_fire = Fire::default(size, radius, variation);
+    /// ```
     pub fn default(size: usize, radius: f32, variation: f32) -> Self {
         let mut fire = Fire::new();
 
@@ -162,7 +193,7 @@ impl Fire {
     }
 }
 
-pub fn spawn_fires(world: &mut World) {
+pub(crate) fn spawn_fires(world: &mut World) {
     let fire = Fire::default(world.len(), 40., 0.1);
     for point in fire.points {
         world[point.row][point.col].content = Content::Fire;
