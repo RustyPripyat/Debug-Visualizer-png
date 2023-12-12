@@ -17,6 +17,7 @@ pub(crate) struct Slice {
 }
 
 //slice a 2d vector into n_slice x n_slice slices (leaving the last slice with the remaining elements)
+#[inline(always)]
 pub(crate) fn slice_vec_2d(input: &[Vec<f64>], n_slice: usize) -> Vec<Slice> {
     // Calculate the number of rows and columns in each slice
     let qnt_per_slice = input.len() / n_slice;
@@ -46,10 +47,12 @@ pub(crate) fn slice_vec_2d(input: &[Vec<f64>], n_slice: usize) -> Vec<Slice> {
     slice
 }
 
+#[allow(dead_code)]
 pub(crate) fn distance(x1: usize, y1: usize, x2: usize, y2: usize) -> usize {
     ((x1 as isize - x2 as isize).abs() + (y1 as isize - y2 as isize).abs()) as usize
 }
 
+#[inline(always)]
 pub(crate) fn percentage(target_percentage: f64, min: f64, max: f64) -> f64 {
     // MappedValue= [(x-a)/(b-a)]⋅(d−c)+c
     let x = target_percentage;
@@ -61,6 +64,7 @@ pub(crate) fn percentage(target_percentage: f64, min: f64, max: f64) -> f64 {
     (x / b) * (d - c) + c //simplified a = 0
 }
 
+#[inline(always)]
 pub(crate) fn find_min_value(matrix: &Vec<Vec<f64>>) -> Option<f64> {
     // Ensure the matrix is not empty
     if matrix.is_empty() || matrix[0].is_empty() {
@@ -80,6 +84,7 @@ pub(crate) fn find_min_value(matrix: &Vec<Vec<f64>>) -> Option<f64> {
     Some(min_value)
 }
 
+#[inline(always)]
 pub(crate) fn find_max_value(matix: &Vec<Vec<f64>>) -> Option<f64> {
     // Ensure the matrix is not empty
     if matix.is_empty() || matix[0].is_empty() {
@@ -99,6 +104,7 @@ pub(crate) fn find_max_value(matix: &Vec<Vec<f64>>) -> Option<f64> {
     Some(max_value)
 }
 
+#[allow(dead_code)]
 pub(crate) fn map_value_to_range(value: f64, from: std::ops::Range<f64>, to: std::ops::Range<f64>) -> f64 {
     let from_min = from.start;
     let from_max = from.end;
@@ -108,6 +114,7 @@ pub(crate) fn map_value_to_range(value: f64, from: std::ops::Range<f64>, to: std
     (value - from_min) * (to_max - to_min) / (from_max - from_min) + to_min
 }
 
+#[inline(always)]
 pub(crate) fn spawn_content_randomly(world: &mut TileMatrix, mut number_of_spawn_points: usize, content: Content) -> Vec<Coordinates> {
     let mut rng = rand::thread_rng();
 
@@ -125,6 +132,7 @@ pub(crate) fn spawn_content_randomly(world: &mut TileMatrix, mut number_of_spawn
     spawn_points
 }
 
+#[inline(always)]
 pub(crate) fn get_random_seeded_noise() -> Perlin {
     // setting noise with random seed
     let mut rng = rand::thread_rng();

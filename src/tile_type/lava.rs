@@ -44,7 +44,8 @@ pub(crate) fn spawn_lava(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, 
 
 //for each x,y flow the lava to the lower neighbour
 /// fatina ricorsina
-pub(crate) fn flow_from(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize>) -> usize {
+#[inline(always)]
+fn flow_from(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize>) -> usize {
     //debug_println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
     world[y][x].tile_type = TileType::Lava;
     if remaining_range.start == remaining_range.end {
@@ -63,7 +64,8 @@ pub(crate) fn flow_from(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, y
 }
 
 // return the coordinates of the lowest neighbour
-pub(crate) fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: usize) -> Coordinates {
+#[inline(always)]
+fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: usize) -> Coordinates {
     let mut neighbour_heights = Vec::new();
     if y != 0 {
         neighbour_heights.push((elevation_map[y - 1][x], y - 1, x));
@@ -84,7 +86,8 @@ pub(crate) fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: u
 }
 
 // return vector with the coordinates of the mountain tiles in range
-pub(crate) fn get_yx_mountain_tiles(wordl: &mut TileMatrix) -> Vec<Coordinates> {
+#[inline(always)]
+fn get_yx_mountain_tiles(wordl: &mut TileMatrix) -> Vec<Coordinates> {
     let mut tiles_in_range = Vec::new();
     for (y, row) in wordl.iter().enumerate() {
         for (x, tile) in row.iter().enumerate() {

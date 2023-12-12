@@ -62,7 +62,7 @@ impl FireSettings {
 }
 
 impl Blaze {
-    pub(crate) fn default(world: &TileMatrix, size: usize, radius: f32, variation: f32) -> Self {
+    pub fn default(world: &TileMatrix, size: usize, radius: f32, variation: f32) -> Self {
         let mut blaze = Blaze::new();
 
         // set the radius
@@ -112,7 +112,7 @@ impl Blaze {
 
         blaze
     }
-
+    #[inline(always)]
     fn limit_on_proper_tile(&mut self, world: &TileMatrix) {
         let mut i = 0;
         while i < self.points.len() {
@@ -129,7 +129,7 @@ impl Blaze {
             }
         }
     }
-
+    #[inline(always)]
     fn get_extreme_points(&self) -> (usize, usize, usize, usize) {
         let min_col = self.border_points.iter().map(|f| f.col).min().unwrap();
         let max_col = self.border_points.iter().map(|f| f.col).max().unwrap();
@@ -151,6 +151,7 @@ impl Blaze {
     }
 
     // a function to spread the fire from the center to the border points of the blaze
+    #[inline(always)]
     fn spread_fire(&mut self, upper_border: usize, left_border: usize, lower_border: usize, righter_border: usize) {
         let rect_width = righter_border - left_border + 1;
         let rect_height = lower_border - upper_border + 1;
@@ -269,6 +270,7 @@ pub(crate) fn spawn_fires(world: &mut TileMatrix, fire_settings: &FireSettings) 
     }
 }
 
+#[inline(always)]
 fn errors(n_tiles: Range<usize>, radius_range: Range<f32>, n_blaze: Range<usize>) -> Result<FireSettings, String> {
     if radius_range.start.floor() as usize * n_blaze.start > n_tiles.end {
         // the minimum number of fire tiles that could be generated would be higher than the maximum number of fire tiles provided
@@ -291,6 +293,7 @@ fn errors(n_tiles: Range<usize>, radius_range: Range<f32>, n_blaze: Range<usize>
     }
 }
 
+#[inline(always)]
 fn check_fire_settings(settings: &FireSettings, size: usize) -> Result<FireSettings, String> {
     let t = (settings.num_fire_tiles.clone(), settings.radius_range.clone(), settings.num_of_blaze.clone());
     match t {

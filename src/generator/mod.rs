@@ -99,6 +99,7 @@ pub struct WorldGenerator {
 }
 
 impl WorldGenerator {
+    #[inline(always)]
     fn generate_terrain(&self, noise_map: &[Vec<f64>], min: f64, max: f64) -> TileMatrix {
         let mut world = vec![vec![Tile { tile_type: TileType::Grass, content: Content::None, elevation: 0 }; self.size]; self.size];
 
@@ -134,7 +135,7 @@ impl WorldGenerator {
         }
         world
     }
-
+    #[inline(always)]
     fn generate_elevation_map(&self) -> Vec<Vec<f64>> {
         let noise = RidgedMulti::<Fbm<Perlin>>::new(self.noise_settings.seed)
             .set_octaves(self.noise_settings.octaves)

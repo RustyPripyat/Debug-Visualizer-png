@@ -41,7 +41,7 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n
     // trace the streets edges
     fixed_extremes.iter().map(|edge| connect_points(edge.start, edge.end)).collect()
 }
-
+#[inline(always)]
 fn get_edges_extremes_from_diagram(diagram: VoronoiDiagram<Point>) -> HashSet<Edge> {
     let mut unique_extremes: HashSet<Edge> = HashSet::new();
     for cell in diagram.cells().iter() {
@@ -61,7 +61,7 @@ fn get_edges_extremes_from_diagram(diagram: VoronoiDiagram<Point>) -> HashSet<Ed
     }
     unique_extremes
 }
-
+#[inline(always)]
 fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[Coordinates]) -> VoronoiDiagram<Point> {
     // convert centers to (f64,f64)
     let points: Vec<(f64, f64)> = centers.iter().map(|(y, x)| (*x as f64, *y as f64)).collect();
@@ -69,7 +69,7 @@ fn get_voronoi_diagram(elevation_map: &[Vec<f64>], centers: &[Coordinates]) -> V
     // vornoi diagram
     VoronoiDiagram::<Point>::from_tuple(&(0., 0.), &((elevation_map.len() - 1) as f64, (elevation_map.len() - 1) as f64), &points).unwrap()
 }
-
+#[inline(always)]
 fn fix_extremes(edges: HashSet<Edge>, size: usize) -> Vec<Edge> {
     let mut edges: Vec<Edge> = edges.into_iter().collect();
     for edge in edges.iter_mut() {
@@ -86,6 +86,7 @@ fn are_extremes_on_border(e1: Coordinates, e2: Coordinates, size: usize) -> bool
 }
 
 // Function to connect two points with a line segment using Bresenham's algorithm
+#[inline(always)]
 fn connect_points(start: Coordinates, end: Coordinates) -> Vec<Coordinates> {
     // Vector to store the points along the line segment
     let mut line_segments: Vec<Coordinates> = Vec::new();
@@ -131,7 +132,7 @@ fn connect_points(start: Coordinates, end: Coordinates) -> Vec<Coordinates> {
     // line_segments.push((end.0, end.1));
     line_segments
 }
-
+#[inline(always)]
 fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [Coordinates], n_slice_per_side: usize, band_width: usize) -> Vec<Coordinates> {
     let mut hs: HashSet<Coordinates> = HashSet::new();
     let qnt_per_slice = elevation_map.len() / n_slice_per_side;
@@ -175,7 +176,7 @@ fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [Coor
 
     hs.into_iter().collect()
 }
-
+#[inline(always)]
 fn combine_local_maxima_in_same_slice(
     index: usize,
     get_slice: fn(usize, usize, usize, usize) -> Slice,
@@ -216,23 +217,23 @@ fn combine_local_maxima_in_same_slice(
     }
     local_maxima_in_slice
 }
-
+#[inline(always)]
 fn get_delta_x(higher: &Coordinates, lower: &Coordinates) -> usize {
     higher.1.abs_diff(lower.1)
 }
-
+#[inline(always)]
 fn get_delta_y(higher: &Coordinates, lower: &Coordinates) -> usize {
     higher.0.abs_diff(lower.0)
 }
-
+#[inline(always)]
 fn is_inside_horizontal_slice(local_maximum: &Coordinates, slice: &Slice) -> bool {
     local_maximum.0 >= slice.start.row && local_maximum.0 <= slice.end.row
 }
-
+#[inline(always)]
 fn is_inside_vertical_slice(local_maximum: &Coordinates, slice: &Slice) -> bool {
     local_maximum.1 >= slice.start.col && local_maximum.1 <= slice.end.col
 }
-
+#[inline(always)]
 fn get_horizontal_slice(map_len: usize, row: usize, qnt_per_slice: usize, band_width: usize) -> Slice {
     Slice {
         start: Coordinate {
@@ -245,7 +246,7 @@ fn get_horizontal_slice(map_len: usize, row: usize, qnt_per_slice: usize, band_w
         },
     }
 }
-
+#[inline(always)]
 fn get_vertical_slice(map_len: usize, col: usize, qnt_per_slice: usize, band_width: usize) -> Slice {
     Slice {
         start: Coordinate {
@@ -258,7 +259,7 @@ fn get_vertical_slice(map_len: usize, col: usize, qnt_per_slice: usize, band_wid
         },
     }
 }
-
+#[inline(always)]
 fn get_local_maxima(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<Coordinates> {
     let mut local_maxima: Vec<Coordinates> = Vec::new();
     let mut found_local_maximum;
@@ -282,6 +283,7 @@ fn get_local_maxima(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_thres
 }
 
 // get the maximum value from a slice
+#[inline(always)]
 fn get_maximum(slice: &[Vec<f64>]) -> Coordinates {
     slice
         .iter()

@@ -1,5 +1,5 @@
 //! This crate defines the world generator <b>Exclusion Zone</b>
-//!your robot will be swept into an arduous map, full of pitfalls, just like the Černobyl exclusion
+//! your robot will be swept into an arduous map, full of pitfalls, just like the Černobyl exclusion
 //! zone, you will feel like you are in the 1986 USSR.
 //!
 //! This world generator allows for granular customisation of its content, it allows you to specify
