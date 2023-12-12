@@ -54,12 +54,62 @@ impl Default for NoiseSettings {
 pub struct NoiseSettings {
     /// define the world generator seed, used to build the noise map, normally a random value
     seed: u32,
-    //TODO how am i supposed to document this?
+    /// Total number of frequency octaves to generate the noise with.
+    /// The number of octaves control the amount of detail in the noise function. Adding more octaves increases the detail, with the drawback of increasing the calculation time.
     pub octaves: usize,
+    /// The number of cycles per unit length that the noise function outputs.
     pub frequency: f64,
+    /// A multiplier that determines how quickly the frequency increases for each successive octave in the noise function.
+    /// The frequency of each successive octave is equal to the product of the previous octave’s frequency and the lacunarity value.
+    /// A lacunarity of 2.0 results in the frequency doubling every octave. For almost all cases, 2.0 is a good value to use.
     pub lacunarity: f64,
+    ///A multiplier that determines how quickly the amplitudes diminish for each successive octave in the noise function.
+    /// The amplitude of each successive octave is equal to the product of the previous octave’s amplitude and the persistence value. Increasing the persistence produces “rougher” noise.
     pub persistence: f64,
+    /// The attenuation to apply to the weight on each octave. This reduces the strength of each successive octave, making their respective ridges smaller. The default attenuation is 2.0, making each octave half the height of the previous.
     pub attenuation: f64,
+}
+
+impl NoiseSettings {
+    /// Creates a new instance of `NoiseSettings` with the provided parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - The world generator seed used to build the noise map.
+    /// * `octaves` - Total number of frequency octaves.
+    /// * `frequency` - Number of cycles per unit length.
+    /// * `lacunarity` - Multiplier determining frequency increase.
+    /// * `persistence` - Multiplier determining amplitude decrease.
+    /// * `attenuation` - Attenuation applied to octave weights.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `NoiseSettings` initialized with the provided parameters.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use exclusion_zone::generator::NoiseSettings;
+    ///
+    /// let settings = NoiseSettings::new(123, 5, 1.0, 2.0, 0.5, 1.0);
+    /// ```
+    pub fn new(
+        seed: u32,
+        octaves: usize,
+        frequency: f64,
+        lacunarity: f64,
+        persistence: f64,
+        attenuation: f64,
+    ) -> Self {
+        NoiseSettings {
+            seed,
+            octaves,
+            frequency,
+            lacunarity,
+            persistence,
+            attenuation,
+        }
+    }
 }
 
 /// Define the thresholds within which tile types are assigned
