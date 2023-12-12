@@ -4,12 +4,14 @@ use nannou_core::math::{deg_to_rad, map_range};
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
 use robotics_lib::world::tile::Content;
-use worldgen::world::World;
+
+use crate::generator::TileMatrix;
 use crate::utils::{Coordinate, get_random_seeded_noise};
+
 /// Settings defining the behavior of fire spawn.
 ///
 /// This struct represents the configuration for fire, including the total quantity
-/// of garbage, pile sizes, quantity per tile and the likelihood that it will spawn a pile.
+/// of fire tiles, the radius of the range and the number of blaze.
 #[derive(Clone)]
 pub struct FireSettings {
     pub(crate) num_fire_tiles: Option<Range<usize>>,
@@ -28,35 +30,30 @@ pub(crate) struct Blaze {
 
 
 impl FireSettings {
-    /// Creates a new instance of `Fire` with optimal settings based on the provided parameters
+    /// Creates a new instance of `FireSettings` with optimal settings based on the provided parameters
     ///
-    /// This method initializes a `Fire` instance with default parameters, including the size,
+    /// This method initializes a `FireSettings` instance with default parameters, including the size,
     /// radius, and variation of the fire. It generates a fire centered randomly within the specified
     /// `size`, setting the radius and variation, and determining the border points of the fire.
     ///
     /// # Arguments
     ///
-    /// * `size` - The size of the game map.
-    /// * `radius` - The radius of the fire.
-    /// * `variation` - The variation in the fire's radius.
+    /// * `size` - The size of the world side.
     ///
     /// # Returns
     ///
-    /// A new instance of `Fire` initialized with optimal settings based on the provided arguments.
+    /// A new instance of `FireSettings` initialized with optimal settings based on the provided arguments.
     ///
     /// # Examples
     ///
     /// ```
-    /// use robotics_lib::world::tile::Content::Fire;
+    /// use exclusion_zone::content::fire::FireSettings;
     ///
-    /// let size = 1000; // Example size of the game map
-    /// let radius = 40.0; // Example radius of the fire
-    /// let variation = 0.1; // Example variation in the fire's radius
-    ///
-    /// let default_fire = Fire::default(size, radius, variation);
+    /// let size = 1000;
+    /// let default_fire = FireSettings::default(size);
     /// ```
     pub fn default(size: usize) -> Self {
-        FireSettings {
+        Self {
             num_fire_tiles: None,
             radius_range: Some(5.0..size as f32 / 50.0),
             num_of_blaze: Some(1..size / 100),
@@ -65,7 +62,7 @@ impl FireSettings {
 }
 
 impl Blaze {
-    pub fn default(world: &World, size: usize, radius: f32, variation: f32) -> Self {
+    pub(crate) fn default(world: &TileMatrix, size: usize, radius: f32, variation: f32) -> Self {
         let mut blaze = Blaze::new();
 
         // set the radius
@@ -116,7 +113,7 @@ impl Blaze {
         blaze
     }
 
-    fn limit_on_proper_tile(&mut self, world: &[Vec<Tile>]) {
+    fn limit_on_proper_tile(&mut self, world: &TileMatrix) {
         let mut i = 0;
         while i < self.points.len() {
             let point = self.points[i];
@@ -231,7 +228,7 @@ impl Blaze {
     }
 }
 
-pub fn spawn_fires(world: &mut Vec<Vec<Tile>>, fire_settings: &FireSettings) {
+pub(crate) fn spawn_fires(world: &mut TileMatrix, fire_settings: &FireSettings) {
     let size = world.len();
 
     // checks if fire settings are valid
@@ -239,7 +236,7 @@ pub fn spawn_fires(world: &mut Vec<Vec<Tile>>, fire_settings: &FireSettings) {
         Err(msg) => {
             panic!("{}", msg);
         }
-        Ok(fs) => {fs}
+        Ok(fs) => { fs }
     };
 
     // generate blazes and place them in the world
@@ -250,7 +247,7 @@ pub fn spawn_fires(world: &mut Vec<Vec<Tile>>, fire_settings: &FireSettings) {
         let mut rng = rand::thread_rng();
         let variation = rng.gen_range(0.075..0.175);
         let radius = rng.gen_range(fs.radius_range.as_ref().unwrap().start..fs.radius_range.as_ref().unwrap().end);
-        let blaze = Blaze::default(world.as_slice(), world.len(), radius, variation);
+        let blaze = Blaze::default(world, world.len(), radius, variation);
 
         // Decrease the settings.num_fire_tiles.unwrap().end
         fs.num_fire_tiles.as_mut().unwrap().end -= blaze.points.len();

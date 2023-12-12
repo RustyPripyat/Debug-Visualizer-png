@@ -1,7 +1,7 @@
 use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bank;
 
-use crate::generator::World;
+use crate::generator::TileMatrix;
 use crate::utils::spawn_content_randomly;
 
 impl BankSettings {
@@ -21,7 +21,7 @@ pub struct BankSettings {
     pub(crate) number_of_spawn_points: usize,
 }
 
-pub(crate) fn spawn_bank(world: &mut World, bank_settings: BankSettings) {
+pub(crate) fn spawn_bank(world: &mut TileMatrix, bank_settings: BankSettings) {
     thread_rng();
     let max = Bank(0..0).properties().max();
     let spawn_points = spawn_content_randomly(world, bank_settings.number_of_spawn_points, Bank(0..0));

@@ -99,7 +99,7 @@ pub struct WorldGenerator {
 }
 
 impl WorldGenerator {
-    fn generate_terrain(&self, noise_map: &[Vec<f64>], min: f64, max: f64) -> World {
+    fn generate_terrain(&self, noise_map: &[Vec<f64>], min: f64, max: f64) -> TileMatrix {
         let mut world = vec![vec![Tile { tile_type: TileType::Grass, content: Content::None, elevation: 0 }; self.size]; self.size];
 
         for (y, row) in noise_map.iter().enumerate() {
@@ -188,16 +188,6 @@ impl WorldGenerator {
     /// let crate_settings = CrateSettings::default(world_size);
     /// let garbage_settings = GarbageSettings::default(world_size);
     ///
-    /// let instance = WorldGenerator::new(
-    ///     world_size,
-    ///     noise_settings,
-    ///     thresholds,
-    ///     lava_settings,
-    ///     bank_settings,
-    ///     bin_settings,
-    ///     crate_settings,
-    ///     garbage_settings,
-    /// );
     /// ```
     pub fn new(
         size: usize,
@@ -225,7 +215,7 @@ impl WorldGenerator {
 }
 
 /// Alias for `Vec<Vec<Tile>>` which is the Tile matrix representing the world
-pub type World = Vec<Vec<Tile>>;
+pub type TileMatrix = Vec<Vec<Tile>>;
 
 /// Alias for `(usize, usize)` which are 2D coordinates, in x, y order
 pub type Coordinates = (usize, usize);
@@ -246,34 +236,29 @@ impl Generator for WorldGenerator {
     ///
     /// ```
     /// use robotics_lib::world::world_generator::Generator;
+    /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::generator::{
     ///     WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings,
     ///     BinSettings, CrateSettings, GarbageSettings
     /// };
     ///
     /// let world_size = 1000;
-    /// let noise_settings = NoiseSettings::default();
-    /// let thresholds = Thresholds::default();
-    /// let lava_settings = LavaSettings::default(world_size);
-    /// let bank_settings = BankSettings::default(world_size);
-    /// let bin_settings = BinSettings::default(world_size);
-    /// let crate_settings = CrateSettings::default(world_size);
-    /// let garbage_settings = GarbageSettings::default(world_size);
     ///
     /// let mut world_generator = WorldGenerator::new(
     ///     world_size,
-    ///     noise_settings,
-    ///     thresholds,
-    ///     lava_settings,
-    ///     bank_settings,
-    ///     bin_settings,
-    ///     crate_settings,
-    ///     garbage_settings,
+    ///     NoiseSettings::default(),
+    ///     Thresholds::default(),
+    ///     LavaSettings::default(world_size),
+    ///     BankSettings::default(world_size),
+    ///     BinSettings::default(world_size),
+    ///     CrateSettings::default(world_size),
+    ///     GarbageSettings::default(world_size),
+    ///     FireSettings::default(world_size),
     /// );
     ///
     /// let generated = world_generator.gen();
     /// ```
-    fn gen(&mut self) -> (World, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
+    fn gen(&mut self) -> (TileMatrix, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
         let tot = Utc::now();
         debug_println!("Start: Noise map generation");
         let mut start = Utc::now();

@@ -1,7 +1,7 @@
 use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bin;
 
-use crate::generator::World;
+use crate::generator::TileMatrix;
 use crate::utils::spawn_content_randomly;
 
 impl BinSettings {
@@ -21,7 +21,7 @@ pub struct BinSettings {
     pub(crate) number_of_spawn_points: usize,
 }
 
-pub(crate) fn spawn_bin(world: &mut World, bin_settings: BinSettings) {
+pub(crate) fn spawn_bin(world: &mut TileMatrix, bin_settings: BinSettings) {
     let max = Bin(0..0).properties().max();
     let spawn_points = spawn_content_randomly(world, bin_settings.number_of_spawn_points, Bin(0..0));
 
