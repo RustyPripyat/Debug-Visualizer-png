@@ -67,5 +67,5 @@ fn main() {
 
     let tiles = generator.gen().0;
 
-    visualizer::save_world_image(&tiles, (0, 0), ".png", 4);
+    visualizer::save_world_image(&tiles, (0, 0), "img.png", 4);
 }

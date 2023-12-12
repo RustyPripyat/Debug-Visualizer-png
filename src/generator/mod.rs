@@ -23,10 +23,10 @@ use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
 impl NoiseSettings {
-    /// Provides an instance of `NoiseSettings` with the default parameters, seed is generated randomly
-    pub fn default() -> Self {
+    /// Provides an instance of `NoiseSettings` with the default parameter and give seed
+    pub fn from_seed(seed: u32) -> Self {
         Self {
-            seed: thread_rng().next_u32(),
+            seed,
             octaves: 12,
             frequency: 2.5,
             lacunarity: 2.0,
@@ -34,11 +34,13 @@ impl NoiseSettings {
             attenuation: 2.5,
         }
     }
+}
 
-    /// Provides an instance of `NoiseSettings` with the default parameter and give seed
-    pub fn from_seed(seed: u32) -> Self {
+impl Default for NoiseSettings {
+    /// Provides an instance of `NoiseSettings` with the default parameters, seed is generated randomly
+    fn default() -> Self {
         Self {
-            seed,
+            seed: thread_rng().next_u32(),
             octaves: 12,
             frequency: 2.5,
             lacunarity: 2.0,
@@ -60,20 +62,6 @@ pub struct NoiseSettings {
     pub attenuation: f64,
 }
 
-impl Default for Thresholds {
-    /// Provides an instance of `Thresholds` with the default parameters
-    fn default() -> Self {
-        Thresholds {
-            threshold_deep_water: 4.0,
-            threshold_shallow_water: 10.0,
-            threshold_sand: 15.0,
-            threshold_grass: 45.0,
-            threshold_hill: 65.0,
-            threshold_mountain: 77.5,
-        }
-    }
-}
-
 /// Define the thresholds within which tile types are assigned
 pub struct Thresholds {
     /// define at what depth the land will be considered deep water
@@ -88,6 +76,61 @@ pub struct Thresholds {
     pub threshold_hill: f64,
     /// define at what height the land will be considered mountain
     pub threshold_mountain: f64,
+}
+
+impl Default for Thresholds {
+    /// Provides an instance of `Thresholds` with the default parameters
+    fn default() -> Self {
+        Thresholds {
+            threshold_deep_water: 4.0,
+            threshold_shallow_water: 10.0,
+            threshold_sand: 15.0,
+            threshold_grass: 45.0,
+            threshold_hill: 65.0,
+            threshold_mountain: 77.5,
+        }
+    }
+}
+
+impl Thresholds {
+    /// Creates a new instance of `Thresholds` with the provided parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `threshold_deep_water` - Depth at which the land will be considered deep water.
+    /// * `threshold_shallow_water` - Depth at which the land will be considered shallow water.
+    /// * `threshold_sand` - Height at which the land will be considered sand.
+    /// * `threshold_grass` - Height at which the land will be considered grass.
+    /// * `threshold_hill` - Height at which the land will be considered hill.
+    /// * `threshold_mountain` - Height at which the land will be considered mountain.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `Thresholds` initialized with the provided parameters.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use exclusion_zone::generator::Thresholds;
+    /// let thresholds = Thresholds::new(0.0, -0.1, 0.1, 0.3, 0.6, 0.8);
+    /// ```
+    pub fn new(
+        threshold_deep_water: f64,
+        threshold_shallow_water: f64,
+        threshold_sand: f64,
+        threshold_grass: f64,
+        threshold_hill: f64,
+        threshold_mountain: f64,
+    ) -> Self {
+        Thresholds {
+            threshold_deep_water,
+            threshold_shallow_water,
+            threshold_sand,
+            threshold_grass,
+            threshold_hill,
+            threshold_mountain,
+        }
+    }
 }
 
 /// Groups all sub-module settings of the world generator, allowing the various aspects to be customised
@@ -295,7 +338,7 @@ impl Generator for WorldGenerator {
     /// let mut world_generator = WorldGenerator::new(
     ///     world_size,
     ///     NoiseSettings::default(),
-    ///     Thresholds::default(),
+    ///     Thresholds::def(),
     ///     LavaSettings::default(world_size),
     ///     BankSettings::default(world_size),
     ///     BinSettings::default(world_size),
