@@ -8,3 +8,4 @@ pub mod rock;
 pub mod tree;
 pub mod water;
 pub mod wood_crate;
+pub(crate) mod blob;

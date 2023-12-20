@@ -14,8 +14,9 @@ use robotics_lib::world::world_generator::Generator;
 
 use crate::content::bank::{BankSettings, spawn_bank};
 use crate::content::bin::{BinSettings, spawn_bin};
-use crate::content::fire::{FireSettings, spawn_fires};
+use crate::content::fire::{FireSettings, spawn_fire};
 use crate::content::garbage::{GarbageSettings, spawn_garbage};
+use crate::content::tree::{spawn_tree, TreeSettings};
 use crate::content::wood_crate::{CrateSettings, spawn_crate};
 use crate::tile_type::lava::{LavaSettings, spawn_lava};
 use crate::tile_type::street::street_spawn;
@@ -77,6 +78,7 @@ pub struct WorldGenerator {
     pub crate_settings: CrateSettings,
     pub garbage_settings: GarbageSettings,
     pub fire_settings: FireSettings,
+    pub tree_settings: TreeSettings,
 }
 
 impl WorldGenerator {
@@ -148,6 +150,7 @@ impl WorldGenerator {
         crate_settings: CrateSettings,
         garbage_settings: GarbageSettings,
         fire_settings: FireSettings,
+        tree_settings: TreeSettings
     ) -> Self {
         Self {
             size,
@@ -159,6 +162,7 @@ impl WorldGenerator {
             crate_settings,
             garbage_settings,
             fire_settings,
+            tree_settings,
         }
     }
 }
@@ -216,8 +220,13 @@ impl Generator for WorldGenerator {
         // spawn fires
         debug_println!("Start: Spawn fire");
         start = Utc::now();
-        spawn_fires(&mut world, &mut self.fire_settings);
+        spawn_fire(&mut world, &mut self.fire_settings);
         debug_println!("Done: Spawn fire in {} ms", (Utc::now() - start).num_milliseconds());
+
+        debug_println!("Start: Spawn trees");
+        start = Utc::now();
+        spawn_tree(&mut world, &mut self.tree_settings);
+        debug_println!("Done: Spawn trees in {} ms", (Utc::now() - start).num_milliseconds());
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
         (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy], 1, 9).unwrap(), 0.0, None)
