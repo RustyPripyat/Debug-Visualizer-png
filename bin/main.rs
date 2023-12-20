@@ -13,7 +13,7 @@ use exclusion_zone::content::fire::FireSettings;
 use exclusion_zone::content::garbage::GarbageSettings;
 use exclusion_zone::content::tree::TreeSettings;
 use exclusion_zone::content::wood_crate::CrateSettings;
-use exclusion_zone::generator::{NoiseSettings, Thresholds, WorldGenerator};
+use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
 use exclusion_zone::tile_type::lava::LavaSettings;
 
 mod visualizer;
@@ -56,6 +56,7 @@ fn main() {
     let seed = thread_rng().next_u32();
     let mut generator = WorldGenerator::new(
         size,
+        get_default_spawn_order(),
         NoiseSettings::from_seed(seed),
         Thresholds::default(),
         LavaSettings::default(size),

@@ -16,8 +16,9 @@ use robotics_lib::world::world_generator::Generator;
 
 use crate::content::bank::{BankSettings, spawn_bank};
 use crate::content::bin::{BinSettings, spawn_bin};
-use crate::content::fire::{FireSettings};
+use crate::content::fire::{FireSettings, spawn_fire};
 use crate::content::garbage::{GarbageSettings, spawn_garbage};
+use crate::content::tree::{spawn_tree, TreeSettings};
 use crate::content::wood_crate::{CrateSettings, spawn_crate};
 use crate::tile_type::lava::{LavaSettings, spawn_lava};
 use crate::tile_type::street::street_spawn;
@@ -70,8 +71,10 @@ pub type SpawnOrder = Vec<Spawnables>;
 /// use exclusion_zone::content::bin::BinSettings;
 /// use exclusion_zone::content::fire::FireSettings;
 /// use exclusion_zone::content::garbage::GarbageSettings;
+/// use exclusion_zone::content::tree::TreeSettings;
 /// use exclusion_zone::content::wood_crate::CrateSettings;
 /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
+/// use exclusion_zone::generator::Spawnables::Tree;
 /// use exclusion_zone::tile_type::lava::LavaSettings;
 /// let size = 1000;
 /// let world_gen = WorldGenerator {
@@ -85,6 +88,7 @@ pub type SpawnOrder = Vec<Spawnables>;
 ///             crate_settings: CrateSettings::default(size),
 ///             garbage_settings: GarbageSettings::default(size),
 ///             fire_settings: FireSettings::default(size),
+///             tree_settings: TreeSettings::default(size),
 ///         };
 /// // The `spawn_order` now contains a randomized order of elements to be spawned.
 /// ```
@@ -367,6 +371,7 @@ impl WorldGenerator {
     /// ```
     /// use rand::{RngCore, thread_rng};
     /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings, SpawnOrder, Spawnables};
     ///
     /// let world_size = 1000;
@@ -395,7 +400,8 @@ impl WorldGenerator {
     /// let crate_settings = CrateSettings::default(world_size);
     /// let garbage_settings = GarbageSettings::default(world_size);
     /// let fire_settings = FireSettings::default(world_size);
-    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings);
+    /// let tree_settings = TreeSettings::default(world_size);
+    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings);
     /// ```
     pub fn new(
         size: usize,
@@ -408,7 +414,7 @@ impl WorldGenerator {
         crate_settings: CrateSettings,
         garbage_settings: GarbageSettings,
         fire_settings: FireSettings,
-        tree_settings: TreeSettings
+        tree_settings: TreeSettings,
     ) -> Self {
         Self {
             size,
@@ -485,6 +491,7 @@ impl Generator for WorldGenerator {
     /// use exclusion_zone::content::bin::BinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
+    /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::content::wood_crate::CrateSettings;
     /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
     /// use exclusion_zone::tile_type::lava::LavaSettings;
