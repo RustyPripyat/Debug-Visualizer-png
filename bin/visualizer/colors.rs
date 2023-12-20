@@ -13,7 +13,7 @@ pub(crate) mod tile {
     /// Sand color (plaid yellow)
     pub(crate) const SAND: Rgb<u8> = Rgb([240, 230, 140]);
     /// Grass color (Minecraft plain grass green)
-    pub(crate) const GRASS: Rgb<u8> = Rgb([74, 111, 40]);
+    pub(crate) const GRASS: Rgb<u8> = Rgb([126, 200, 80]);
     /// Street color (dark grey)
     pub(crate) const STREET: Rgb<u8> = Rgb([90, 90, 90]);
     /// Hill color (light soil brown)
@@ -31,8 +31,8 @@ pub(crate) mod tile {
 pub(crate) mod content {
     use image::Rgb;
 
-    /// Minecraft oak wood (brown)
-    pub(crate) const TREE: Rgb<u8> = Rgb([99, 73, 43]);
+    /// Verde Scuro Italiano
+    pub(crate) const TREE: Rgb<u8> = Rgb([0,77,0]);
     /// Rock color (light brown)
     pub(crate) const ROCK: Rgb<u8> = Rgb([240, 223, 206]);
     /// Fire color (pastel orange)
