@@ -238,6 +238,7 @@ impl WorldGenerator {
     /// ```
     /// use rand::{RngCore, thread_rng};
     /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings};
     ///
     /// let world_size = 1000;
@@ -249,7 +250,8 @@ impl WorldGenerator {
     /// let crate_settings = CrateSettings::default(world_size);
     /// let garbage_settings = GarbageSettings::default(world_size);
     /// let fire_settings = FireSettings::default(world_size);
-    /// let world = WorldGenerator::new(world_size,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings);
+    /// let tree_settings = TreeSettings::default(world_size);
+    /// let world = WorldGenerator::new(world_size,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings);
     /// ```
     pub fn new(
         size: usize,
@@ -305,6 +307,7 @@ impl WorldGenerator {
             crate_settings: CrateSettings::default(size),
             garbage_settings: GarbageSettings::default(size),
             fire_settings: FireSettings::default(size),
+            tree_settings: TreeSettings::default(size),
         }
     }
 }
@@ -332,6 +335,7 @@ impl Generator for WorldGenerator {
     /// ```
     /// use robotics_lib::world::world_generator::Generator;
     /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::generator::{
     ///     WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings,
     ///     BinSettings, CrateSettings, GarbageSettings
@@ -349,6 +353,7 @@ impl Generator for WorldGenerator {
     ///     CrateSettings::default(world_size),
     ///     GarbageSettings::default(world_size),
     ///     FireSettings::default(world_size),
+    ///     TreeSettings::default(world_size),
     /// );
     ///
     /// let generated = world_generator.gen();
