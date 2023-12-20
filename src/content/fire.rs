@@ -1,6 +1,7 @@
-use std::ops::Range;
+use std::ops::{Mul, Range};
 
 use nannou_core::math::{deg_to_rad, map_range};
+use nannou_core::prelude::Pow;
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
 use robotics_lib::world::tile::{Content, Tile};
@@ -9,9 +10,9 @@ use crate::utils::{Coordinate, get_random_seeded_noise};
 
 #[derive(Clone)]
 pub struct FireSettings {
-    pub(crate) num_fire_tiles: Option<Range<usize>>,
-    pub(crate) radius_range: Option<Range<f32>>,
-    pub(crate) num_of_blaze: Option<Range<usize>>,
+    pub(crate) num_fire_tiles: Range<usize>,
+    pub(crate) radius_range: Range<f32>,
+    pub(crate) num_of_blaze: Range<usize>,
 }
 
 pub(crate) struct Blaze {
@@ -26,10 +27,13 @@ pub(crate) struct Blaze {
 
 impl FireSettings {
     pub fn default(size: usize) -> Self {
+        let radius_range = 5.0..size as f32 / 100.0;
+        let num_of_blaze = 1..size / 100;
+        let num_fire_tiles = 1..(radius_range.end.ceil().mul(2.0).pow(2) as usize) * num_of_blaze.end;
         FireSettings {
-            num_fire_tiles: None,
-            radius_range: Some(5.0..size as f32 / 50.0),
-            num_of_blaze: Some(1..size / 100),
+            radius_range,
+            num_of_blaze,
+            num_fire_tiles,
         }
     }
 }
@@ -201,39 +205,40 @@ impl Blaze {
     }
 }
 
-pub fn spawn_fires(world: &mut Vec<Vec<Tile>>, fire_settings: &FireSettings) {
-    let size = world.len();
+pub fn spawn_fires(world: &mut Vec<Vec<Tile>>, fire_settings: &mut FireSettings) {
 
     // checks if fire settings are valid
-    let mut fs = match check_fire_settings(fire_settings, size) {
-        Err(msg) => {
-            panic!("{}", msg);
-        }
-        Ok(fs) => {fs}
+    if let Err(msg) = errors(fire_settings) {
+        panic!("{}", msg);
     };
 
     // generate blazes and place them in the world
-    while fs.num_fire_tiles.as_ref().unwrap().end > fs.num_fire_tiles.as_ref().unwrap().start
-        && fs.num_of_blaze.as_ref().unwrap().end > fs.num_of_blaze.as_ref().unwrap().start {
+    // while fs.num_fire_tiles.as_ref().unwrap().end > fs.num_fire_tiles.as_ref().unwrap().start
+    //     && fs.num_of_blaze.as_ref().unwrap().end > fs.num_of_blaze.as_ref().unwrap().start
+    loop {
 
         // Generate random for variation
         let mut rng = rand::thread_rng();
-        let variation = rng.gen_range(0.075..0.175);
-        let radius = rng.gen_range(fs.radius_range.as_ref().unwrap().start..fs.radius_range.as_ref().unwrap().end);
+        let variation = rng.gen_range(0.075..0.125);
+        let radius = rng.gen_range(fire_settings.radius_range.start..fire_settings.radius_range.end);
         let blaze = Blaze::default(world.as_slice(), world.len(), radius, variation);
 
-        // Decrease the settings.num_fire_tiles.unwrap().end
-        fs.num_fire_tiles.as_mut().unwrap().end -= blaze.points.len();
+        // checks before placing the blaze
+       if blaze.points.len() > fire_settings.num_fire_tiles.end || fire_settings.num_of_blaze.end < 1 {
+            break;
+        }
+
+        // Decrease the settings.num_fire_tiles.unwrap().endfire_settings.num_fire_tiles.end -= blaze.points.len();
         // Decrease the settings.num_of_blaze.unwrap().end
-        fs.num_of_blaze.as_mut().unwrap().end -= 1;
+        fire_settings.num_of_blaze.end -= 1;
 
 
         // check to not exceed the number of blazes or the number of fire tiles
-        if fs.num_fire_tiles.as_ref().unwrap().end <= fs.num_fire_tiles.as_ref().unwrap().start ||
-            fs.num_of_blaze.as_ref().unwrap().end <= fs.num_of_blaze.as_ref().unwrap().start
-        {
-            break;
-        }
+        // if fs.num_fire_tiles.as_ref().unwrap().end <= fs.num_fire_tiles.as_ref().unwrap().start ||
+        //     fs.num_of_blaze.as_ref().unwrap().end <= fs.num_of_blaze.as_ref().unwrap().start
+        // {
+        //     break;
+        // }
 
         // Place fires of the blaze
         for point in blaze.points {
@@ -242,94 +247,20 @@ pub fn spawn_fires(world: &mut Vec<Vec<Tile>>, fire_settings: &FireSettings) {
     }
 }
 
-fn errors(n_tiles: Range<usize>, radius_range: Range<f32>, n_blaze: Range<usize>) -> Result<FireSettings, String> {
-    if radius_range.start.floor() as usize * n_blaze.start > n_tiles.end {
+fn errors(fire_settings: &FireSettings) -> Result<(), String> {
+    if fire_settings.radius_range.start.floor() as usize * fire_settings.num_of_blaze.start > fire_settings.num_fire_tiles.end {
         // the minimum number of fire tiles that could be generated would be higher than the maximum number of fire tiles provided
         Err(format!(r#"num_fire_tiles.end: {} is too small for the given radius_range.start:
                 {} and num_of_blaze.start: {}.\nThe minimum number of fire tiles, that could be
                 generated, would be higher than the maximum number of fire tiles provided."#,
-                    n_tiles.end, radius_range.start, n_blaze.start))
-    } else if radius_range.end.ceil() as usize * n_blaze.end < n_tiles.start {
+                    fire_settings.num_fire_tiles.end, fire_settings.radius_range.start, fire_settings.num_of_blaze.start))
+    } else if fire_settings.radius_range.end.ceil() as usize * fire_settings.num_of_blaze.end < fire_settings.num_fire_tiles.start {
         // the maximum number of fire tiles that could be generated would be lower than the minimum number of fire tiles provided
         Err(format!(r#"num_fire_tiles.start: {} is too small for the given radius_range.end:
                 {} and num_of_blaze.end: {}.\nThe maximum number of fire tiles that could be
                 generated would be lower than the minimum number of fire tiles provided"#,
-                    n_tiles.start, radius_range.end, n_blaze.end))
+                    fire_settings.num_fire_tiles.start, fire_settings.radius_range.end, fire_settings.num_of_blaze.end))
     } else {
-        Ok(FireSettings {
-            num_fire_tiles: Some(n_tiles),
-            radius_range: Some(radius_range),
-            num_of_blaze: Some(n_blaze),
-        })
+        Ok(())
     }
 }
-
-fn check_fire_settings(settings: &FireSettings, size: usize) -> Result<FireSettings, String> {
-    let t = (settings.num_fire_tiles.clone(), settings.radius_range.clone(), settings.num_of_blaze.clone());
-    match t {
-        (Some(n_tiles), Some(radius_range), Some(n_blaze)) => {
-            match errors(n_tiles, radius_range, n_blaze) {
-                Ok(res) => { Ok(res) }
-                Err(err) => { Err(err) }
-            }
-        }
-        (Some(n_tiles), Some(radius_range), None) => {
-            // determine the number of blazes
-            let n_blaze = 1..n_tiles.end / radius_range.start.floor() as usize;
-            Ok(FireSettings {
-                num_fire_tiles: Some(n_tiles),
-                radius_range: Some(radius_range),
-                num_of_blaze: Some(n_blaze),
-            })
-        }
-        (Some(n_tiles), None, Some(n_blaze)) => {
-            // determine the radius range
-            let radius_range = 1.0..n_tiles.end as f32 / n_blaze.start as f32;
-            Ok(FireSettings {
-                num_fire_tiles: Some(n_tiles),
-                radius_range: Some(radius_range),
-                num_of_blaze: Some(n_blaze),
-            })
-        }
-        (Some(n_tiles), None, None) => {
-            // set the defaults
-            let radius_range = 5.0..size as f32 / 50.0;
-            let n_blaze = 1..size / 100;
-            match errors(n_tiles, radius_range, n_blaze) {
-                Ok(res) => { Ok(res) }
-                Err(err) => { Err(err) }
-            }
-        }
-        (None, Some(radius_range), Some(n_blaze)) => {
-            // determine the number of fire tiles
-            let n_tiles = 1..radius_range.end.ceil() as usize * n_blaze.end;
-            Ok(FireSettings {
-                num_fire_tiles: Some(n_tiles),
-                radius_range: Some(radius_range),
-                num_of_blaze: Some(n_blaze),
-            })
-        }
-        (None, Some(radius_range), None) => {
-            // determine the number of fire tiles
-            let n_tiles = 1..radius_range.end.ceil() as usize;
-            let n_blaze = 1..n_tiles.end / radius_range.start.floor() as usize;
-            match errors(n_tiles, radius_range, n_blaze) {
-                Ok(res) => { Ok(res) }
-                Err(err) => { Err(err) }
-            }
-        }
-        (None, None, Some(n_blaze)) => {
-            // determine the number of fire tiles
-            let n_tiles = 1..size;
-            let radius_range = 1.0..n_tiles.end as f32 / n_blaze.start as f32;
-            match errors(n_tiles, radius_range, n_blaze) {
-                Ok(res) => { Ok(res) }
-                Err(err) => { Err(err) }
-            }
-        }
-        (None, None, None) => {
-            Err(String::from("Please use default FireSettings; no settings provided"))
-        }
-    }
-}
-

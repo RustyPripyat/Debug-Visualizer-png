@@ -216,7 +216,7 @@ impl Generator for WorldGenerator {
         // spawn fires
         debug_println!("Start: Spawn fire");
         start = Utc::now();
-        spawn_fires(&mut world, &self.fire_settings);
+        spawn_fires(&mut world, &mut self.fire_settings);
         debug_println!("Done: Spawn fire in {} ms", (Utc::now() - start).num_milliseconds());
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
