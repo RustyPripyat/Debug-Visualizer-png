@@ -12,7 +12,7 @@ exclude = ["rustfmt.toml", ".*"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "exclusion_zone_world_generator"
+name = "exclusion_zone"
 path = "src/lib.rs"
 
 [[bin]]
@@ -20,7 +20,7 @@ name = "bin"
 path = "bin/main.rs"
 
 [dependencies]
-robotics_lib = { git = "ssh://git@github.com/Advanced-Programming-2023/Robotic-Lib.git", branch = "master" }
+robotics_lib = { version = "0.1.21", registry = "kellnr"}
 rand = "0.8.5"
 noise = "0.8.2"
 rayon = "1.8.0"
