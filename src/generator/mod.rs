@@ -6,6 +6,7 @@ use noise::{Fbm, Perlin, RidgedMulti};
 use noise::MultiFractal;
 use noise::NoiseFn;
 use rand::{RngCore, thread_rng};
+use rand::seq::SliceRandom;
 use rayon::iter::*;
 use rayon::iter::IntoParallelIterator;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
@@ -22,6 +23,84 @@ use crate::content::wood_crate::{CrateSettings, spawn_crate};
 use crate::tile_type::lava::{LavaSettings, spawn_lava};
 use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
+
+/// Contains the tile types and the content used to define generation order
+pub enum Spawnables {
+    Street,
+    Lava,
+    Wall,
+    Rock,
+    Tree,
+    Garbage,
+    Fire,
+    Coin,
+    Bin,
+    Crate,
+    Bank,
+    Market,
+    Fish,
+    Building,
+    JollyBlock,
+}
+
+/// Set of content and tile type defining the order of element generation,
+/// if an element appears twice, the second is ignored and <b>if an element does not appear, it is not spawned</b>
+pub type SpawnOrder = Vec<Spawnables>;
+
+/// Generates a randomized order for spawning `TileType` and `Content`.
+///
+/// # Returns
+/// A `SpawnOrder` (Vec<Spawnables>), which is a vector of `Spawnables` enum variants.
+/// This vector represents the order in which different elements (like Bank, Bin, Building, etc.) should be spawned.
+/// The order is randomized each time the function is called.
+///
+/// # Behavior
+/// - Initializes a mutable vector `elements` with all variants of the `Spawnables` enum.
+/// - Shuffles this vector using a random number generator (`thread_rng()`), ensuring that the order of elements is randomized.
+/// - The randomized vector is then returned as the spawn order.
+///
+/// # Usage Notes
+/// - The returned `SpawnOrder` dictates the order in which elements are generated in the game or simulation environment.
+/// - If an element appears twice in a provided `SpawnOrder`, only the first occurrence is considered.
+/// - Elements not included in the `SpawnOrder` will not be spawned.
+/// - Uses thread-local random number generator for shuffling, making each call to this function likely to produce a different order.
+///
+/// # Example
+/// ```
+/// use exclusion_zone::content::bank::BankSettings;
+/// use exclusion_zone::content::bin::BinSettings;
+/// use exclusion_zone::content::fire::FireSettings;
+/// use exclusion_zone::content::garbage::GarbageSettings;
+/// use exclusion_zone::content::tree::TreeSettings;
+/// use exclusion_zone::content::wood_crate::CrateSettings;
+/// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
+/// use exclusion_zone::generator::Spawnables::Tree;
+/// use exclusion_zone::tile_type::lava::LavaSettings;
+/// let size = 1000;
+/// let world_gen = WorldGenerator {
+///             size,
+///             spawn_order: get_default_spawn_order(),
+///             noise_settings: NoiseSettings::default(),
+///             thresholds: Thresholds::default(),
+///             lava_settings: LavaSettings::default(size),
+///             bank_settings: BankSettings::default(size),
+///             bin_settings: BinSettings::default(size),
+///             crate_settings: CrateSettings::default(size),
+///             garbage_settings: GarbageSettings::default(size),
+///             fire_settings: FireSettings::default(size),
+///             tree_settings: TreeSettings::default(size),
+///         };
+/// // The `spawn_order` now contains a randomized order of elements to be spawned.
+/// ```
+pub fn get_default_spawn_order() -> SpawnOrder {
+    let mut elements = vec![Spawnables::Bank, Spawnables::Bin, Spawnables::Building, Spawnables::Coin,
+                            Spawnables::Crate, Spawnables::Fire, Spawnables::Fish, Spawnables::Garbage,
+                            Spawnables::JollyBlock, Spawnables::Lava, Spawnables::Market, Spawnables::Rock,
+                            Spawnables::Street, Spawnables::Tree, Spawnables::Wall,
+    ];
+    elements.shuffle(&mut thread_rng());
+    elements
+}
 
 impl NoiseSettings {
     /// Provides an instance of `NoiseSettings` with the default parameter and give seed
@@ -55,12 +134,62 @@ impl Default for NoiseSettings {
 pub struct NoiseSettings {
     /// define the world generator seed, used to build the noise map, normally a random value
     seed: u32,
-    //TODO how am i supposed to document this?
+    /// Total number of frequency octaves to generate the noise with.
+    /// The number of octaves control the amount of detail in the noise function. Adding more octaves increases the detail, with the drawback of increasing the calculation time.
     pub octaves: usize,
+    /// The number of cycles per unit length that the noise function outputs.
     pub frequency: f64,
+    /// A multiplier that determines how quickly the frequency increases for each successive octave in the noise function.
+    /// The frequency of each successive octave is equal to the product of the previous octave’s frequency and the lacunarity value.
+    /// A lacunarity of 2.0 results in the frequency doubling every octave. For almost all cases, 2.0 is a good value to use.
     pub lacunarity: f64,
+    ///A multiplier that determines how quickly the amplitudes diminish for each successive octave in the noise function.
+    /// The amplitude of each successive octave is equal to the product of the previous octave’s amplitude and the persistence value. Increasing the persistence produces “rougher” noise.
     pub persistence: f64,
+    /// The attenuation to apply to the weight on each octave. This reduces the strength of each successive octave, making their respective ridges smaller. The default attenuation is 2.0, making each octave half the height of the previous.
     pub attenuation: f64,
+}
+
+impl NoiseSettings {
+    /// Creates a new instance of `NoiseSettings` with the provided parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `seed` - The world generator seed used to build the noise map.
+    /// * `octaves` - Total number of frequency octaves.
+    /// * `frequency` - Number of cycles per unit length.
+    /// * `lacunarity` - Multiplier determining frequency increase.
+    /// * `persistence` - Multiplier determining amplitude decrease.
+    /// * `attenuation` - Attenuation applied to octave weights.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of `NoiseSettings` initialized with the provided parameters.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use exclusion_zone::generator::NoiseSettings;
+    ///
+    /// let settings = NoiseSettings::new(123, 5, 1.0, 2.0, 0.5, 1.0);
+    /// ```
+    pub fn new(
+        seed: u32,
+        octaves: usize,
+        frequency: f64,
+        lacunarity: f64,
+        persistence: f64,
+        attenuation: f64,
+    ) -> Self {
+        NoiseSettings {
+            seed,
+            octaves,
+            frequency,
+            lacunarity,
+            persistence,
+            attenuation,
+        }
+    }
 }
 
 /// Define the thresholds within which tile types are assigned
@@ -138,6 +267,8 @@ impl Thresholds {
 pub struct WorldGenerator {
     /// the world side dimension, final size will be size²
     pub size: usize,
+    /// set of content and tile type defining the order with which elements are generated
+    pub spawn_order: SpawnOrder,
     /// settings of the noise generator uses to give rise to the noise map
     pub noise_settings: NoiseSettings,
     /// thresholds within which tile types are assigned
@@ -152,7 +283,9 @@ pub struct WorldGenerator {
     pub crate_settings: CrateSettings,
     /// define how garbage will spawn
     pub garbage_settings: GarbageSettings,
+    /// define how fire will spawn
     pub fire_settings: FireSettings,
+    /// define how trees will spawn
     pub tree_settings: TreeSettings,
 }
 
@@ -239,9 +372,26 @@ impl WorldGenerator {
     /// use rand::{RngCore, thread_rng};
     /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
-    /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings};
+    /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings, SpawnOrder, Spawnables};
     ///
     /// let world_size = 1000;
+    /// let spawn_order : SpawnOrder = vec![
+    ///         Spawnables::Bank,
+    ///         Spawnables::Bin,
+    ///         Spawnables::Building,
+    ///         Spawnables::Coin,
+    ///         Spawnables::Crate,
+    ///         Spawnables::Fire,
+    ///         Spawnables::Fish,
+    ///         Spawnables::Garbage,
+    ///         Spawnables::JollyBlock,
+    ///         Spawnables::Lava,
+    ///         Spawnables::Market,
+    ///         Spawnables::Rock,
+    ///         Spawnables::Street,
+    ///         Spawnables::Tree,
+    ///         Spawnables::Wall,
+    ///     ];
     /// let noise_settings = NoiseSettings::from_seed(thread_rng().next_u32());
     /// let thresholds = Thresholds::default();
     /// let lava_settings = LavaSettings::default(world_size);
@@ -251,10 +401,11 @@ impl WorldGenerator {
     /// let garbage_settings = GarbageSettings::default(world_size);
     /// let fire_settings = FireSettings::default(world_size);
     /// let tree_settings = TreeSettings::default(world_size);
-    /// let world = WorldGenerator::new(world_size,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings);
+    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings);
     /// ```
     pub fn new(
         size: usize,
+        spawn_order: SpawnOrder,
         noise_settings: NoiseSettings,
         thresholds: Thresholds,
         lava_settings: LavaSettings,
@@ -263,10 +414,11 @@ impl WorldGenerator {
         crate_settings: CrateSettings,
         garbage_settings: GarbageSettings,
         fire_settings: FireSettings,
-        tree_settings: TreeSettings
+        tree_settings: TreeSettings,
     ) -> Self {
         Self {
             size,
+            spawn_order,
             noise_settings,
             thresholds,
             lava_settings,
@@ -299,6 +451,7 @@ impl WorldGenerator {
     pub fn default(size: usize) -> Self {
         Self {
             size,
+            spawn_order: get_default_spawn_order(),
             noise_settings: NoiseSettings::default(),
             thresholds: Thresholds::default(),
             lava_settings: LavaSettings::default(size),
@@ -334,17 +487,20 @@ impl Generator for WorldGenerator {
     ///
     /// ```
     /// use robotics_lib::world::world_generator::Generator;
+    /// use exclusion_zone::content::bank::BankSettings;
+    /// use exclusion_zone::content::bin::BinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::garbage::GarbageSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
-    /// use exclusion_zone::generator::{
-    ///     WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings,
-    ///     BinSettings, CrateSettings, GarbageSettings
-    /// };
+    /// use exclusion_zone::content::wood_crate::CrateSettings;
+    /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
+    /// use exclusion_zone::tile_type::lava::LavaSettings;
     ///
     /// let world_size = 1000;
     ///
     /// let mut world_generator = WorldGenerator::new(
     ///     world_size,
+    ///     get_default_spawn_order(),
     ///     NoiseSettings::default(),
     ///     Thresholds::def(),
     ///     LavaSettings::default(world_size),
