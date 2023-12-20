@@ -1,12 +1,18 @@
 [package]
-name = "rusty_pripyat"
+name = "exclusion_zone_world_generator"
 version = "0.1.0"
 edition = "2021"
 authors = ["Marco Toniolo @Toniolo-Marco", "Federico Frigerio @FrostWalk"]
+description = "Let your robot feel the vibes of Černobyl like in the 1986 USSR."
+readme = "README.md"
+repository = "https://github.com/RustyPripyat/World-Generator"
+license-file = "LICENSE.txt"
+keywords = ["world_generator"]
+exclude = ["rustfmt.toml", ".*"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "exclusion_zone"
+name = "exclusion_zone_world_generator"
 path = "src/lib.rs"
 
 [[bin]]

@@ -2,7 +2,5 @@
 note.md
 .idea/
 /bin/target
-.cargo/
 Cargo.lock
 *.png
-Cargo.toml
