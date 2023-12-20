@@ -16,7 +16,7 @@ use robotics_lib::world::world_generator::Generator;
 
 use crate::content::bank::{BankSettings, spawn_bank};
 use crate::content::bin::{BinSettings, spawn_bin};
-use crate::content::fire::{FireSettings, spawn_fires};
+use crate::content::fire::{FireSettings};
 use crate::content::garbage::{GarbageSettings, spawn_garbage};
 use crate::content::wood_crate::{CrateSettings, spawn_crate};
 use crate::tile_type::lava::{LavaSettings, spawn_lava};
@@ -281,6 +281,8 @@ pub struct WorldGenerator {
     pub garbage_settings: GarbageSettings,
     /// define how fire will spawn
     pub fire_settings: FireSettings,
+    /// define how trees will spawn
+    pub tree_settings: TreeSettings,
 }
 
 impl WorldGenerator {
@@ -406,6 +408,7 @@ impl WorldGenerator {
         crate_settings: CrateSettings,
         garbage_settings: GarbageSettings,
         fire_settings: FireSettings,
+        tree_settings: TreeSettings
     ) -> Self {
         Self {
             size,
@@ -418,6 +421,7 @@ impl WorldGenerator {
             crate_settings,
             garbage_settings,
             fire_settings,
+            tree_settings,
         }
     }
 
@@ -450,6 +454,7 @@ impl WorldGenerator {
             crate_settings: CrateSettings::default(size),
             garbage_settings: GarbageSettings::default(size),
             fire_settings: FireSettings::default(size),
+            tree_settings: TreeSettings::default(size),
         }
     }
 }
@@ -497,6 +502,7 @@ impl Generator for WorldGenerator {
     ///     CrateSettings::default(world_size),
     ///     GarbageSettings::default(world_size),
     ///     FireSettings::default(world_size),
+    ///     TreeSettings::default(world_size),
     /// );
     ///
     /// let generated = world_generator.gen();
@@ -553,8 +559,13 @@ impl Generator for WorldGenerator {
         // spawn fires
         debug_println!("Start: Spawn fire");
         start = Utc::now();
-        spawn_fires(&mut world, &self.fire_settings);
+        spawn_fire(&mut world, &mut self.fire_settings);
         debug_println!("Done: Spawn fire in {} ms", (Utc::now() - start).num_milliseconds());
+
+        debug_println!("Start: Spawn trees");
+        start = Utc::now();
+        spawn_tree(&mut world, &mut self.tree_settings);
+        debug_println!("Done: Spawn trees in {} ms", (Utc::now() - start).num_milliseconds());
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
         (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 1, 9).unwrap(), 0.0, None)
