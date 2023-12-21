@@ -1,7 +1,7 @@
 use rand::Rng;
 use robotics_lib::world::tile::{Content, TileType};
 
-// TODO doc water
+// TODO doc water?
 pub(crate) fn add_default_water_content(tile_type: TileType) -> Content {
     if tile_type == TileType::DeepWater || tile_type == TileType::ShallowWater {
         //return Content::Water with random value between 0 and Content::Water max

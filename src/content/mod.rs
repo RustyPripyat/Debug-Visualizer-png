@@ -18,4 +18,6 @@ pub mod tree;
 pub mod water;
 /// Contains structures and functions related to the spawn of wood crate
 pub mod wood_crate;
+/// Contains structures and functions related to the spawn of cities, composed by:
+pub mod city;
 pub(crate) mod blob;
