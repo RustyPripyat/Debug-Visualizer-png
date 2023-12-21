@@ -5,4 +5,4 @@ note.md
 Cargo.lock
 *.png
 /.cargo/
-*.bsw
+*.zst

@@ -469,16 +469,14 @@ impl WorldGenerator {
     }
     /// Generates a new world based on the current settings and serializes it.
     ///
-    /// This method first creates a new world, wraps it with the current settings
-    /// serialize it into binary, compress it with Zstandard and then save
-    /// this data to a file at `file_path` with extension `.bsw`
+    /// This method generates a new world and couples it with the current settings. It then serializes this combined
+    /// data into a binary format and compresses it using Zstandard for efficient storage. Finally,
+    /// the compressed binary data is saved to a file specified by the file_path parameter, appending a .zst
+    /// extension to the file name.
     ///
     /// # Arguments
     ///
-    /// This method generates a new world and couples it with the current settings. It then serializes this combined
-    /// data into a binary format and compresses it using Zstandard (zstd) for efficient storage. Finally,
-    /// the compressed binary data is saved to a file specified by the file_path parameter, appending a .bsw
-    /// extension to the file name.
+    /// `file_path`: The path and the name of the file to generate as `&str`
     ///
     /// # Panics
     ///
@@ -520,7 +518,57 @@ impl WorldGenerator {
         SerializeWorld {
             settings: self.clone(),
             world: self.gen(),
-        }.serialize(file_path, true, 11)
+        }.serialize(file_path, 11)
+    }
+
+    /// Loads a previously saved world from file.
+    ///
+    /// This function attempts to load and deserialize a world and the settings used to generate it.
+    ///  If successful, it extracts and returns the
+    /// `WorldGenerator` settings along with the world data `(TileMatrix, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>)`
+    /// the same yuo will get when generating a new world.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - A string slice that specifies the path to the binary file
+    ///   containing the saved world.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<(WorldGenerator, (TileMatrix, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>)), String>`:
+    /// - On success, provides a tuple consisting of the `WorldGenerator` settings
+    ///   and the detailed world data.
+    /// - On failure, returns a `String` error message detailing the issue
+    ///   encountered during the loading process.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use exclusion_zone::generator::WorldGenerator;
+    /// let file_path = "path/to/saved_world.zst";
+    ///
+    /// let world_and_data = match WorldGenerator::load_saved(file_path) {
+    ///     Ok((settings, (tile_matrix, coordinates, environmental_conditions, metric, content_map))) => {
+    ///         println!("World loaded successfully.");
+    ///         // Use `settings` and the world data here...
+    ///     }
+    ///     Err(e) => {
+    ///         eprintln!("Error loading world: {}", e);
+    ///     }
+    /// };
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error string if it encounters any issues during
+    /// the deserialization process, such as problems with reading the file,
+    /// decompression, or deserialization itself. The error string will contain
+    /// details about the specific problem encountered.
+    pub fn load_saved(file_path: &str) -> Result<(WorldGenerator, GenResult), String> {
+        match SerializeWorld::deserialize(file_path) {
+            Ok(c) => { Ok((c.settings, c.world)) }
+            Err(e) => { Err(format!("Unable to load world file {file_path}:\n{e}")) }
+        }
     }
 }
 
@@ -529,6 +577,8 @@ pub type TileMatrix = Vec<Vec<Tile>>;
 
 /// Alias for `(usize, usize)` which are 2D coordinates, in x, y order
 pub type Coordinates = (usize, usize);
+
+pub(crate) type GenResult = (TileMatrix, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>);
 
 impl Generator for WorldGenerator {
     /// Generates a new world based on the specified settings.
@@ -573,7 +623,7 @@ impl Generator for WorldGenerator {
     ///
     /// let generated = world_generator.gen();
     /// ```
-    fn gen(&mut self) -> (TileMatrix, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
+    fn gen(&mut self) -> GenResult {
         let tot = Utc::now();
 
         debug_println!("Start: Noise map generation");

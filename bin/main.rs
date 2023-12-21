@@ -67,8 +67,7 @@ fn main() {
         TreeSettings::default(size),
     );
 
-    // let tiles = generator.gen().0;
-    //
-    // visualizer::save_world_image(&tiles, (0, 0), "img.png", 4);
-    generator.generate_and_save("world");
+    let tiles = generator.gen().0;
+
+    visualizer::save_world_image(&tiles, (0, 0), "img.png", 4);
 }
