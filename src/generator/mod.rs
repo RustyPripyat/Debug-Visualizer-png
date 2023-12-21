@@ -23,7 +23,7 @@ use crate::content::tree::{spawn_tree, TreeSettings};
 use crate::content::wood_crate::{CrateSettings, spawn_crate};
 use crate::tile_type::lava::{LavaSettings, spawn_lava};
 use crate::tile_type::street::street_spawn;
-use crate::utils::{find_max_value, find_min_value, percentage, SerializeWorld};
+use crate::utils::{find_max_value, find_min_value, percentage, SerializedWorld};
 
 /// Contains the tile types and the content used to define generation order
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
@@ -512,12 +512,83 @@ impl WorldGenerator {
     ///     FireSettings::default(world_size),
     ///     TreeSettings::default(world_size),
     /// );
-    /// world_generator.generate_and_save("file/path/name");
+    /// world_generator.generate_and_save("file/path/name").expect("Unable to save the world");
     /// ```
-    pub fn generate_and_save(&mut self, file_path: &str) {
-        SerializeWorld {
+    pub fn generate_and_save(&mut self, file_path: &str) -> Result<(), String> {
+        SerializedWorld {
             settings: self.clone(),
             world: self.gen(),
+        }.serialize(file_path, 11)
+    }
+
+    /// Saves the current world settings along with the provided world data to a file.
+    ///
+    /// This function creates an instance of `SerializedWorld` using the current
+    /// `WorldGenerator` settings and the provided `world` data. It then serializes
+    /// this instance into a binary format, optionally compresses it, and saves it to
+    /// the specified file path with a `.bsw` extension.
+    ///
+    /// The serialization and compression are handled by the `serialize` method of
+    /// `SerializedWorld`. The compression level is set to `11`, but this can be
+    /// adjusted based on the desired balance between compression efficiency and
+    /// performance.
+    ///
+    /// # Arguments
+    ///
+    /// * `file_path` - A string slice specifying the path to the file where the
+    ///   serialized data will be saved. The `.bsw` extension will be appended to
+    ///   this path.
+    /// * `world` - The world data to be saved, represented as a `GenResult`. This
+    ///   includes all relevant world information like tile matrix, coordinates,
+    ///   environmental conditions, and other related data.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result<(), String>`:
+    /// - On success, it returns `Ok(())`.
+    /// - On failure, it returns `Err(String)` with a description of the error.
+    ///
+    /// # Examples
+    /// ```
+    /// use robotics_lib::world::world_generator::Generator;
+    /// use exclusion_zone::content::bank::BankSettings;
+    /// use exclusion_zone::content::bin::BinSettings;
+    /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::garbage::GarbageSettings;
+    /// use exclusion_zone::content::tree::TreeSettings;
+    /// use exclusion_zone::content::wood_crate::CrateSettings;
+    /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
+    /// use exclusion_zone::tile_type::lava::LavaSettings;
+    ///
+    /// let world_size = 1000;
+    ///
+    /// let mut world_generator = WorldGenerator::new(
+    ///     world_size,
+    ///     get_default_spawn_order(),
+    ///     NoiseSettings::default(),
+    ///     Thresholds::def(),
+    ///     LavaSettings::default(world_size),
+    ///     BankSettings::default(world_size),
+    ///     BinSettings::default(world_size),
+    ///     CrateSettings::default(world_size),
+    ///     GarbageSettings::default(world_size),
+    ///     FireSettings::default(world_size),
+    ///     TreeSettings::default(world_size),
+    /// );
+    /// let world = world_generator.gen();
+    /// /* do stuff with the world, like visualize etc...*/
+    /// world_generator.save("path/to/file", world).expect("unable to save the world");
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// This function may return an error if it encounters issues during the
+    /// serialization process or while writing to the file. The error message will
+    /// provide details on the nature of the problem encountered.
+    pub fn save(&mut self, file_path: &str, world: GenResult) -> Result<(), String> {
+        SerializedWorld {
+            settings: self.clone(),
+            world,
         }.serialize(file_path, 11)
     }
 
@@ -550,7 +621,7 @@ impl WorldGenerator {
     /// let world_and_data = match WorldGenerator::load_saved(file_path) {
     ///     Ok((settings, (tile_matrix, coordinates, environmental_conditions, metric, content_map))) => {
     ///         println!("World loaded successfully.");
-    ///         // Use `settings` and the world data here...
+    ///         // Use settings and the world data here...
     ///     }
     ///     Err(e) => {
     ///         eprintln!("Error loading world: {}", e);
@@ -565,7 +636,7 @@ impl WorldGenerator {
     /// decompression, or deserialization itself. The error string will contain
     /// details about the specific problem encountered.
     pub fn load_saved(file_path: &str) -> Result<(WorldGenerator, GenResult), String> {
-        match SerializeWorld::deserialize(file_path) {
+        match SerializedWorld::deserialize(file_path) {
             Ok(c) => { Ok((c.settings, c.world)) }
             Err(e) => { Err(format!("Unable to load world file {file_path}:\n{e}")) }
         }

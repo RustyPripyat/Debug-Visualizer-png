@@ -67,7 +67,16 @@ fn main() {
         TreeSettings::default(size),
     );
 
-    let tiles = generator.gen().0;
+    let world = generator.gen();
 
-    visualizer::save_world_image(&tiles, (0, 0), "img.png", 4);
+    visualizer::save_world_image(&world.0, (0, 0), "img.png", 4);
+
+
+    // match generator.save("world", world) {
+    //     Ok(_) => {}
+    //     Err(e) => { panic!("{e}") }
+    // }
+
+    // let world = WorldGenerator::load_saved("world.zst").expect("unable to open file").1;
+    // 1+1;
 }

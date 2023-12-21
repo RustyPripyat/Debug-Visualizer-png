@@ -146,30 +146,36 @@ pub(crate) fn get_random_seeded_noise() -> Perlin {
 }
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct SerializeWorld {
+pub(crate) struct SerializedWorld {
     pub(crate) world: GenResult,
     pub(crate) settings: WorldGenerator,
 }
 
-impl SerializeWorld {
+impl SerializedWorld {
     #[inline(always)]
-    pub(crate) fn serialize(&self, file_path: &str, compression_level: i32) {
+    pub(crate) fn serialize(&self, file_path: &str, compression_level: i32) -> Result<(), String> {
         let serialized = match bincode::serialize(self) {
-            Ok(s) => { s }
-            Err(_e) => {
-                panic!("Unable to serialize the world\n{_e}")
+            Ok(r) => { r }
+            Err(e) => {
+                return Err(format!("{e}"));
             }
         };
 
         let mut file = match File::create(format!("{file_path}.zst")) {
-            Ok(f) => { f }
-            Err(_e) => {
-                panic!("Unable to create the file {file_path}\n{_e}")
+            Ok(r) => { r }
+            Err(e) => {
+                return Err(format!("{e}"));
             }
         };
 
-        copy_encode(&*serialized, &mut file, compression_level)
-            .unwrap_or_else(|e| panic!("Compression failed: {}", e));
+        match copy_encode(&*serialized, &mut file, compression_level) {
+            Ok(r) => { r }
+            Err(e) => {
+                return Err(format!("{e}"));
+            }
+        };
+
+        Ok(())
     }
     #[inline(always)]
     pub(crate) fn deserialize(file_path: &str) -> io::Result<Self> {
@@ -179,7 +185,7 @@ impl SerializeWorld {
         let mut decoder = Decoder::new(file)?;
         decoder.read_to_end(&mut buffer)?;
 
-        let deserialized: SerializeWorld = bincode::deserialize(&buffer)
+        let deserialized: SerializedWorld = bincode::deserialize(&buffer)
             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Deserialization failed: {}", e)))?;
 
         Ok(deserialized)
