@@ -1,12 +1,13 @@
 use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bin;
+use serde::{Deserialize, Serialize};
 
 use crate::generator::TileMatrix;
 use crate::utils::spawn_content_randomly;
 
 /// Settings defining the behavior of bins spawn,
 /// such as the number of spawn points
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct BinSettings {
     pub number_of_spawn_points: usize,
 }

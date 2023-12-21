@@ -4,9 +4,11 @@ use nannou_core::math::{deg_to_rad, map_range};
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
 use robotics_lib::world::tile::{Content, Tile};
+use serde::{Deserialize, Serialize};
+use crate::generator::TileMatrix;
 
 use crate::utils::{Coordinate, get_random_seeded_noise};
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct BlobSettings {
     pub(crate) n_tiles: Range<usize>,
     pub(crate) radius_range: Range<f32>,
@@ -32,6 +34,32 @@ pub(crate) trait BlobTrait{
 }
 
 impl BlobTrait for Blob{
+    fn limit_on_proper_tile(&mut self, world: &[Vec<Tile>], content: &Content) {
+        let mut i = 0;
+        while i < self.points.len() {
+            let point = self.points[i];
+
+            if !world[point.row][point.col].tile_type.properties().can_hold(&content)
+                || world[point.row][point.col].content != Content::None
+            {
+                // Remove the point from the blob
+                self.points.swap_remove(i);
+            } else {
+                // Move to the next index
+                i += 1;
+            }
+        }
+    }
+
+    fn get_extreme_points(&self) -> (usize, usize, usize, usize) {
+        let min_col = self.border_points.iter().map(|f| f.col).min().unwrap();
+        let max_col = self.border_points.iter().map(|f| f.col).max().unwrap();
+        let min_row = self.border_points.iter().map(|f| f.row).min().unwrap();
+        let max_row = self.border_points.iter().map(|f| f.row).max().unwrap();
+
+        (min_row, min_col, max_row, max_col)
+    }
+
     fn default(world: &[Vec<Tile>], size: usize, radius: f32, variation: f32, content: &Content) -> Self {
         let mut blob = Blob::new();
 
@@ -81,32 +109,6 @@ impl BlobTrait for Blob{
         blob.limit_on_proper_tile(world, content);
 
         blob
-    }
-
-    fn limit_on_proper_tile(&mut self, world: &[Vec<Tile>], content: &Content) {
-        let mut i = 0;
-        while i < self.points.len() {
-            let point = self.points[i];
-
-            if !world[point.row][point.col].tile_type.properties().can_hold(&content)
-                || world[point.row][point.col].content != Content::None
-            {
-                // Remove the point from the blob
-                self.points.swap_remove(i);
-            } else {
-                // Move to the next index
-                i += 1;
-            }
-        }
-    }
-
-    fn get_extreme_points(&self) -> (usize, usize, usize, usize) {
-        let min_col = self.border_points.iter().map(|f| f.col).min().unwrap();
-        let max_col = self.border_points.iter().map(|f| f.col).max().unwrap();
-        let min_row = self.border_points.iter().map(|f| f.row).min().unwrap();
-        let max_row = self.border_points.iter().map(|f| f.row).max().unwrap();
-
-        (min_row, min_col, max_row, max_col)
     }
 
     fn new() -> Self {
@@ -200,7 +202,7 @@ impl BlobTrait for Blob{
 }
 
 
-pub(crate) fn spawn_blob(world: &mut Vec<Vec<Tile>>, settings: &mut BlobSettings, content: Content) {
+pub(crate) fn spawn_blob(world: &mut TileMatrix, settings: &mut BlobSettings, content: Content) {
 
     // checks if settings are valid
     if let Err(msg) = errors(settings) {

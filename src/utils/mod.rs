@@ -1,8 +1,15 @@
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
+
 use noise::Perlin;
 use rand::Rng;
+use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::tile::Content;
+use serde::{Deserialize, Serialize};
+use zstd::stream::copy_encode;
 
-use crate::generator::Coordinates;
+use crate::generator::{Coordinates, WorldGenerator};
 use crate::generator::TileMatrix;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -139,3 +146,35 @@ pub(crate) fn get_random_seeded_noise() -> Perlin {
     Perlin::new(rng.gen())
 }
 
+#[derive(Serialize, Deserialize)]
+pub(crate) struct SerializeWorld {
+    pub(crate) world: (TileMatrix, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>),
+    pub(crate) settings: WorldGenerator,
+}
+
+impl SerializeWorld {
+    #[inline(always)]
+    pub(crate) fn serialize(&self, file_path: &str, compress: bool, level: i32) {
+        let serialized = match bincode::serialize(self) {
+            Ok(s) => { s }
+            Err(_e) => {
+                panic!("Unable to serialize the world\n{_e}")
+            }
+        };
+
+        let mut file = match File::create(format!("{file_path}.bsw")) {
+            Ok(f) => { f }
+            Err(_e) => {
+                panic!("Unable to create the file {file_path}\n{_e}")
+            }
+        };
+
+        if compress {
+            copy_encode(&*serialized, &mut file, level)
+                .unwrap_or_else(|e| panic!("Compression failed: {}", e));
+        } else {
+            file.write_all(&serialized)
+                .unwrap_or_else(|e| panic!("Unable to write file {}\n{}", file_path, e));
+        }
+    }
+}

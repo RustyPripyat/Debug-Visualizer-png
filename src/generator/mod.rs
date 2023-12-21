@@ -13,6 +13,7 @@ use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny, TrentinoSnow, TropicalMonsoon};
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::world_generator::Generator;
+use serde::{Deserialize, Serialize};
 
 use crate::content::bank::{BankSettings, spawn_bank};
 use crate::content::bin::{BinSettings, spawn_bin};
@@ -22,10 +23,10 @@ use crate::content::tree::{spawn_tree, TreeSettings};
 use crate::content::wood_crate::{CrateSettings, spawn_crate};
 use crate::tile_type::lava::{LavaSettings, spawn_lava};
 use crate::tile_type::street::street_spawn;
-use crate::utils::{find_max_value, find_min_value, percentage};
+use crate::utils::{find_max_value, find_min_value, percentage, SerializeWorld};
 
 /// Contains the tile types and the content used to define generation order
-#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
 pub enum Spawnables {
     Street,
     Lava,
@@ -140,6 +141,7 @@ impl Default for NoiseSettings {
 }
 
 /// Defines the settings that the noise generator uses to give rise to the noise map
+#[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct NoiseSettings {
     /// define the world generator seed, used to build the noise map, normally a random value
     seed: u32,
@@ -202,6 +204,7 @@ impl NoiseSettings {
 }
 
 /// Define the thresholds within which tile types are assigned
+#[derive(Serialize, Deserialize, Copy, Clone)]
 pub struct Thresholds {
     /// define at what depth the land will be considered deep water
     pub threshold_deep_water: f64,
@@ -273,6 +276,7 @@ impl Thresholds {
 }
 
 /// Groups all sub-module settings of the world generator, allowing the various aspects to be customised
+#[derive(Serialize, Deserialize, Clone)]
 pub struct WorldGenerator {
     /// the world side dimension, final size will be size²
     pub size: usize,
@@ -463,6 +467,61 @@ impl WorldGenerator {
             tree_settings: TreeSettings::default(size),
         }
     }
+    /// Generates a new world based on the current settings and serializes it.
+    ///
+    /// This method first creates a new world, wraps it with the current settings
+    /// serialize it into binary, compress it with Zstandard and then save
+    /// this data to a file at `file_path` with extension `.bsw`
+    ///
+    /// # Arguments
+    ///
+    /// This method generates a new world and couples it with the current settings. It then serializes this combined
+    /// data into a binary format and compresses it using Zstandard (zstd) for efficient storage. Finally,
+    /// the compressed binary data is saved to a file specified by the file_path parameter, appending a .bsw
+    /// extension to the file name.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if:
+    /// - The file specified by `file_path` cannot be created.
+    /// - There is an error in writing to the file.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use robotics_lib::world::world_generator::Generator;
+    /// use exclusion_zone::content::bank::BankSettings;
+    /// use exclusion_zone::content::bin::BinSettings;
+    /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::garbage::GarbageSettings;
+    /// use exclusion_zone::content::tree::TreeSettings;
+    /// use exclusion_zone::content::wood_crate::CrateSettings;
+    /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
+    /// use exclusion_zone::tile_type::lava::LavaSettings;
+    ///
+    /// let world_size = 1000;
+    ///
+    /// let mut world_generator = WorldGenerator::new(
+    ///     world_size,
+    ///     get_default_spawn_order(),
+    ///     NoiseSettings::default(),
+    ///     Thresholds::def(),
+    ///     LavaSettings::default(world_size),
+    ///     BankSettings::default(world_size),
+    ///     BinSettings::default(world_size),
+    ///     CrateSettings::default(world_size),
+    ///     GarbageSettings::default(world_size),
+    ///     FireSettings::default(world_size),
+    ///     TreeSettings::default(world_size),
+    /// );
+    /// world_generator.generate_and_save("file/path/name");
+    /// ```
+    pub fn generate_and_save(&mut self, file_path: &str) {
+        SerializeWorld {
+            settings: self.clone(),
+            world: self.gen(),
+        }.serialize(file_path, true, 11)
+    }
 }
 
 /// Alias for `Vec<Vec<Tile>>` which is the Tile matrix representing the world
@@ -586,7 +645,7 @@ impl Generator for WorldGenerator {
                 Spawnables::Bank => {
                     debug_println!("Start: Spawn bank");
                     start = Utc::now();
-                    spawn_bank(&mut world, self.bank_settings.clone());
+                    spawn_bank(&mut world, self.bank_settings);
                     debug_println!("Done: Spawn bank: {} ms", (Utc::now() - start).num_milliseconds());
                 }
                 Spawnables::Coin => {}

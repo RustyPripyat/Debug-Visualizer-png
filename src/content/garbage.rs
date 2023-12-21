@@ -5,6 +5,7 @@ use rand::{Rng, thread_rng};
 use rand::prelude::ThreadRng;
 use robotics_lib::world::tile::{Content, Tile};
 use robotics_lib::world::tile::Content::Garbage;
+use serde::{Deserialize, Serialize};
 
 use crate::generator::TileMatrix;
 
@@ -12,7 +13,7 @@ use crate::generator::TileMatrix;
 ///
 /// This struct represents the configuration for garbage spawn, including the total quantity
 /// of garbage, pile sizes, quantity per tile and the likelihood that it will spawn a pile.
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GarbageSettings {
     pub total_garbage_quantity: usize,
     pub garbage_pile_size: Range<usize>,
