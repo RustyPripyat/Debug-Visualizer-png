@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use chrono::Utc;
 use debug_print::debug_println;
@@ -25,10 +25,10 @@ use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage};
 
 /// Contains the tile types and the content used to define generation order
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
 pub enum Spawnables {
     Street,
     Lava,
-    Wall,
     Rock,
     Tree,
     Garbage,
@@ -41,6 +41,7 @@ pub enum Spawnables {
     Fish,
     Building,
     JollyBlock,
+    City,
 }
 
 /// Set of content and tile type defining the order of element generation,
@@ -92,14 +93,22 @@ pub type SpawnOrder = Vec<Spawnables>;
 ///         };
 /// // The `spawn_order` now contains a randomized order of elements to be spawned.
 /// ```
+#[inline(always)]
 pub fn get_default_spawn_order() -> SpawnOrder {
-    let mut elements = vec![Spawnables::Bank, Spawnables::Bin, Spawnables::Building, Spawnables::Coin,
-                            Spawnables::Crate, Spawnables::Fire, Spawnables::Fish, Spawnables::Garbage,
-                            Spawnables::JollyBlock, Spawnables::Lava, Spawnables::Market, Spawnables::Rock,
-                            Spawnables::Street, Spawnables::Tree, Spawnables::Wall,
+    let mut elements = vec![
+        Spawnables::Bank, Spawnables::Bin, Spawnables::Building, Spawnables::Coin,
+        Spawnables::Crate, Spawnables::Fire, Spawnables::Fish, Spawnables::Garbage,
+        Spawnables::JollyBlock, Spawnables::Lava, Spawnables::Market, Spawnables::Rock,
+        Spawnables::Street, Spawnables::Tree, Spawnables::City,
     ];
     elements.shuffle(&mut thread_rng());
     elements
+}
+
+#[inline(always)]
+fn remove_duplicates_spawnables(order: &mut SpawnOrder) {
+    let mut seen = HashSet::with_capacity(order.len());
+    order.retain(|i| seen.insert(*i));
 }
 
 impl NoiseSettings {
@@ -306,9 +315,6 @@ impl WorldGenerator {
                     | _ => TileType::Snow,
                 };
 
-                //add Default Water Content on DeepWater and ShallowWater
-                // content = add_default_water_content(tile_type);
-
                 world[y][x] = Tile {
                     tile_type,
                     content: Content::None,
@@ -316,16 +322,10 @@ impl WorldGenerator {
                 };
             }
         }
-        //color local maxima black
-        let polygons = street_spawn(self.size / 250, noise_map, 10, 0.0);
 
-        for polygon in polygons.iter() {
-            for (y, x) in polygon {
-                world[*y][*x].tile_type = TileType::Street;
-            }
-        }
         world
     }
+
     #[inline(always)]
     fn generate_elevation_map(&self) -> Vec<Vec<f64>> {
         let noise = RidgedMulti::<Fbm<Perlin>>::new(self.noise_settings.seed)
@@ -390,7 +390,7 @@ impl WorldGenerator {
     ///         Spawnables::Rock,
     ///         Spawnables::Street,
     ///         Spawnables::Tree,
-    ///         Spawnables::Wall,
+    ///         Spawnables::City,
     ///     ];
     /// let noise_settings = NoiseSettings::from_seed(thread_rng().next_u32());
     /// let thresholds = Thresholds::default();
@@ -516,6 +516,7 @@ impl Generator for WorldGenerator {
     /// ```
     fn gen(&mut self) -> (TileMatrix, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>) {
         let tot = Utc::now();
+
         debug_println!("Start: Noise map generation");
         let mut start = Utc::now();
         let noise_map = self.generate_elevation_map();
@@ -523,9 +524,8 @@ impl Generator for WorldGenerator {
 
         debug_println!("Start: Calculate min and max value");
         start = Utc::now();
-        let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX); // get min value
+        let min_value = find_min_value(&noise_map).unwrap_or(f64::MAX);
         let max_value = find_max_value(&noise_map).unwrap_or(f64::MIN);
-        // get max value
         debug_println!("Done: Calculate min and max value: {} ms", (Utc::now() - start).num_milliseconds());
 
         debug_println!("Start: Generate terrain");
@@ -533,46 +533,71 @@ impl Generator for WorldGenerator {
         let mut world = self.generate_terrain(&noise_map, min_value, max_value);
         debug_println!("Done: Generate terrain: {} ms", (Utc::now() - start).num_milliseconds());
 
-        // spawn lava
-        debug_println!("Start: Spawn lava");
-        start = Utc::now();
-        spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
-        debug_println!("Done: Spawn lava: {} ms", (Utc::now() - start).num_milliseconds());
+        remove_duplicates_spawnables(&mut self.spawn_order);
 
-        // spawn bank
-        debug_println!("Start: Spawn bank");
-        start = Utc::now();
-        spawn_bank(&mut world, self.bank_settings.clone());
-        debug_println!("Done: Spawn bank: {} ms", (Utc::now() - start).num_milliseconds());
+        for content in &self.spawn_order {
+            match content {
+                Spawnables::Street => {
+                    //color local maxima black
+                    let polygons = street_spawn(self.size / 250, &noise_map, 10, 0.0);
 
-        // spawn bin
-        debug_println!("Start: Spawn bin");
-        start = Utc::now();
-        spawn_bin(&mut world, self.bin_settings.clone());
-        debug_println!("Done: Spawn bin: {} ms", (Utc::now() - start).num_milliseconds());
-
-        // spawn wood_crate
-        debug_println!("Start: Spawn crate");
-        start = Utc::now();
-        spawn_crate(&mut world, self.crate_settings.clone());
-        debug_println!("Done: Spawn crate: {} ms", (Utc::now() - start).num_milliseconds());
-
-        // spawn garbage
-        debug_println!("Start: Spawn garbage");
-        start = Utc::now();
-        spawn_garbage(&mut world, &self.garbage_settings);
-        debug_println!("Done: Spawn garbage in {} ms", (Utc::now() - start).num_milliseconds());
-
-        // spawn fires
-        debug_println!("Start: Spawn fire");
-        start = Utc::now();
-        spawn_fire(&mut world, &mut self.fire_settings);
-        debug_println!("Done: Spawn fire in {} ms", (Utc::now() - start).num_milliseconds());
-
-        debug_println!("Start: Spawn trees");
-        start = Utc::now();
-        spawn_tree(&mut world, &mut self.tree_settings);
-        debug_println!("Done: Spawn trees in {} ms", (Utc::now() - start).num_milliseconds());
+                    for polygon in polygons.iter() {
+                        for (y, x) in polygon {
+                            world[*y][*x].tile_type = TileType::Street;
+                        }
+                    }
+                }
+                Spawnables::Lava => {
+                    debug_println!("Start: Spawn lava");
+                    start = Utc::now();
+                    spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
+                    debug_println!("Done: Spawn lava: {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                Spawnables::Tree => {
+                    debug_println!("Start: Spawn trees");
+                    start = Utc::now();
+                    spawn_tree(&mut world, &mut self.tree_settings);
+                    debug_println!("Done: Spawn trees in {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                Spawnables::Garbage => {
+                    debug_println!("Start: Spawn garbage");
+                    start = Utc::now();
+                    spawn_garbage(&mut world, &self.garbage_settings);
+                    debug_println!("Done: Spawn garbage in {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                Spawnables::Fire => {
+                    debug_println!("Start: Spawn fire");
+                    start = Utc::now();
+                    spawn_fire(&mut world, &mut self.fire_settings);
+                    debug_println!("Done: Spawn fire in {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                Spawnables::Bin => {
+                    debug_println!("Start: Spawn bin");
+                    start = Utc::now();
+                    spawn_bin(&mut world, self.bin_settings.clone());
+                    debug_println!("Done: Spawn bin: {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                Spawnables::Crate => {
+                    debug_println!("Start: Spawn crate");
+                    start = Utc::now();
+                    spawn_crate(&mut world, self.crate_settings.clone());
+                    debug_println!("Done: Spawn crate: {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                Spawnables::Bank => {
+                    debug_println!("Start: Spawn bank");
+                    start = Utc::now();
+                    spawn_bank(&mut world, self.bank_settings.clone());
+                    debug_println!("Done: Spawn bank: {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                Spawnables::Coin => {}
+                Spawnables::Market => {}
+                Spawnables::Fish => {}
+                Spawnables::Building => {}
+                Spawnables::JollyBlock => {}
+                Spawnables::City => {}
+                Spawnables::Rock => {}
+            }
+        }
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
         (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 1, 9).unwrap(), 0.0, None)
