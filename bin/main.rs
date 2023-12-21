@@ -1,4 +1,4 @@
-use rand::{RngCore, thread_rng};
+use rand::RngCore;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
 use robotics_lib::runner::{Robot, Runnable};
@@ -53,11 +53,10 @@ fn main() {
 
     let _r = MyRobot(Robot::new());
     let size = 1000;
-    let seed = thread_rng().next_u32();
     let mut generator = WorldGenerator::new(
         size,
         get_default_spawn_order(),
-        NoiseSettings::from_seed(seed),
+        NoiseSettings::from_seed(0),
         Thresholds::default(),
         LavaSettings::default(size),
         BankSettings::default(size),

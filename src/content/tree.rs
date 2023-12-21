@@ -2,9 +2,12 @@ use std::ops::Mul;
 
 use nannou_core::prelude::Pow;
 use robotics_lib::world::tile::{Content, Tile};
+use serde::{Deserialize, Serialize};
 
 use crate::content::blob::{Blob, BlobSettings, BlobTrait, spawn_blob};
+use crate::generator::TileMatrix;
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TreeSettings {
     settings: BlobSettings,
 }
@@ -39,7 +42,6 @@ impl BlobTrait for Tree {
 
         // remove with a certain probability
         self.inner.points.retain(|_| rand::random::<f32>() > 0.1);
-
     }
 }
 
@@ -58,6 +60,6 @@ impl TreeSettings {
     }
 }
 
-pub fn spawn_tree(world: &mut Vec<Vec<Tile>>, settings: &mut TreeSettings) {
+pub fn spawn_tree(world: &mut TileMatrix, settings: &mut TreeSettings) {
     spawn_blob(world, &mut settings.settings, Content::Tree(0))
 }

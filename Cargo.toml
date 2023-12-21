@@ -30,3 +30,6 @@ voronator = "0.2.1"
 debug_print = "1.0.0"# Only for debug porpouse
 nannou_core = "0.18.0"
 image = "0.24.7" # Only in visualizer, comment when publishing to kellnr
+serde = "1.0.193"
+bincode = "1.3.3"
+zstd = "0.13.0"

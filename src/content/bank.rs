@@ -1,12 +1,13 @@
 use rand::{Rng, thread_rng};
 use robotics_lib::world::tile::Content::Bank;
+use serde::{Deserialize, Serialize};
 
 use crate::generator::TileMatrix;
 use crate::utils::spawn_content_randomly;
 
 /// Settings defining the behavior of bank spawn,
 /// such as the number of spawn points
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub struct BankSettings {
     /// the number of banks to spawn
     pub number_of_spawn_points: usize,

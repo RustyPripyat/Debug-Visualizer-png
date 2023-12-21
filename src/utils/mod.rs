@@ -1,8 +1,14 @@
+use std::fs::File;
+use std::io::{self, Read};
+
 use noise::Perlin;
 use rand::Rng;
 use robotics_lib::world::tile::Content;
+use serde::{Deserialize, Serialize};
+use zstd::stream::copy_encode;
+use zstd::stream::read::Decoder;
 
-use crate::generator::Coordinates;
+use crate::generator::{Coordinates, GenResult, WorldGenerator};
 use crate::generator::TileMatrix;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -137,5 +143,46 @@ pub(crate) fn get_random_seeded_noise() -> Perlin {
     // setting noise with random seed
     let mut rng = rand::thread_rng();
     Perlin::new(rng.gen())
+}
+
+#[derive(Serialize, Deserialize)]
+pub(crate) struct SerializeWorld {
+    pub(crate) world: GenResult,
+    pub(crate) settings: WorldGenerator,
+}
+
+impl SerializeWorld {
+    #[inline(always)]
+    pub(crate) fn serialize(&self, file_path: &str, compression_level: i32) {
+        let serialized = match bincode::serialize(self) {
+            Ok(s) => { s }
+            Err(_e) => {
+                panic!("Unable to serialize the world\n{_e}")
+            }
+        };
+
+        let mut file = match File::create(format!("{file_path}.zst")) {
+            Ok(f) => { f }
+            Err(_e) => {
+                panic!("Unable to create the file {file_path}\n{_e}")
+            }
+        };
+
+        copy_encode(&*serialized, &mut file, compression_level)
+            .unwrap_or_else(|e| panic!("Compression failed: {}", e));
+    }
+    #[inline(always)]
+    pub(crate) fn deserialize(file_path: &str) -> io::Result<Self> {
+        let file = File::open(file_path)?;
+
+        let mut buffer = Vec::new();
+        let mut decoder = Decoder::new(file)?;
+        decoder.read_to_end(&mut buffer)?;
+
+        let deserialized: SerializeWorld = bincode::deserialize(&buffer)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Deserialization failed: {}", e)))?;
+
+        Ok(deserialized)
+    }
 }
 

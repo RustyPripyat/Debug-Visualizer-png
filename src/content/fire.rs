@@ -2,9 +2,12 @@ use std::ops::Mul;
 
 use nannou_core::prelude::Pow;
 use robotics_lib::world::tile::{Content, Tile};
+use serde::{Deserialize, Serialize};
 
 use crate::content::blob::{Blob, BlobSettings, BlobTrait, spawn_blob};
+use crate::generator::TileMatrix;
 
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FireSettings {
     settings: BlobSettings,
 }
@@ -37,7 +40,6 @@ impl BlobTrait for Fire {
     fn spread_blob(&mut self, upper_border: usize, left_border: usize, lower_border: usize, righter_border: usize) {
         self.inner.spread_blob(upper_border, left_border, lower_border, righter_border);
     }
-
 }
 
 impl FireSettings {
@@ -77,7 +79,7 @@ impl FireSettings {
     }
 }
 
-pub fn spawn_fire(world: &mut Vec<Vec<Tile>>, settings: &mut FireSettings) {
+pub fn spawn_fire(world: &mut TileMatrix, settings: &mut FireSettings) {
     spawn_blob(world, &mut settings.settings, Content::Fire)
 }
 

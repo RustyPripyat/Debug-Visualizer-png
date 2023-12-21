@@ -3,6 +3,7 @@ use std::ops::Range;
 
 use rand::seq::SliceRandom;
 use robotics_lib::world::tile::TileType;
+use serde::{Deserialize, Serialize};
 
 use crate::generator::{Coordinates, TileMatrix};
 
@@ -10,7 +11,7 @@ use crate::generator::{Coordinates, TileMatrix};
 ///
 /// This struct represents the configuration for lava, including the number of spawn points
 /// and the range of lava flow.
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct LavaSettings {
     /// The number of spawn points for lava within the world.
     pub number_of_spawn_points: usize,
