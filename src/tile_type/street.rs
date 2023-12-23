@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::HashSet;
-use std::hash::Hash;
+use std::hash::{Hash, Hasher};
 
 use voronator::delaunator::Point;
 use voronator::VoronoiDiagram;
@@ -9,16 +9,36 @@ use crate::utils::{Coordinate, Slice, slice_vec_2d};
 
 // TODO doc street
 
-#[derive(Debug, Eq, Hash)]
+#[derive(Debug, Eq, Clone)]
 struct Edge {
     start: Coordinate,
     end: Coordinate,
+}
+
+fn remove_duplicates(edges: Vec<Edge>) -> Vec<Edge> {
+    let unique_edges: HashSet<Edge> = edges.into_iter().collect();
+    unique_edges.into_iter().collect()
 }
 
 impl Edge{
     pub fn is_near(&self, other: &Self) -> bool {
         //check if the edges are near
         (self.start.is_neighbor(&other.start) && self.end.is_neighbor(&other.end)) || (self.end.is_neighbor(&other.start) && self.start.is_neighbor(&other.end))
+    }
+}
+
+
+impl Hash for Edge {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Sort the coordinates
+        let (first, second) = match self.start.cmp(&self.end) {
+            Ordering::Less => (&self.start, &self.end),
+            _ => (&self.end, &self.start),
+        };
+
+        // Hash the sorted coordinates
+        first.hash(state);
+        second.hash(state);
     }
 }
 
@@ -56,38 +76,12 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n
     let unique_extremes: HashSet<Edge> = get_edges_extremes_from_diagram(diagram);
 
     // fix edges extremes
-    let mut fixed_extremes = fix_extremes(unique_extremes, elevation_map.len() - 1);
+    let fixed_extremes = fix_extremes(unique_extremes, elevation_map.len() - 1);
 
-    // // print all the  edges with near extremes
-    // for e1 in fixed_extremes.iter() {
-    //     for e2 in fixed_extremes.iter() {
-    //         if e1!=e2 && e1.is_near(e2) {
-    //             println!("e1: {:?}, e2: {:?}", e1, e2);
-    //         }
-    //     }
-    // }
+    // remove duplicates
+    let unique_edges = remove_duplicates(fixed_extremes);
 
-    // fixed_extremes.push(Edge{start: Coordinate{row: 0, col: 0}, end: Coordinate{row: 100, col: 100}});
-
-
-    // i == 3 -> i == 18
-    // trace the streets edges
-    fixed_extremes.sort();
-    // fixed_extremes.iter().map(|edge| connect_points(edge.start, edge.end)).collect()
-
-    let mut res = Vec::new();
-    for (i,edge) in fixed_extremes.iter().enumerate() {
-        if i == 3 || i == 18 {
-            res.push(connect_points(edge.start, edge.end));
-        }
-    }
-    res
-
-    // fixed_extremes.iter().enumerate().map(|(i,edge)|
-    //     // only the first edge
-    //     if i == 5 || i == 18 {
-    //         connect_points(edge.start, edge.end)
-    //     }else { Vec::new() }).collect()
+    unique_edges.iter().map(|edge| connect_points(edge.start, edge.end)).collect()
 }
 
 
@@ -202,7 +196,6 @@ fn add_step_between_diagonal(segments: &[Coordinate], next_step: Coordinate) -> 
         None
     }
 }
-
 
 #[inline(always)]
 fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [Coordinate], n_slice_per_side: usize, band_width: usize) -> Vec<Coordinate> {
