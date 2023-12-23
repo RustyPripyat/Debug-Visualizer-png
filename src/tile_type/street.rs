@@ -92,50 +92,55 @@ fn are_extremes_on_border(e1: Coordinates, e2: Coordinates, size: usize) -> bool
 // Function to connect two points with a line segment using Bresenham's algorithm
 #[inline(always)]
 fn connect_points(start: Coordinates, end: Coordinates) -> Vec<Coordinates> {
-    // Vector to store the points along the line segment
     let mut line_segments: Vec<Coordinates> = Vec::new();
 
-    // Calculate the differences in x and y coordinates
-    let dx = end.0 as isize - start.0 as isize;
-    let dy = end.1 as isize - start.1 as isize;
+    let mut x = start.0 as isize;
+    let mut y = start.1 as isize;
 
-    // Determine the number of steps needed for the line using the larger of dx and dy
-    let steps = if dx.abs() > dy.abs() { dx.abs() } else { dy.abs() } as f64;
+    let dx = (end.0 as isize - start.0 as isize).abs();
+    let dy = -(end.1 as isize - start.1 as isize).abs();
 
-    // Calculate the increments for x and y based on the number of steps
-    let x_increment = dx as f64 / steps;
-    let y_increment = dy as f64 / steps;
+    let sx = if start.0 < end.0 { 1 } else { -1 };
+    let sy = if start.1 < end.1 { 1 } else { -1 };
 
-    // Initialize starting coordinates
-    let mut x = start.0 as f64;
-    let mut y = start.1 as f64;
+    let mut err = dx + dy;
 
-    // Generate points along the line segment and round them to the nearest integer
-    for index in 0..=steps as usize {
-        let rounded_x = x.round() as usize;
-        let rounded_y = y.round() as usize;
+    loop {
+        avoid_diagonal_steps(&mut line_segments, Coordinates::new(x as usize, y as usize));
+        line_segments.push((x as usize, y as usize));
 
-        // avoid diagonal steps
-        if index > 0 && index < steps as usize && rounded_x != line_segments[line_segments.len() - 1].0 && rounded_y != line_segments[line_segments.len() - 1].1 {
-            line_segments.push((rounded_x, line_segments[line_segments.len() - 1].1));
-            line_segments.push((line_segments[line_segments.len() - 1].0, rounded_y));
+        if x == end.0 as isize && y == end.1 as isize {
+            break;
         }
 
-        line_segments.push((rounded_x, rounded_y));
-
-        x += x_increment;
-        y += y_increment;
+        let e2 = 2 * err;
+        if e2 >= dy {
+            if x != end.0 as isize {
+                err += dy;
+            }
+            x += sx;
+        }
+        if e2 <= dx {
+            if y != end.1 as isize {
+                err += dx;
+            }
+            y += sy;
+        }
     }
 
-    //get only the first ten points
-    //line_segments.truncate(line_segments.len()/2);
-
-    // Return the vector of points representing the line segment
-    // let mut line_segments: Vec<Coordinates> = Vec::new();
-    // line_segments.push((start.0, start.1));
-    // line_segments.push((end.0, end.1));
     line_segments
 }
+
+#[inline(always)]
+fn avoid_diagonal_steps(segments:  &mut [Coordinate], new_step: Coordinate){
+    let mut is_diagonal = false;
+
+    if segments.len() > 1 && new_step.0 != segments[segments.len() - 1].0 && new_step.1 != segments[segments.len() - 1].1 {
+
+
+    }
+}
+
 
 #[inline(always)]
 fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [Coordinates], n_slice_per_side: usize, band_width: usize) -> Vec<Coordinates> {
