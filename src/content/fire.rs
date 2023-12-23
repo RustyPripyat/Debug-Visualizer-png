@@ -66,8 +66,8 @@ impl FireSettings {
     /// let default_fire = FireSettings::default(size);
     /// ```
     pub fn default(size: usize) -> Self {
-        let radius_range = 5.0..size as f32 / 100.0;
-        let n_blob = 1..size / 100;
+        let radius_range = size as f32/100.0..size as f32 / 50.0;
+        let n_blob = size/100 ..size / 50;
         let n_tiles = 1..(radius_range.end.ceil().mul(2.0).pow(2) as usize) * n_blob.end;
         FireSettings {
             settings: BlobSettings {

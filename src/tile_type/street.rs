@@ -15,6 +15,13 @@ struct Edge {
     end: Coordinate,
 }
 
+impl Edge{
+    pub fn is_near(&self, other: &Self) -> bool {
+        //check if the edges are near
+        (self.start.is_neighbor(&other.start) && self.end.is_neighbor(&other.end)) || (self.end.is_neighbor(&other.start) && self.start.is_neighbor(&other.end))
+    }
+}
+
 impl PartialEq for Edge {
     fn eq(&self, other: &Self) -> bool {
         (self.start == other.start && self.end == other.end) || (self.start == other.end && self.end == other.start)
@@ -35,17 +42,35 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n
     let unique_extremes: HashSet<Edge> = get_edges_extremes_from_diagram(diagram);
 
     // fix edges extremes
-    let fixed_extremes = fix_extremes(unique_extremes, elevation_map.len() - 1);
+    let mut fixed_extremes = fix_extremes(unique_extremes, elevation_map.len() - 1);
+
+    // // print all the  edges with near extremes
+    // for e1 in fixed_extremes.iter() {
+    //     for e2 in fixed_extremes.iter() {
+    //         if e1!=e2 && e1.is_near(e2) {
+    //             println!("e1: {:?}, e2: {:?}", e1, e2);
+    //         }
+    //     }
+    // }
+
+    fixed_extremes.push(Edge{start: Coordinate{row: 0, col: 0}, end: Coordinate{row: 100, col: 100}});
+
 
     // trace the streets edges
-    fixed_extremes.iter().map(|edge| connect_points(edge.start, edge.end)).collect()
+    // fixed_extremes.iter().map(|edge| connect_points(edge.start, edge.end)).collect()
+    fixed_extremes.iter().enumerate().map(|(i,edge)|
+        // only the first edge
+        if edge.start == (Coordinate{row: 0, col: 0}) {
+            connect_points(edge.start, edge.end)
+        }else { Vec::new() }).collect()
 }
+
 
 #[inline(always)]
 fn get_edges_extremes_from_diagram(diagram: VoronoiDiagram<Point>) -> HashSet<Edge> {
     let mut unique_extremes: HashSet<Edge> = HashSet::new();
     for cell in diagram.cells().iter() {
-        let extremes: Vec<Coordinate> = cell.points().iter().map(|point| Coordinate{col: point.x as usize, row: point.y as usize} ).collect();
+        let extremes: Vec<Coordinate> = cell.points().iter().map(|point| Coordinate { col: point.x as usize, row: point.y as usize }).collect();
 
         // connect the points
         for i in 0..extremes.len() - 1 {
@@ -91,6 +116,7 @@ fn are_extremes_on_border(e1: Coordinate, e2: Coordinate, size: usize) -> bool {
 // Function to connect two points with a line segment using Bresenham's algorithm
 #[inline(always)]
 fn connect_points(start: Coordinate, end: Coordinate) -> Vec<Coordinate> {
+    println!("start: {:?}, end: {:?}", start, end);
     let mut line_segments: Vec<Coordinate> = Vec::new();
 
     let mut x = start.col as isize;
@@ -105,7 +131,7 @@ fn connect_points(start: Coordinate, end: Coordinate) -> Vec<Coordinate> {
     let mut err = dx + dy;
 
     loop {
-        let next_step = Coordinate{row: y as usize, col: x as usize};
+        let next_step = Coordinate { row: y as usize, col: x as usize };
 
         // add step between diagonal
         if let Some(step) = add_step_between_diagonal(&line_segments, next_step) {
@@ -137,13 +163,17 @@ fn connect_points(start: Coordinate, end: Coordinate) -> Vec<Coordinate> {
 }
 
 #[inline(always)]
-fn add_step_between_diagonal(segments:  & [Coordinate], next_step: Coordinate)-> Option<Coordinate> {
-    let is_diagonal = if segments.len() > 1 && next_step.col != segments[segments.len() - 1].col && next_step.row != segments[segments.len() - 1].row { true } else { false };
+fn add_step_between_diagonal(segments: &[Coordinate], next_step: Coordinate) -> Option<Coordinate> {
+    if segments.is_empty() {
+        return None;
+    }
+
+    let last = segments.last().unwrap();
+    let is_diagonal = next_step.col != last.col && next_step.row != last.row;
 
     if is_diagonal {
-        Some(Coordinate{row: next_step.row, col: segments[segments.len() - 1].col})
-    }
-    else {
+        Some(Coordinate { row: last.row, col: next_step.col})
+    } else {
         None
     }
 }
@@ -292,11 +322,11 @@ fn get_local_maxima(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_thres
     for slice in slices {
         found_local_maximum = false;
 
-        let mut local_maximum_point = Coordinate{row: slice.start.row, col : slice.start.col}; // set initially the local maximum to the first point in the slice
+        let mut local_maximum_point = Coordinate { row: slice.start.row, col: slice.start.col }; // set initially the local maximum to the first point in the slice
         for row in slice.start.row..slice.end.row {
             for col in slice.start.col..slice.end.col {
                 if elevation_map[row][col] >= elevation_map[local_maximum_point.row][local_maximum_point.col] {
-                    local_maximum_point = Coordinate{row, col};
+                    local_maximum_point = Coordinate { row, col };
                     found_local_maximum = true;
                 }
             }
@@ -317,6 +347,6 @@ fn get_maximum(slice: &[Vec<f64>]) -> Coordinate {
         .enumerate()
         .flat_map(|(row_index, inner)| inner.iter().enumerate().map(move |(col_index, &value)| (row_index, col_index, value)))
         .max_by(|(_, _, a), (_, _, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
-        .map(|(row_index, col_index, _)| Coordinate{row: row_index, col: col_index})
+        .map(|(row_index, col_index, _)| Coordinate { row: row_index, col: col_index })
         .unwrap()
 }

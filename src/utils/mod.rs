@@ -17,6 +17,15 @@ pub struct Coordinate {
     pub(crate) col: usize,
 }
 
+impl Coordinate{
+    pub(crate) fn is_neighbor(&self, other: &Coordinate) -> bool {
+        let x = self.row as isize - other.row as isize;
+        let y = self.col as isize - other.col as isize;
+
+        (x == 1 || x == -1 || x == 0) && (y == 1 || y == -1 || y == 0)
+    }
+}
+
 pub(crate) struct Slice {
     pub(crate) start: Coordinate,
     pub(crate) end: Coordinate,

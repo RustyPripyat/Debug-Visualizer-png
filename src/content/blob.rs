@@ -238,15 +238,15 @@ pub(crate) fn spawn_blob(world: &mut TileMatrix, settings: &mut BlobSettings, co
 fn errors(settings: &BlobSettings) -> Result<(), String> {
     if settings.radius_range.start.floor() as usize * settings.n_blob.start > settings.n_tiles.end {
         // the minimum number of tiles that could be generated would be higher than the maximum number of tiles provided
-        Err(format!(r#"n_tiles.end: {} is too small for the given radius_range.start:
-                {} and n_blob.start: {}.\nThe minimum number of tiles, that could be
-                generated, would be higher than the maximum number of tiles provided."#,
+        Err(format!(
+r#"n_tiles.end: {} is too small for the given radius_range.start: {} and n_blob.start: {}.
+The minimum number of tiles, that could be generated, would be higher than the maximum number of tiles provided."#,
                     settings.n_tiles.end, settings.radius_range.start, settings.n_blob.start))
     } else if settings.radius_range.end.ceil() as usize * settings.n_blob.end < settings.n_tiles.start {
         // the maximum number of tiles that could be generated would be lower than the minimum number of tiles provided
-        Err(format!(r#"n_tiles.start: {} is too small for the given radius_range.end:
-                {} and n_blob.end: {}.\nThe maximum number of tiles that could be
-                generated would be lower than the minimum number of tiles provided"#,
+        Err(format!(
+r#"n_tiles.start: {} is too small for the given radius_range.end: {} and n_blob.end: {}.
+The maximum number of tiles that could be generated would be lower than the minimum number of tiles provided"#,
                     settings.n_tiles.start, settings.radius_range.end, settings.n_blob.end))
     } else {
         Ok(())
