@@ -12,6 +12,8 @@
 //!
 
 
+extern crate core;
+
 /// Contains a sub module for each tile content present in the common crate, each of which has a struct
 /// to define the behavior of how it is generated, such as quantity, probability and so on
 pub mod content;

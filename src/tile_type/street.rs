@@ -22,9 +22,23 @@ impl Edge{
     }
 }
 
-impl PartialEq for Edge {
+impl PartialEq<Self> for Edge {
     fn eq(&self, other: &Self) -> bool {
         (self.start == other.start && self.end == other.end) || (self.start == other.end && self.end == other.start)
+    }
+}
+
+impl PartialOrd for Edge {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+}
+
+impl Ord for Edge {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.start == other.start {
+            self.end.cmp(&other.end)
+        } else {
+            self.start.cmp(&other.start)
+        }
     }
 }
 
@@ -53,16 +67,27 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n
     //     }
     // }
 
-    fixed_extremes.push(Edge{start: Coordinate{row: 0, col: 0}, end: Coordinate{row: 100, col: 100}});
+    // fixed_extremes.push(Edge{start: Coordinate{row: 0, col: 0}, end: Coordinate{row: 100, col: 100}});
 
 
+    // i == 3 -> i == 18
     // trace the streets edges
+    fixed_extremes.sort();
     // fixed_extremes.iter().map(|edge| connect_points(edge.start, edge.end)).collect()
-    fixed_extremes.iter().enumerate().map(|(i,edge)|
-        // only the first edge
-        if edge.start == (Coordinate{row: 0, col: 0}) {
-            connect_points(edge.start, edge.end)
-        }else { Vec::new() }).collect()
+
+    let mut res = Vec::new();
+    for (i,edge) in fixed_extremes.iter().enumerate() {
+        if i == 3 || i == 18 {
+            res.push(connect_points(edge.start, edge.end));
+        }
+    }
+    res
+
+    // fixed_extremes.iter().enumerate().map(|(i,edge)|
+    //     // only the first edge
+    //     if i == 5 || i == 18 {
+    //         connect_points(edge.start, edge.end)
+    //     }else { Vec::new() }).collect()
 }
 
 

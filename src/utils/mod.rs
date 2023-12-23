@@ -26,6 +26,23 @@ impl Coordinate{
     }
 }
 
+impl PartialOrd for Coordinate {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> { Some(self.cmp(other)) }
+}
+
+
+impl Ord for Coordinate {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.row == other.row {
+            self.col.cmp(&other.col)
+        } else {
+            self.row.cmp(&other.row)
+        }
+    }
+}
+
+
+
 pub(crate) struct Slice {
     pub(crate) start: Coordinate,
     pub(crate) end: Coordinate,
