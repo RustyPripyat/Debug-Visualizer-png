@@ -5,7 +5,8 @@ use rand::seq::SliceRandom;
 use robotics_lib::world::tile::TileType;
 use serde::{Deserialize, Serialize};
 
-use crate::generator::{Coordinates, TileMatrix};
+use crate::generator::{TileMatrix};
+use crate::utils::Coordinate;
 
 /// Settings defining the behavior of lava generation within the world.
 ///
@@ -61,24 +62,24 @@ pub(crate) fn spawn_lava(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, 
     let possible_spawn_points = get_yx_mountain_tiles(world);
     let min = min(lava_settings.number_of_spawn_points, possible_spawn_points.len());
     for i in 0..min {
-        let (y, x) = possible_spawn_points[i];
+        let spawn_coordinate = possible_spawn_points[i];
         let range = lava_settings.lava_flow_range.clone();
-        flow_from(world, elevation_map, y, x, range);
+        flow_from(world, elevation_map, spawn_coordinate, range);
     }
 }
 
 //for each x,y flow the lava to the lower neighbour
 /// fatina ricorsina
 #[inline(always)]
-fn flow_from(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, y: usize, x: usize, remaining_range: Range<usize>) -> usize {
+fn flow_from(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, spawn_coordinate: Coordinate, remaining_range: Range<usize>) -> usize {
     //debug_println!("flowing from {},{} with range {}..{}", x,y, remaining_range.start, remaining_range.end);
-    world[y][x].tile_type = TileType::Lava;
+    world[spawn_coordinate.row][spawn_coordinate.col].tile_type = TileType::Lava;
     if remaining_range.start == remaining_range.end {
         0
     } else {
         // if there is a neighbour with a lower height, flow to it
-        let (lowest_neighbour_y, lowest_neighbour_x) = get_lowest_neighbour(elevation_map, y, x);
-        flow_from(world, elevation_map, lowest_neighbour_y, lowest_neighbour_x, remaining_range.start..remaining_range.end - 1)
+        let lowest_neighbour = get_lowest_neighbour(elevation_map, spawn_coordinate);
+        flow_from(world, elevation_map, lowest_neighbour, remaining_range.start..remaining_range.end - 1)
         // if elevation_map[lowest_neighbour_y][lowest_neighbour_x] < elevation_map[y][x] {
         //     return flow_from(world, elevation_map, lowest_neighbour_y, lowest_neighbour_x, remaining_range.start..remaining_range.end - 1);
         // }
@@ -90,34 +91,34 @@ fn flow_from(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, y: usize, x:
 
 // return the coordinates of the lowest neighbour
 #[inline(always)]
-fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, y: usize, x: usize) -> Coordinates {
+fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, start:Coordinate) -> Coordinate {
     let mut neighbour_heights = Vec::new();
-    if y != 0 {
-        neighbour_heights.push((elevation_map[y - 1][x], y - 1, x));
+    if start.row != 0 {
+        neighbour_heights.push((elevation_map[start.row - 1][start.col], Coordinate{row: start.row - 1, col: start.col}));
     }
-    if y != elevation_map.len() - 1 {
-        neighbour_heights.push((elevation_map[y + 1][x], y + 1, x));
+    if start.row != elevation_map.len() - 1 {
+        neighbour_heights.push((elevation_map[start.row + 1][start.col], Coordinate{row: start.row + 1, col: start.col}));
     }
-    if x != 0 {
-        neighbour_heights.push((elevation_map[y][x - 1], y, x - 1));
+    if start.col != 0 {
+        neighbour_heights.push((elevation_map[start.row][start.col - 1], Coordinate{row: start.row, col: start.col - 1}));
     }
-    if x != elevation_map[0].len() - 1 {
-        neighbour_heights.push((elevation_map[y][x + 1], y, x + 1));
+    if start.col != elevation_map[0].len() - 1 {
+        neighbour_heights.push((elevation_map[start.row][start.col + 1], Coordinate{row: start.row, col: start.col + 1}));
     }
     // sort by height
     neighbour_heights.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     // return coordinates of the lowest neighbour
-    (neighbour_heights[0].1, neighbour_heights[0].2)
+    neighbour_heights[0].1
 }
 
 // return vector with the coordinates of the mountain tiles in range
 #[inline(always)]
-fn get_yx_mountain_tiles(wordl: &mut TileMatrix) -> Vec<Coordinates> {
+fn get_yx_mountain_tiles(wordl: &mut TileMatrix) -> Vec<Coordinate> {
     let mut tiles_in_range = Vec::new();
     for (y, row) in wordl.iter().enumerate() {
         for (x, tile) in row.iter().enumerate() {
             if tile.tile_type == TileType::Mountain {
-                tiles_in_range.push((y, x));
+                tiles_in_range.push(Coordinate{row: y, col: x});
             }
         }
     }

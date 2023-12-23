@@ -8,11 +8,11 @@ use serde::{Deserialize, Serialize};
 use zstd::stream::copy_encode;
 use zstd::stream::read::Decoder;
 
-use crate::generator::{Coordinates, GenResult, WorldGenerator};
+use crate::generator::{GenResult, WorldGenerator};
 use crate::generator::TileMatrix;
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub(crate) struct Coordinate {
+pub struct Coordinate {
     pub(crate) row: usize,
     pub(crate) col: usize,
 }
@@ -121,18 +121,17 @@ pub(crate) fn map_value_to_range(value: f64, from: std::ops::Range<f64>, to: std
 }
 
 #[inline(always)]
-pub(crate) fn spawn_content_randomly(world: &mut TileMatrix, mut number_of_spawn_points: usize, content: Content) -> Vec<Coordinates> {
+pub(crate) fn spawn_content_randomly(world: &mut TileMatrix, mut number_of_spawn_points: usize, content: Content) -> Vec<Coordinate> {
     let mut rng = rand::thread_rng();
 
     let mut spawn_points = Vec::new();
 
     while number_of_spawn_points > 0 {
-        let y = rng.gen_range(0..world.len());
-        let x = rng.gen_range(0..world.len());
+        let c = Coordinate{ row: rng.gen_range(0..world.len()), col: rng.gen_range(0..world.len()) };
 
-        if world[y][x].tile_type.properties().can_hold(&content) && world[y][x].content == Content::None {
+        if world[c.row][c.col].tile_type.properties().can_hold(&content) && world[c.row][c.col].content == Content::None {
             number_of_spawn_points -= 1;
-            spawn_points.push((y, x));
+            spawn_points.push(c);
         }
     }
     spawn_points

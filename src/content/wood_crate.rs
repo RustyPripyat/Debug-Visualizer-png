@@ -49,8 +49,8 @@ pub(crate) fn spawn_crate(world: &mut TileMatrix, crate_settings: CrateSettings)
     let max = Crate(0..0).properties().max();
     let spawn_points = spawn_content_randomly(world, crate_settings.number_of_spawn_points, Crate(0..0));
 
-    for (y, x) in spawn_points {
+    for c in spawn_points {
         let upper_bound = thread_rng().gen_range(2..=max);
-        world[y][x].content = Crate(1..upper_bound);
+        world[c.row][c.col].content = Crate(1..upper_bound);
     }
 }

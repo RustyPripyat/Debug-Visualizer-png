@@ -51,8 +51,8 @@ pub(crate) fn spawn_bank(world: &mut TileMatrix, bank_settings: BankSettings) {
     let max = Bank(0..0).properties().max();
     let spawn_points = spawn_content_randomly(world, bank_settings.number_of_spawn_points, Bank(0..0));
 
-    for (y, x) in spawn_points {
+    for c in spawn_points {
         let upper_bound = thread_rng().gen_range(2..=max);
-        world[y][x].content = Bank(1..upper_bound);
+        world[c.row][c.col].content = Bank(1..upper_bound);
     }
 }

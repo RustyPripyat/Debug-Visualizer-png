@@ -9,6 +9,7 @@ use rand::{RngCore, thread_rng};
 use rand::seq::SliceRandom;
 use rayon::iter::*;
 use rayon::iter::IntoParallelIterator;
+
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny, TrentinoSnow, TropicalMonsoon};
 use robotics_lib::world::tile::{Content, Tile, TileType};
@@ -646,10 +647,7 @@ impl WorldGenerator {
 /// Alias for `Vec<Vec<Tile>>` which is the Tile matrix representing the world
 pub type TileMatrix = Vec<Vec<Tile>>;
 
-/// Alias for `(usize, usize)` which are 2D coordinates, in x, y order
-pub type Coordinates = (usize, usize);
-
-pub(crate) type GenResult = (TileMatrix, Coordinates, EnvironmentalConditions, f32, Option<HashMap<Content, f32>>);
+pub(crate) type GenResult = (TileMatrix, (usize,usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>);
 
 impl Generator for WorldGenerator {
     /// Generates a new world based on the specified settings.
@@ -722,8 +720,8 @@ impl Generator for WorldGenerator {
                     let polygons = street_spawn(self.size / 250, &noise_map, 10, 0.0);
 
                     for polygon in polygons.iter() {
-                        for (y, x) in polygon {
-                            world[*y][*x].tile_type = TileType::Street;
+                        for c in polygon {
+                            world[c.row][c.col].tile_type = TileType::Street;
                         }
                     }
                 }
@@ -780,6 +778,6 @@ impl Generator for WorldGenerator {
         }
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
-        (world, (0, 0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 1, 9).unwrap(), 0.0, None)
+        (world, (0,0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 1, 9).unwrap(), 0.0, None)
     }
 }
