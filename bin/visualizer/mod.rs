@@ -62,7 +62,7 @@ fn set_content_color(c: &Content, p: &mut Vec<Vec<Rgb<u8>>>) {
     }
 }
 
-fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize,usize), tile_size: usize) -> RgbImage {
+fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize, usize), tile_size: usize) -> RgbImage {
     // get the image final size
     let size: u32 = (tile_size * tiles.len()) as u32;
     let mut img: RgbImage = RgbImage::new(size, size);
@@ -87,7 +87,7 @@ fn create_image_from_tiles(tiles: &[Vec<Tile>], _bot_position: (usize,usize), ti
     img
 }
 
-pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize,usize), file_name: &str, tile_size: usize) {
+pub fn save_world_image(tiles: &[Vec<Tile>], bot_position: (usize, usize), file_name: &str, tile_size: usize) {
     debug_println!("Start: saving world as png");
     let start = Utc::now();
     let img = create_image_from_tiles(tiles, bot_position, tile_size);

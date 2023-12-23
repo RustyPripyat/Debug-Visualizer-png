@@ -5,7 +5,7 @@ use rand::seq::SliceRandom;
 use robotics_lib::world::tile::TileType;
 use serde::{Deserialize, Serialize};
 
-use crate::generator::{TileMatrix};
+use crate::generator::TileMatrix;
 use crate::utils::Coordinate;
 
 /// Settings defining the behavior of lava generation within the world.
@@ -91,19 +91,43 @@ fn flow_from(world: &mut TileMatrix, elevation_map: &Vec<Vec<f64>>, spawn_coordi
 
 // return the coordinates of the lowest neighbour
 #[inline(always)]
-fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, start:Coordinate) -> Coordinate {
+fn get_lowest_neighbour(elevation_map: &Vec<Vec<f64>>, start: Coordinate) -> Coordinate {
     let mut neighbour_heights = Vec::new();
     if start.row != 0 {
-        neighbour_heights.push((elevation_map[start.row - 1][start.col], Coordinate{row: start.row - 1, col: start.col}));
+        neighbour_heights.push((
+            elevation_map[start.row - 1][start.col],
+            Coordinate {
+                row: start.row - 1,
+                col: start.col,
+            },
+        ));
     }
     if start.row != elevation_map.len() - 1 {
-        neighbour_heights.push((elevation_map[start.row + 1][start.col], Coordinate{row: start.row + 1, col: start.col}));
+        neighbour_heights.push((
+            elevation_map[start.row + 1][start.col],
+            Coordinate {
+                row: start.row + 1,
+                col: start.col,
+            },
+        ));
     }
     if start.col != 0 {
-        neighbour_heights.push((elevation_map[start.row][start.col - 1], Coordinate{row: start.row, col: start.col - 1}));
+        neighbour_heights.push((
+            elevation_map[start.row][start.col - 1],
+            Coordinate {
+                row: start.row,
+                col: start.col - 1,
+            },
+        ));
     }
     if start.col != elevation_map[0].len() - 1 {
-        neighbour_heights.push((elevation_map[start.row][start.col + 1], Coordinate{row: start.row, col: start.col + 1}));
+        neighbour_heights.push((
+            elevation_map[start.row][start.col + 1],
+            Coordinate {
+                row: start.row,
+                col: start.col + 1,
+            },
+        ));
     }
     // sort by height
     neighbour_heights.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
@@ -118,7 +142,7 @@ fn get_yx_mountain_tiles(wordl: &mut TileMatrix) -> Vec<Coordinate> {
     for (y, row) in wordl.iter().enumerate() {
         for (x, tile) in row.iter().enumerate() {
             if tile.tile_type == TileType::Mountain {
-                tiles_in_range.push(Coordinate{row: y, col: x});
+                tiles_in_range.push(Coordinate { row: y, col: x });
             }
         }
     }

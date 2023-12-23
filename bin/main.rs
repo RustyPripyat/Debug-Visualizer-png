@@ -1,11 +1,11 @@
 use rand::RngCore;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
-use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::runner::backpack::BackPack;
+use robotics_lib::runner::{Robot, Runnable};
 use robotics_lib::world::coordinates::Coordinate;
-use robotics_lib::world::World;
 use robotics_lib::world::world_generator::Generator;
+use robotics_lib::world::World;
 
 use exclusion_zone::content::bank::BankSettings;
 use exclusion_zone::content::bin::BinSettings;
@@ -70,7 +70,6 @@ fn main() {
     let world = generator.gen();
 
     visualizer::save_world_image(&world.0, (0, 0), "img.png", 4);
-
 
     // match generator.save("world", world) {
     //     Ok(_) => {}

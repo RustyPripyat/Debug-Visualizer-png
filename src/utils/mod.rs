@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use zstd::stream::copy_encode;
 use zstd::stream::read::Decoder;
 
-use crate::generator::{GenResult, WorldGenerator};
 use crate::generator::TileMatrix;
+use crate::generator::{GenResult, WorldGenerator};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Coordinate {
@@ -17,7 +17,7 @@ pub struct Coordinate {
     pub(crate) col: usize,
 }
 
-impl Coordinate{
+impl Coordinate {
     pub(crate) fn is_neighbor(&self, other: &Coordinate) -> bool {
         let x = self.row as isize - other.row as isize;
         let y = self.col as isize - other.col as isize;
@@ -27,9 +27,10 @@ impl Coordinate{
 }
 
 impl PartialOrd for Coordinate {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
-
 
 impl Ord for Coordinate {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
@@ -40,8 +41,6 @@ impl Ord for Coordinate {
         }
     }
 }
-
-
 
 pub(crate) struct Slice {
     pub(crate) start: Coordinate,
@@ -153,7 +152,10 @@ pub(crate) fn spawn_content_randomly(world: &mut TileMatrix, mut number_of_spawn
     let mut spawn_points = Vec::new();
 
     while number_of_spawn_points > 0 {
-        let c = Coordinate{ row: rng.gen_range(0..world.len()), col: rng.gen_range(0..world.len()) };
+        let c = Coordinate {
+            row: rng.gen_range(0..world.len()),
+            col: rng.gen_range(0..world.len()),
+        };
 
         if world[c.row][c.col].tile_type.properties().can_hold(&content) && world[c.row][c.col].content == Content::None {
             number_of_spawn_points -= 1;
@@ -180,22 +182,22 @@ impl SerializedWorld {
     #[inline(always)]
     pub(crate) fn serialize(&self, file_path: &str, compression_level: i32) -> Result<(), String> {
         let serialized = match bincode::serialize(self) {
-            Ok(r) => { r }
-            Err(e) => {
+            | Ok(r) => r,
+            | Err(e) => {
                 return Err(format!("{e}"));
             }
         };
 
         let mut file = match File::create(format!("{file_path}.zst")) {
-            Ok(r) => { r }
-            Err(e) => {
+            | Ok(r) => r,
+            | Err(e) => {
                 return Err(format!("{e}"));
             }
         };
 
         match copy_encode(&*serialized, &mut file, compression_level) {
-            Ok(r) => { r }
-            Err(e) => {
+            | Ok(r) => r,
+            | Err(e) => {
                 return Err(format!("{e}"));
             }
         };
@@ -210,10 +212,8 @@ impl SerializedWorld {
         let mut decoder = Decoder::new(file)?;
         decoder.read_to_end(&mut buffer)?;
 
-        let deserialized: SerializedWorld = bincode::deserialize(&buffer)
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Deserialization failed: {}", e)))?;
+        let deserialized: SerializedWorld = bincode::deserialize(&buffer).map_err(|e| io::Error::new(io::ErrorKind::Other, format!("Deserialization failed: {}", e)))?;
 
         Ok(deserialized)
     }
 }
-

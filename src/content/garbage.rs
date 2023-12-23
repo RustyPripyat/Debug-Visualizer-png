@@ -1,10 +1,10 @@
 use std::cmp::min;
 use std::ops::Range;
 
-use rand::{Rng, thread_rng};
 use rand::prelude::ThreadRng;
-use robotics_lib::world::tile::{Content, Tile};
+use rand::{thread_rng, Rng};
 use robotics_lib::world::tile::Content::Garbage;
+use robotics_lib::world::tile::{Content, Tile};
 use serde::{Deserialize, Serialize};
 
 use crate::generator::TileMatrix;
@@ -64,13 +64,7 @@ impl GarbageSettings {
     ///     0.1,
     /// );
     /// ```
-    pub fn new(
-        total_garbage_quantity: usize,
-        garbage_pile_size: Range<usize>,
-        garbage_per_tile_quantity: Range<usize>,
-        spawn_in_near_tiles_probability: f64,
-        probability_step_by: f64,
-    ) -> Self {
+    pub fn new(total_garbage_quantity: usize, garbage_pile_size: Range<usize>, garbage_per_tile_quantity: Range<usize>, spawn_in_near_tiles_probability: f64, probability_step_by: f64) -> Self {
         GarbageSettings {
             total_garbage_quantity,
             garbage_pile_size,
@@ -92,7 +86,15 @@ pub(crate) fn spawn_garbage(world: &mut TileMatrix, settings: &GarbageSettings) 
 }
 
 #[inline(always)]
-pub(crate) fn spawn_garbage_build_up(world: &mut TileMatrix, garbage_pile_size: Range<usize>, probability_step_by: f64, spawn_prob: f64, placed: &mut usize, rng: &mut ThreadRng, max_garbage_per_tile: usize) {
+pub(crate) fn spawn_garbage_build_up(
+    world: &mut TileMatrix,
+    garbage_pile_size: Range<usize>,
+    probability_step_by: f64,
+    spawn_prob: f64,
+    placed: &mut usize,
+    rng: &mut ThreadRng,
+    max_garbage_per_tile: usize,
+) {
     // Get size of garbage pile
     let pile_range = rng.gen_range(garbage_pile_size);
 

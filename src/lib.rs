@@ -11,7 +11,6 @@
 //! We recommend a size of at least <b>1000</b>.
 //!
 
-
 extern crate core;
 
 /// Contains a sub module for each tile content present in the common crate, each of which has a struct

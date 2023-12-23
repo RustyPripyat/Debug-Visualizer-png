@@ -4,7 +4,7 @@ use nannou_core::prelude::Pow;
 use robotics_lib::world::tile::{Content, Tile};
 use serde::{Deserialize, Serialize};
 
-use crate::content::blob::{Blob, BlobSettings, BlobTrait, spawn_blob};
+use crate::content::blob::{spawn_blob, Blob, BlobSettings, BlobTrait};
 use crate::generator::TileMatrix;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -32,9 +32,7 @@ impl BlobTrait for Tree {
     }
 
     fn new() -> Self {
-        Tree {
-            inner: Blob::new(),
-        }
+        Tree { inner: Blob::new() }
     }
 
     fn spread_blob(&mut self, upper_border: usize, left_border: usize, lower_border: usize, righter_border: usize) {
@@ -55,7 +53,7 @@ impl TreeSettings {
                 radius_range,
                 n_blob,
                 n_tiles,
-            }
+            },
         }
     }
 }

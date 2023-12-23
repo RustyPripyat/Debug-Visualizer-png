@@ -1,13 +1,13 @@
-use std::ops::{Range};
+use std::ops::Range;
 
+use crate::generator::TileMatrix;
 use nannou_core::math::{deg_to_rad, map_range};
 use noise::{NoiseFn, Perlin};
 use rand::Rng;
 use robotics_lib::world::tile::{Content, Tile};
 use serde::{Deserialize, Serialize};
-use crate::generator::TileMatrix;
 
-use crate::utils::{Coordinate, get_random_seeded_noise};
+use crate::utils::{get_random_seeded_noise, Coordinate};
 #[derive(Serialize, Deserialize, Clone)]
 pub struct BlobSettings {
     pub(crate) n_tiles: Range<usize>,
@@ -24,7 +24,7 @@ pub(crate) struct Blob {
     pub(crate) center: Coordinate,
 }
 
-pub(crate) trait BlobTrait{
+pub(crate) trait BlobTrait {
     fn limit_on_proper_tile(&mut self, world: &[Vec<Tile>], content: &Content);
     fn get_extreme_points(&self) -> (usize, usize, usize, usize);
     fn default(world: &[Vec<Tile>], size: usize, radius: f32, variation: f32, content: &Content) -> Self;
@@ -33,15 +33,13 @@ pub(crate) trait BlobTrait{
     fn spread_blob(&mut self, upper_border: usize, left_border: usize, lower_border: usize, righter_border: usize);
 }
 
-impl BlobTrait for Blob{
+impl BlobTrait for Blob {
     fn limit_on_proper_tile(&mut self, world: &[Vec<Tile>], content: &Content) {
         let mut i = 0;
         while i < self.points.len() {
             let point = self.points[i];
 
-            if !world[point.row][point.col].tile_type.properties().can_hold(&content)
-                || world[point.row][point.col].content != Content::None
-            {
+            if !world[point.row][point.col].tile_type.properties().can_hold(&content) || world[point.row][point.col].content != Content::None {
                 // Remove the point from the blob
                 self.points.swap_remove(i);
             } else {
@@ -80,8 +78,9 @@ impl BlobTrait for Blob{
         blob.center = Coordinate { row: y, col: x };
 
         // set boarder points
-        blob.border_points =
-            (0..=360).map(|i| { // Map over an array of integers from 0 to 360 to represent the degrees in a circle.
+        blob.border_points = (0..=360)
+            .map(|i| {
+                // Map over an array of integers from 0 to 360 to represent the degrees in a circle.
                 // Convert each degree to radians.
                 let radian = deg_to_rad(i as f32);
                 // Get the sine of the radian to find the x co-ordinate of this point of the circle
@@ -100,7 +99,8 @@ impl BlobTrait for Blob{
                     row: border_y,
                     col: border_x,
                 }
-            }).collect();
+            })
+            .collect();
 
         let (min_row, min_col, max_row, max_col) = blob.get_extreme_points();
 
@@ -137,20 +137,24 @@ impl BlobTrait for Blob{
         }
 
         let mut stack: Vec<Coordinate> = Vec::new();
-        stack.push(Coordinate { row: self.center.row - upper_border, col: self.center.col - left_border });
+        stack.push(Coordinate {
+            row: self.center.row - upper_border,
+            col: self.center.col - left_border,
+        });
         // mark center as visited
         visited[self.center.row - upper_border][self.center.col - left_border] = true;
-        while !stack.is_empty()
-        {
-            if let Some(current) = stack.pop()
-            {
+        while !stack.is_empty() {
+            if let Some(current) = stack.pop() {
                 let x = current.col;
                 let y = current.row;
 
                 // upper left
                 if x > 0 && y > 0 && !visited[y - 1][x - 1] && !visited[y - 1][x] && !visited[y][x - 1] {
                     visited[y - 1][x - 1] = true;
-                    stack.push(Coordinate { row: y - 1, col: x - 1 });
+                    stack.push(Coordinate {
+                        row: y - 1,
+                        col: x - 1,
+                    });
                 }
                 // upper center
                 if y > 0 && !visited[y - 1][x] {
@@ -160,7 +164,10 @@ impl BlobTrait for Blob{
                 // upper right
                 if x < rect_width - 1 && y > 0 && !visited[y - 1][x + 1] && !visited[y - 1][x] && !visited[y][x + 1] {
                     visited[y - 1][x + 1] = true;
-                    stack.push(Coordinate { row: y - 1, col: x + 1 });
+                    stack.push(Coordinate {
+                        row: y - 1,
+                        col: x + 1,
+                    });
                 }
                 // right center
                 if x < rect_width - 1 && !visited[y][x + 1] {
@@ -170,7 +177,10 @@ impl BlobTrait for Blob{
                 // lower right
                 if x < rect_width - 1 && y < rect_height - 1 && !visited[y + 1][x + 1] && !visited[y + 1][x] && !visited[y][x + 1] {
                     visited[y + 1][x + 1] = true;
-                    stack.push(Coordinate { row: y + 1, col: x + 1 });
+                    stack.push(Coordinate {
+                        row: y + 1,
+                        col: x + 1,
+                    });
                 }
                 // lower center
                 if y < rect_height - 1 && !visited[y + 1][x] {
@@ -180,7 +190,10 @@ impl BlobTrait for Blob{
                 // lower left
                 if x > 0 && y < rect_height - 1 && !visited[y + 1][x - 1] && !visited[y + 1][x] && !visited[y][x - 1] {
                     visited[y + 1][x - 1] = true;
-                    stack.push(Coordinate { row: y + 1, col: x - 1 });
+                    stack.push(Coordinate {
+                        row: y + 1,
+                        col: x - 1,
+                    });
                 }
                 // left center
                 if x > 0 && !visited[y][x - 1] {
@@ -193,17 +206,17 @@ impl BlobTrait for Blob{
         for (y, row) in visited.iter().enumerate() {
             for (x, visited) in row.iter().enumerate() {
                 if *visited {
-                    self.points.push(Coordinate { row: y + upper_border, col: x + left_border });
+                    self.points.push(Coordinate {
+                        row: y + upper_border,
+                        col: x + left_border,
+                    });
                 }
             }
         }
     }
-
 }
 
-
 pub(crate) fn spawn_blob(world: &mut TileMatrix, settings: &mut BlobSettings, content: Content) {
-
     // checks if settings are valid
     if let Err(msg) = errors(settings) {
         panic!("{}", msg);
@@ -211,7 +224,6 @@ pub(crate) fn spawn_blob(world: &mut TileMatrix, settings: &mut BlobSettings, co
 
     // generate blobs and place them in the world
     loop {
-
         // Generate random for variation
         let mut rng = rand::thread_rng();
         let variation = rng.gen_range(0.075..0.125);
@@ -239,17 +251,18 @@ fn errors(settings: &BlobSettings) -> Result<(), String> {
     if settings.radius_range.start.floor() as usize * settings.n_blob.start > settings.n_tiles.end {
         // the minimum number of tiles that could be generated would be higher than the maximum number of tiles provided
         Err(format!(
-r#"n_tiles.end: {} is too small for the given radius_range.start: {} and n_blob.start: {}.
+            r#"n_tiles.end: {} is too small for the given radius_range.start: {} and n_blob.start: {}.
 The minimum number of tiles, that could be generated, would be higher than the maximum number of tiles provided."#,
-                    settings.n_tiles.end, settings.radius_range.start, settings.n_blob.start))
+            settings.n_tiles.end, settings.radius_range.start, settings.n_blob.start
+        ))
     } else if settings.radius_range.end.ceil() as usize * settings.n_blob.end < settings.n_tiles.start {
         // the maximum number of tiles that could be generated would be lower than the minimum number of tiles provided
         Err(format!(
-r#"n_tiles.start: {} is too small for the given radius_range.end: {} and n_blob.end: {}.
+            r#"n_tiles.start: {} is too small for the given radius_range.end: {} and n_blob.end: {}.
 The maximum number of tiles that could be generated would be lower than the minimum number of tiles provided"#,
-                    settings.n_tiles.start, settings.radius_range.end, settings.n_blob.end))
+            settings.n_tiles.start, settings.radius_range.end, settings.n_blob.end
+        ))
     } else {
         Ok(())
     }
 }
-

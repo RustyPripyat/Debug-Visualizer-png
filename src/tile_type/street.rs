@@ -5,7 +5,7 @@ use std::hash::{Hash, Hasher};
 use voronator::delaunator::Point;
 use voronator::VoronoiDiagram;
 
-use crate::utils::{Coordinate, Slice, slice_vec_2d};
+use crate::utils::{slice_vec_2d, Coordinate, Slice};
 
 // TODO doc street
 
@@ -20,20 +20,19 @@ fn remove_duplicates(edges: Vec<Edge>) -> Vec<Edge> {
     unique_edges.into_iter().collect()
 }
 
-impl Edge{
+impl Edge {
     pub fn is_near(&self, other: &Self) -> bool {
         //check if the edges are near
         (self.start.is_neighbor(&other.start) && self.end.is_neighbor(&other.end)) || (self.end.is_neighbor(&other.start) && self.start.is_neighbor(&other.end))
     }
 }
 
-
 impl Hash for Edge {
     fn hash<H: Hasher>(&self, state: &mut H) {
         // Sort the coordinates
         let (first, second) = match self.start.cmp(&self.end) {
-            Ordering::Less => (&self.start, &self.end),
-            _ => (&self.end, &self.start),
+            | Ordering::Less => (&self.start, &self.end),
+            | _ => (&self.end, &self.start),
         };
 
         // Hash the sorted coordinates
@@ -49,7 +48,9 @@ impl PartialEq<Self> for Edge {
 }
 
 impl PartialOrd for Edge {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Ord for Edge {
@@ -84,12 +85,18 @@ pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n
     unique_edges.iter().map(|edge| connect_points(edge.start, edge.end)).collect()
 }
 
-
 #[inline(always)]
 fn get_edges_extremes_from_diagram(diagram: VoronoiDiagram<Point>) -> HashSet<Edge> {
     let mut unique_extremes: HashSet<Edge> = HashSet::new();
     for cell in diagram.cells().iter() {
-        let extremes: Vec<Coordinate> = cell.points().iter().map(|point| Coordinate { col: point.x as usize, row: point.y as usize }).collect();
+        let extremes: Vec<Coordinate> = cell
+            .points()
+            .iter()
+            .map(|point| Coordinate {
+                col: point.x as usize,
+                row: point.y as usize,
+            })
+            .collect();
 
         // connect the points
         for i in 0..extremes.len() - 1 {
@@ -135,7 +142,6 @@ fn are_extremes_on_border(e1: Coordinate, e2: Coordinate, size: usize) -> bool {
 // Function to connect two points with a line segment using Bresenham's algorithm
 #[inline(always)]
 fn connect_points(start: Coordinate, end: Coordinate) -> Vec<Coordinate> {
-    println!("start: {:?}, end: {:?}", start, end);
     let mut line_segments: Vec<Coordinate> = Vec::new();
 
     let mut x = start.col as isize;
@@ -150,7 +156,10 @@ fn connect_points(start: Coordinate, end: Coordinate) -> Vec<Coordinate> {
     let mut err = dx + dy;
 
     loop {
-        let next_step = Coordinate { row: y as usize, col: x as usize };
+        let next_step = Coordinate {
+            row: y as usize,
+            col: x as usize,
+        };
 
         // add step between diagonal
         if let Some(step) = add_step_between_diagonal(&line_segments, next_step) {
@@ -191,7 +200,10 @@ fn add_step_between_diagonal(segments: &[Coordinate], next_step: Coordinate) -> 
     let is_diagonal = next_step.col != last.col && next_step.row != last.row;
 
     if is_diagonal {
-        Some(Coordinate { row: last.row, col: next_step.col})
+        Some(Coordinate {
+            row: last.row,
+            col: next_step.col,
+        })
     } else {
         None
     }
@@ -217,10 +229,10 @@ fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [Coor
             qnt_per_slice,
             band_width,
         )
-            .iter()
-            .for_each(|x| {
-                hs.insert(*x);
-            });
+        .iter()
+        .for_each(|x| {
+            hs.insert(*x);
+        });
 
         //horizontal slices
         combine_local_maxima_in_same_slice(
@@ -233,10 +245,10 @@ fn combine_local_maxima(elevation_map: &[Vec<f64>], all_local_maxima: &mut [Coor
             qnt_per_slice,
             band_width,
         )
-            .iter()
-            .for_each(|x| {
-                hs.insert(*x);
-            });
+        .iter()
+        .for_each(|x| {
+            hs.insert(*x);
+        });
     }
 
     hs.into_iter().collect()
@@ -340,7 +352,10 @@ fn get_local_maxima(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_thres
     for slice in slices {
         found_local_maximum = false;
 
-        let mut local_maximum_point = Coordinate { row: slice.start.row, col: slice.start.col }; // set initially the local maximum to the first point in the slice
+        let mut local_maximum_point = Coordinate {
+            row: slice.start.row,
+            col: slice.start.col,
+        }; // set initially the local maximum to the first point in the slice
         for row in slice.start.row..slice.end.row {
             for col in slice.start.col..slice.end.col {
                 if elevation_map[row][col] >= elevation_map[local_maximum_point.row][local_maximum_point.col] {
@@ -365,6 +380,9 @@ fn get_maximum(slice: &[Vec<f64>]) -> Coordinate {
         .enumerate()
         .flat_map(|(row_index, inner)| inner.iter().enumerate().map(move |(col_index, &value)| (row_index, col_index, value)))
         .max_by(|(_, _, a), (_, _, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
-        .map(|(row_index, col_index, _)| Coordinate { row: row_index, col: col_index })
+        .map(|(row_index, col_index, _)| Coordinate {
+            row: row_index,
+            col: col_index,
+        })
         .unwrap()
 }

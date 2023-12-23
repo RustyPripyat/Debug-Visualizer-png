@@ -4,7 +4,7 @@ use nannou_core::prelude::Pow;
 use robotics_lib::world::tile::{Content, Tile};
 use serde::{Deserialize, Serialize};
 
-use crate::content::blob::{Blob, BlobSettings, BlobTrait, spawn_blob};
+use crate::content::blob::{spawn_blob, Blob, BlobSettings, BlobTrait};
 use crate::generator::TileMatrix;
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -32,9 +32,7 @@ impl BlobTrait for Fire {
     }
 
     fn new() -> Self {
-        Fire {
-            inner: Blob::new(),
-        }
+        Fire { inner: Blob::new() }
     }
 
     fn spread_blob(&mut self, upper_border: usize, left_border: usize, lower_border: usize, righter_border: usize) {
@@ -66,15 +64,15 @@ impl FireSettings {
     /// let default_fire = FireSettings::default(size);
     /// ```
     pub fn default(size: usize) -> Self {
-        let radius_range = size as f32/100.0..size as f32 / 50.0;
-        let n_blob = size/100 ..size / 50;
+        let radius_range = size as f32 / 100.0..size as f32 / 50.0;
+        let n_blob = size / 100..size / 50;
         let n_tiles = 1..(radius_range.end.ceil().mul(2.0).pow(2) as usize) * n_blob.end;
         FireSettings {
             settings: BlobSettings {
                 radius_range,
                 n_blob,
                 n_tiles,
-            }
+            },
         }
     }
 }
@@ -82,5 +80,3 @@ impl FireSettings {
 pub fn spawn_fire(world: &mut TileMatrix, settings: &mut FireSettings) {
     spawn_blob(world, &mut settings.settings, Content::Fire)
 }
-
-

@@ -2,27 +2,26 @@ use std::collections::{HashMap, HashSet};
 
 use chrono::Utc;
 use debug_print::debug_println;
-use noise::{Fbm, Perlin, RidgedMulti};
 use noise::MultiFractal;
 use noise::NoiseFn;
-use rand::{RngCore, thread_rng};
+use noise::{Fbm, Perlin, RidgedMulti};
 use rand::seq::SliceRandom;
-use rayon::iter::*;
+use rand::{thread_rng, RngCore};
 use rayon::iter::IntoParallelIterator;
-
+use rayon::iter::*;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny, TrentinoSnow, TropicalMonsoon};
 use robotics_lib::world::tile::{Content, Tile, TileType};
 use robotics_lib::world::world_generator::Generator;
 use serde::{Deserialize, Serialize};
 
-use crate::content::bank::{BankSettings, spawn_bank};
-use crate::content::bin::{BinSettings, spawn_bin};
-use crate::content::fire::{FireSettings, spawn_fire};
-use crate::content::garbage::{GarbageSettings, spawn_garbage};
+use crate::content::bank::{spawn_bank, BankSettings};
+use crate::content::bin::{spawn_bin, BinSettings};
+use crate::content::fire::{spawn_fire, FireSettings};
+use crate::content::garbage::{spawn_garbage, GarbageSettings};
 use crate::content::tree::{spawn_tree, TreeSettings};
-use crate::content::wood_crate::{CrateSettings, spawn_crate};
-use crate::tile_type::lava::{LavaSettings, spawn_lava};
+use crate::content::wood_crate::{spawn_crate, CrateSettings};
+use crate::tile_type::lava::{spawn_lava, LavaSettings};
 use crate::tile_type::street::street_spawn;
 use crate::utils::{find_max_value, find_min_value, percentage, SerializedWorld};
 
@@ -98,10 +97,21 @@ pub type SpawnOrder = Vec<Spawnables>;
 #[inline(always)]
 pub fn get_default_spawn_order() -> SpawnOrder {
     let mut elements = vec![
-        Spawnables::Bank, Spawnables::Bin, Spawnables::Building, Spawnables::Coin,
-        Spawnables::Crate, Spawnables::Fire, Spawnables::Fish, Spawnables::Garbage,
-        Spawnables::JollyBlock, Spawnables::Lava, Spawnables::Market, Spawnables::Rock,
-        Spawnables::Street, Spawnables::Tree, Spawnables::City,
+        Spawnables::Bank,
+        Spawnables::Bin,
+        Spawnables::Building,
+        Spawnables::Coin,
+        Spawnables::Crate,
+        Spawnables::Fire,
+        Spawnables::Fish,
+        Spawnables::Garbage,
+        Spawnables::JollyBlock,
+        Spawnables::Lava,
+        Spawnables::Market,
+        Spawnables::Rock,
+        Spawnables::Street,
+        Spawnables::Tree,
+        Spawnables::City,
     ];
     elements.shuffle(&mut thread_rng());
     elements
@@ -185,14 +195,7 @@ impl NoiseSettings {
     ///
     /// let settings = NoiseSettings::new(123, 5, 1.0, 2.0, 0.5, 1.0);
     /// ```
-    pub fn new(
-        seed: u32,
-        octaves: usize,
-        frequency: f64,
-        lacunarity: f64,
-        persistence: f64,
-        attenuation: f64,
-    ) -> Self {
+    pub fn new(seed: u32, octaves: usize, frequency: f64, lacunarity: f64, persistence: f64, attenuation: f64) -> Self {
         NoiseSettings {
             seed,
             octaves,
@@ -257,14 +260,7 @@ impl Thresholds {
     /// use exclusion_zone::generator::Thresholds;
     /// let thresholds = Thresholds::new(0.0, -0.1, 0.1, 0.3, 0.6, 0.8);
     /// ```
-    pub fn new(
-        threshold_deep_water: f64,
-        threshold_shallow_water: f64,
-        threshold_sand: f64,
-        threshold_grass: f64,
-        threshold_hill: f64,
-        threshold_mountain: f64,
-    ) -> Self {
+    pub fn new(threshold_deep_water: f64, threshold_shallow_water: f64, threshold_sand: f64, threshold_grass: f64, threshold_hill: f64, threshold_mountain: f64) -> Self {
         Thresholds {
             threshold_deep_water,
             threshold_shallow_water,
@@ -306,7 +302,17 @@ pub struct WorldGenerator {
 impl WorldGenerator {
     #[inline(always)]
     fn generate_terrain(&self, noise_map: &[Vec<f64>], min: f64, max: f64) -> TileMatrix {
-        let mut world = vec![vec![Tile { tile_type: TileType::Grass, content: Content::None, elevation: 0 }; self.size]; self.size];
+        let mut world = vec![
+            vec![
+                Tile {
+                    tile_type: TileType::Grass,
+                    content: Content::None,
+                    elevation: 0
+                };
+                self.size
+            ];
+            self.size
+        ];
 
         for (y, row) in noise_map.iter().enumerate() {
             for (x, &value) in row.iter().enumerate() {
@@ -519,7 +525,8 @@ impl WorldGenerator {
         SerializedWorld {
             settings: self.clone(),
             world: self.gen(),
-        }.serialize(file_path, 11)
+        }
+        .serialize(file_path, 11)
     }
 
     /// Saves the current world settings along with the provided world data to a file.
@@ -590,7 +597,8 @@ impl WorldGenerator {
         SerializedWorld {
             settings: self.clone(),
             world,
-        }.serialize(file_path, 11)
+        }
+        .serialize(file_path, 11)
     }
 
     /// Loads a previously saved world from file.
@@ -638,8 +646,8 @@ impl WorldGenerator {
     /// details about the specific problem encountered.
     pub fn load_saved(file_path: &str) -> Result<(WorldGenerator, GenResult), String> {
         match SerializedWorld::deserialize(file_path) {
-            Ok(c) => { Ok((c.settings, c.world)) }
-            Err(e) => { Err(format!("Unable to load world file {file_path}:\n{e}")) }
+            | Ok(c) => Ok((c.settings, c.world)),
+            | Err(e) => Err(format!("Unable to load world file {file_path}:\n{e}")),
         }
     }
 }
@@ -647,7 +655,7 @@ impl WorldGenerator {
 /// Alias for `Vec<Vec<Tile>>` which is the Tile matrix representing the world
 pub type TileMatrix = Vec<Vec<Tile>>;
 
-pub(crate) type GenResult = (TileMatrix, (usize,usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>);
+pub(crate) type GenResult = (TileMatrix, (usize, usize), EnvironmentalConditions, f32, Option<HashMap<Content, f32>>);
 
 impl Generator for WorldGenerator {
     /// Generates a new world based on the specified settings.
@@ -715,7 +723,7 @@ impl Generator for WorldGenerator {
 
         for content in &self.spawn_order {
             match content {
-                Spawnables::Street => {
+                | Spawnables::Street => {
                     //color local maxima black
                     let polygons = street_spawn(self.size / 250, &noise_map, 10, 0.0);
 
@@ -725,59 +733,65 @@ impl Generator for WorldGenerator {
                         }
                     }
                 }
-                Spawnables::Lava => {
+                | Spawnables::Lava => {
                     debug_println!("Start: Spawn lava");
                     start = Utc::now();
                     spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
                     debug_println!("Done: Spawn lava: {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                Spawnables::Tree => {
+                | Spawnables::Tree => {
                     debug_println!("Start: Spawn trees");
                     start = Utc::now();
                     spawn_tree(&mut world, &mut self.tree_settings);
                     debug_println!("Done: Spawn trees in {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                Spawnables::Garbage => {
+                | Spawnables::Garbage => {
                     debug_println!("Start: Spawn garbage");
                     start = Utc::now();
                     spawn_garbage(&mut world, &self.garbage_settings);
                     debug_println!("Done: Spawn garbage in {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                Spawnables::Fire => {
+                | Spawnables::Fire => {
                     debug_println!("Start: Spawn fire");
                     start = Utc::now();
                     spawn_fire(&mut world, &mut self.fire_settings);
                     debug_println!("Done: Spawn fire in {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                Spawnables::Bin => {
+                | Spawnables::Bin => {
                     debug_println!("Start: Spawn bin");
                     start = Utc::now();
                     spawn_bin(&mut world, self.bin_settings.clone());
                     debug_println!("Done: Spawn bin: {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                Spawnables::Crate => {
+                | Spawnables::Crate => {
                     debug_println!("Start: Spawn crate");
                     start = Utc::now();
                     spawn_crate(&mut world, self.crate_settings.clone());
                     debug_println!("Done: Spawn crate: {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                Spawnables::Bank => {
+                | Spawnables::Bank => {
                     debug_println!("Start: Spawn bank");
                     start = Utc::now();
                     spawn_bank(&mut world, self.bank_settings);
                     debug_println!("Done: Spawn bank: {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                Spawnables::Coin => {}
-                Spawnables::Market => {}
-                Spawnables::Fish => {}
-                Spawnables::Building => {}
-                Spawnables::JollyBlock => {}
-                Spawnables::City => {}
-                Spawnables::Rock => {}
+                | Spawnables::Coin => {}
+                | Spawnables::Market => {}
+                | Spawnables::Fish => {}
+                | Spawnables::Building => {}
+                | Spawnables::JollyBlock => {}
+                | Spawnables::City => {}
+                | Spawnables::Rock => {}
             }
         }
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
-        (world, (0,0), EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 1, 9).unwrap(), 0.0, None)
+        (
+            world,
+            (0, 0),
+            EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 1, 9).unwrap(),
+            0.0,
+            None,
+        )
     }
 }

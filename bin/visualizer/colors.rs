@@ -32,7 +32,7 @@ pub(crate) mod content {
     use image::Rgb;
 
     /// Verde Scuro Italiano
-    pub(crate) const TREE: Rgb<u8> = Rgb([0,77,0]);
+    pub(crate) const TREE: Rgb<u8> = Rgb([0, 77, 0]);
     /// Rock color (light brown)
     pub(crate) const ROCK: Rgb<u8> = Rgb([240, 223, 206]);
     /// Fire color (pastel orange)
