@@ -1,6 +1,6 @@
 [package]
 name = "exclusion_zone_world_generator"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 authors = ["Marco Toniolo @Toniolo-Marco", "Federico Frigerio @FrostWalk"]
 description = "Let your robot feel the vibes of Černobyl like in the 1986 USSR."
@@ -21,14 +21,14 @@ name = "bin"
 path = "bin/main.rs"
 
 [dependencies]
-robotics_lib = { registry = "kellnr"}
+robotics_lib = { registry = "kellnr", version = "0.1.21" }
 rand = "0.8.5"
 noise = "0.8.2"
 rayon = "1.8.0"
 chrono = "0.4.31" # Only for debug porpouse
 voronator = "0.2.1"
 debug_print = "1.0.0"# Only for debug porpouse
-nannou_core = "0.18.0"
+nannou_core = "0.19.0"
 image = "0.24.7" # Only in visualizer, comment when publishing to kellnr
 serde = "1.0.193"
 bincode = "1.3.3"
