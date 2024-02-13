@@ -785,12 +785,23 @@ impl Generator for WorldGenerator {
             }
         }
 
+        // Detect the first walkable tile and set the initial position of the robot
+        let mut robot_position = (0, 0);
+        for (y, row) in world.iter().enumerate() {
+            for (x, tile) in row.iter().enumerate() {
+                if tile.tile_type.properties().walk() {
+                    robot_position = (x, y);
+                    break;
+                }
+            }
+        }
+
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
         (
             world,
-            (0, 0),
-            EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 1, 9).unwrap(),
-            0.0,
+            robot_position,
+            EnvironmentalConditions::new(&[Rainy, Sunny, Foggy, TropicalMonsoon, TrentinoSnow], 15, 9).unwrap(),
+            100.0,
             None,
         )
     }
