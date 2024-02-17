@@ -6,7 +6,7 @@ use noise::MultiFractal;
 use noise::NoiseFn;
 use noise::{Fbm, Perlin, RidgedMulti};
 use rand::seq::SliceRandom;
-use rand::{thread_rng, RngCore};
+use rand::{thread_rng, RngCore, Rng};
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::*;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
@@ -17,8 +17,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::content::bank::{spawn_bank, BankSettings};
 use crate::content::bin::{spawn_bin, BinSettings};
+use crate::content::coin::{CoinSettings, spawn_coin};
 use crate::content::fire::{spawn_fire, FireSettings};
+use crate::content::fish::{FishSettings, spawn_fish};
 use crate::content::garbage::{spawn_garbage, GarbageSettings};
+use crate::content::market::{MarketSettings, spawn_market};
 use crate::content::tree::{spawn_tree, TreeSettings};
 use crate::content::wood_crate::{spawn_crate, CrateSettings};
 use crate::tile_type::lava::{spawn_lava, LavaSettings};
@@ -71,8 +74,11 @@ pub type SpawnOrder = Vec<Spawnables>;
 /// ```
 /// use exclusion_zone::content::bank::BankSettings;
 /// use exclusion_zone::content::bin::BinSettings;
+/// use exclusion_zone::content::coin::CoinSettings;
 /// use exclusion_zone::content::fire::FireSettings;
+/// use exclusion_zone::content::fish::FishSettings;
 /// use exclusion_zone::content::garbage::GarbageSettings;
+/// use exclusion_zone::content::market::MarketSettings;
 /// use exclusion_zone::content::tree::TreeSettings;
 /// use exclusion_zone::content::wood_crate::CrateSettings;
 /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -91,6 +97,9 @@ pub type SpawnOrder = Vec<Spawnables>;
 ///             garbage_settings: GarbageSettings::default(size),
 ///             fire_settings: FireSettings::default(size),
 ///             tree_settings: TreeSettings::default(size),
+///             coin_settings: CoinSettings::default(size),
+///             market_settings: MarketSettings::default(size),
+///             fish_settings: FishSettings::default(size),
 ///         };
 /// // The `spawn_order` now contains a randomized order of elements to be spawned.
 /// ```
@@ -99,19 +108,16 @@ pub fn get_default_spawn_order() -> SpawnOrder {
     let mut elements = vec![
         Spawnables::Bank,
         Spawnables::Bin,
-        Spawnables::Building,
         Spawnables::Coin,
         Spawnables::Crate,
         Spawnables::Fire,
         Spawnables::Fish,
         Spawnables::Garbage,
-        Spawnables::JollyBlock,
         Spawnables::Lava,
         Spawnables::Market,
         Spawnables::Rock,
         Spawnables::Street,
         Spawnables::Tree,
-        Spawnables::City,
     ];
     elements.shuffle(&mut thread_rng());
     elements
@@ -297,6 +303,11 @@ pub struct WorldGenerator {
     pub fire_settings: FireSettings,
     /// define how trees will spawn
     pub tree_settings: TreeSettings,
+    /// define how coins will spawn
+    pub coin_settings: CoinSettings,
+    /// define how the market will spawn
+    pub market_settings: MarketSettings,
+    pub fish_settings: FishSettings,
 }
 
 impl WorldGenerator {
@@ -307,13 +318,12 @@ impl WorldGenerator {
                 Tile {
                     tile_type: TileType::Grass,
                     content: Content::None,
-                    elevation: 0
+                    elevation: 0,
                 };
                 self.size
             ];
             self.size
         ];
-
         for (y, row) in noise_map.iter().enumerate() {
             for (x, &value) in row.iter().enumerate() {
                 let tile_type = match value {
@@ -326,9 +336,28 @@ impl WorldGenerator {
                     | _ => TileType::Snow,
                 };
 
+                let rock_probability = match value {
+                    | v if v < percentage(self.thresholds.threshold_deep_water, min, max) => 0.0,
+                    | v if v < percentage(self.thresholds.threshold_shallow_water, min, max) => 0.0,
+                    | v if v < percentage(self.thresholds.threshold_sand, min, max) => 0.2,
+                    | v if v < percentage(self.thresholds.threshold_grass, min, max) => 0.4,
+                    | v if v < percentage(self.thresholds.threshold_hill, min, max) => 0.6,
+                    | v if v < percentage(self.thresholds.threshold_mountain, min, max) => 0.8,
+                    | _ => 0.9,
+                };
+
+                let rock = thread_rng().gen_bool(rock_probability);
+                let mut content = Content::None;
+
+                if rock {
+                    // random quantity of rock
+                    let qt = thread_rng().gen_range(0..=Content::Rock(0).properties().max());
+                    content = Content::Rock(qt);
+                }
+
                 world[y][x] = Tile {
                     tile_type,
-                    content: Content::None,
+                    content,
                     elevation: 0,
                 };
             }
@@ -381,7 +410,10 @@ impl WorldGenerator {
     ///
     /// ```
     /// use rand::{RngCore, thread_rng};
+    /// use exclusion_zone::content::coin::CoinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::fish::FishSettings;
+    /// use exclusion_zone::content::market::MarketSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings, SpawnOrder, Spawnables};
     ///
@@ -389,19 +421,16 @@ impl WorldGenerator {
     /// let spawn_order : SpawnOrder = vec![
     ///         Spawnables::Bank,
     ///         Spawnables::Bin,
-    ///         Spawnables::Building,
     ///         Spawnables::Coin,
     ///         Spawnables::Crate,
     ///         Spawnables::Fire,
     ///         Spawnables::Fish,
     ///         Spawnables::Garbage,
-    ///         Spawnables::JollyBlock,
     ///         Spawnables::Lava,
     ///         Spawnables::Market,
     ///         Spawnables::Rock,
     ///         Spawnables::Street,
     ///         Spawnables::Tree,
-    ///         Spawnables::City,
     ///     ];
     /// let noise_settings = NoiseSettings::from_seed(thread_rng().next_u32());
     /// let thresholds = Thresholds::default();
@@ -412,7 +441,10 @@ impl WorldGenerator {
     /// let garbage_settings = GarbageSettings::default(world_size);
     /// let fire_settings = FireSettings::default(world_size);
     /// let tree_settings = TreeSettings::default(world_size);
-    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings);
+    /// let coin_settings = CoinSettings::default(world_size);
+    /// let market_settings = MarketSettings::default(world_size);
+    /// let fish_settings = FishSettings::default(world_size);
+    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings,coin_settings,market_settings,fish_settings);
     /// ```
     pub fn new(
         size: usize,
@@ -426,6 +458,9 @@ impl WorldGenerator {
         garbage_settings: GarbageSettings,
         fire_settings: FireSettings,
         tree_settings: TreeSettings,
+        coin_settings: CoinSettings,
+        market_settings: MarketSettings,
+        fish_settings: FishSettings,
     ) -> Self {
         Self {
             size,
@@ -439,6 +474,9 @@ impl WorldGenerator {
             garbage_settings,
             fire_settings,
             tree_settings,
+            coin_settings,
+            market_settings,
+            fish_settings,
         }
     }
 
@@ -472,6 +510,9 @@ impl WorldGenerator {
             garbage_settings: GarbageSettings::default(size),
             fire_settings: FireSettings::default(size),
             tree_settings: TreeSettings::default(size),
+            coin_settings: CoinSettings::default(size),
+            market_settings: MarketSettings::default(size),
+            fish_settings: FishSettings::default(size),
         }
     }
     /// Generates a new world based on the current settings and serializes it.
@@ -497,8 +538,11 @@ impl WorldGenerator {
     /// use robotics_lib::world::world_generator::Generator;
     /// use exclusion_zone::content::bank::BankSettings;
     /// use exclusion_zone::content::bin::BinSettings;
+    /// use exclusion_zone::content::coin::CoinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::fish::FishSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
+    /// use exclusion_zone::content::market::MarketSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::content::wood_crate::CrateSettings;
     /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -518,6 +562,9 @@ impl WorldGenerator {
     ///     GarbageSettings::default(world_size),
     ///     FireSettings::default(world_size),
     ///     TreeSettings::default(world_size),
+    ///     CoinSettings::default(world_size),
+    ///     MarketSettings::default(world_size),
+    ///     FishSettings::default(world_size)
     /// );
     /// world_generator.generate_and_save("file/path/name").expect("Unable to save the world");
     /// ```
@@ -526,7 +573,7 @@ impl WorldGenerator {
             settings: self.clone(),
             world: self.gen(),
         }
-        .serialize(file_path, 11)
+            .serialize(file_path, 11)
     }
 
     /// Saves the current world settings along with the provided world data to a file.
@@ -561,8 +608,11 @@ impl WorldGenerator {
     /// use robotics_lib::world::world_generator::Generator;
     /// use exclusion_zone::content::bank::BankSettings;
     /// use exclusion_zone::content::bin::BinSettings;
+    /// use exclusion_zone::content::coin::CoinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::fish::FishSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
+    /// use exclusion_zone::content::market::MarketSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::content::wood_crate::CrateSettings;
     /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -582,6 +632,9 @@ impl WorldGenerator {
     ///     GarbageSettings::default(world_size),
     ///     FireSettings::default(world_size),
     ///     TreeSettings::default(world_size),
+    ///     CoinSettings::default(world_size),
+    ///     MarketSettings::default(world_size),
+    ///     FishSettings::default(world_size)
     /// );
     /// let world = world_generator.gen();
     /// /* do stuff with the world, like visualize etc...*/
@@ -598,7 +651,7 @@ impl WorldGenerator {
             settings: self.clone(),
             world,
         }
-        .serialize(file_path, 11)
+            .serialize(file_path, 11)
     }
 
     /// Loads a previously saved world from file.
@@ -675,8 +728,11 @@ impl Generator for WorldGenerator {
     /// use robotics_lib::world::world_generator::Generator;
     /// use exclusion_zone::content::bank::BankSettings;
     /// use exclusion_zone::content::bin::BinSettings;
+    /// use exclusion_zone::content::coin::CoinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
+    /// use exclusion_zone::content::fish::FishSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
+    /// use exclusion_zone::content::market::MarketSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::content::wood_crate::CrateSettings;
     /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -696,11 +752,18 @@ impl Generator for WorldGenerator {
     ///     GarbageSettings::default(world_size),
     ///     FireSettings::default(world_size),
     ///     TreeSettings::default(world_size),
+    ///     CoinSettings::default(world_size),
+    ///     MarketSettings::default(world_size),
+    ///     FishSettings::default(world_size)
     /// );
     ///
     /// let generated = world_generator.gen();
     /// ```
     fn gen(&mut self) -> GenResult {
+        if self.size < 100 {
+            panic!("The world size must be at least 100");
+        }
+
         let tot = Utc::now();
 
         debug_println!("Start: Noise map generation");
@@ -725,7 +788,7 @@ impl Generator for WorldGenerator {
             match content {
                 | Spawnables::Street => {
                     //color local maxima black
-                    let polygons = street_spawn(self.size / 250, &noise_map, 10, 0.0);
+                    let polygons = street_spawn(&noise_map, 10, 0.0);
 
                     for polygon in polygons.iter() {
                         for c in polygon {
@@ -760,13 +823,13 @@ impl Generator for WorldGenerator {
                 | Spawnables::Bin => {
                     debug_println!("Start: Spawn bin");
                     start = Utc::now();
-                    spawn_bin(&mut world, self.bin_settings.clone());
+                    spawn_bin(&mut world, self.bin_settings);
                     debug_println!("Done: Spawn bin: {} ms", (Utc::now() - start).num_milliseconds());
                 }
                 | Spawnables::Crate => {
                     debug_println!("Start: Spawn crate");
                     start = Utc::now();
-                    spawn_crate(&mut world, self.crate_settings.clone());
+                    spawn_crate(&mut world, self.crate_settings);
                     debug_println!("Done: Spawn crate: {} ms", (Utc::now() - start).num_milliseconds());
                 }
                 | Spawnables::Bank => {
@@ -775,13 +838,34 @@ impl Generator for WorldGenerator {
                     spawn_bank(&mut world, self.bank_settings);
                     debug_println!("Done: Spawn bank: {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                | Spawnables::Coin => {}
-                | Spawnables::Market => {}
-                | Spawnables::Fish => {}
-                | Spawnables::Building => {}
-                | Spawnables::JollyBlock => {}
-                | Spawnables::City => {}
+                | Spawnables::Coin => {
+                    debug_println!("Start: Spawn coins");
+                    start = Utc::now();
+                    spawn_coin(&mut world, self.coin_settings);
+                    debug_println!("Done: Spawn coins: {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                | Spawnables::Market => {
+                    debug_println!("Start: Spawn market");
+                    start = Utc::now();
+                    spawn_market(&mut world, self.market_settings);
+                    debug_println!("Done: Spawn market: {} ms", (Utc::now() - start).num_milliseconds());
+                }
+                | Spawnables::Fish => {
+                    debug_println!("Start: Spawn fish");
+                    start = Utc::now();
+                    spawn_fish(&mut world, self.fish_settings);
+                    debug_println!("Done: Spawn fish: {} ms", (Utc::now() - start).num_milliseconds());
+                }
                 | Spawnables::Rock => {}
+                | Spawnables::Building => {
+                    panic!("This world generator does not support implement Building")
+                }
+                | Spawnables::JollyBlock => {
+                    panic!("This world generator does not support implement JollyBlock")
+                }
+                | Spawnables::City => {
+                    panic!("This world generator does not support implement City")
+                }
             }
         }
 

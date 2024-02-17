@@ -1,4 +1,3 @@
-use rand::RngCore;
 use robotics_lib::energy::Energy;
 use robotics_lib::event::events::Event;
 use robotics_lib::runner::backpack::BackPack;
@@ -9,8 +8,11 @@ use robotics_lib::world::World;
 
 use exclusion_zone::content::bank::BankSettings;
 use exclusion_zone::content::bin::BinSettings;
+use exclusion_zone::content::coin::CoinSettings;
 use exclusion_zone::content::fire::FireSettings;
+use exclusion_zone::content::fish::FishSettings;
 use exclusion_zone::content::garbage::GarbageSettings;
+use exclusion_zone::content::market::MarketSettings;
 use exclusion_zone::content::tree::TreeSettings;
 use exclusion_zone::content::wood_crate::CrateSettings;
 use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -52,7 +54,7 @@ fn main() {
     }
 
     let _r = MyRobot(Robot::new());
-    let size = 1000;
+    let size = 100;
     let mut generator = WorldGenerator::new(
         size,
         get_default_spawn_order(),
@@ -65,6 +67,9 @@ fn main() {
         GarbageSettings::default(size),
         FireSettings::default(size),
         TreeSettings::default(size),
+        CoinSettings::default(size),
+        MarketSettings::default(size),
+        FishSettings::default(size),
     );
 
     let world = generator.gen();

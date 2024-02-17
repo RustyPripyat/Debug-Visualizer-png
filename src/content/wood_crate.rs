@@ -7,7 +7,7 @@ use crate::utils::spawn_content_randomly;
 
 /// Settings defining the behavior of wood crate spawn,
 /// such as the number of spawn points
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Copy)]
 pub struct CrateSettings {
     pub number_of_spawn_points: usize,
 }
@@ -17,7 +17,7 @@ impl CrateSettings {
     /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         CrateSettings {
-            number_of_spawn_points: size / 25,
+            number_of_spawn_points: usize::pow(size, 2) / 40,
         }
     }
 

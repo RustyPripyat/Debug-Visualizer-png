@@ -21,6 +21,7 @@ fn remove_duplicates(edges: Vec<Edge>) -> Vec<Edge> {
 }
 
 impl Edge {
+    #[allow(dead_code)]
     pub fn is_near(&self, other: &Self) -> bool {
         //check if the edges are near
         (self.start.is_neighbor(&other.start) && self.end.is_neighbor(&other.end)) || (self.end.is_neighbor(&other.start) && self.start.is_neighbor(&other.end))
@@ -63,7 +64,7 @@ impl Ord for Edge {
     }
 }
 
-pub(crate) fn street_spawn(street_quantity: usize, elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<Vec<Coordinate>> {
+pub(crate) fn street_spawn(elevation_map: &[Vec<f64>], n_slice_side: usize, lower_threshold: f64) -> Vec<Vec<Coordinate>> {
     // get local maxima
     let mut local_maxima: Vec<Coordinate> = get_local_maxima(elevation_map, n_slice_side, lower_threshold);
 
