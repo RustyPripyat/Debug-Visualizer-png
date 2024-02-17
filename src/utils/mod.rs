@@ -18,6 +18,8 @@ pub struct Coordinate {
 }
 
 impl Coordinate {
+    #[inline(always)]
+    #[allow(dead_code)]
     pub(crate) fn is_neighbor(&self, other: &Coordinate) -> bool {
         let x = self.row as isize - other.row as isize;
         let y = self.col as isize - other.col as isize;

@@ -28,7 +28,7 @@ impl GarbageSettings {
     /// loss in speed generation
     pub fn default(size: usize) -> Self {
         GarbageSettings {
-            total_garbage_quantity: size * size / 9,
+            total_garbage_quantity: usize::pow(size, 2) / 100,
             garbage_pile_size: 1..size / 10,
             garbage_per_tile_quantity: 1..Garbage(0).properties().max(),
             spawn_in_near_tiles_probability: 1.0,

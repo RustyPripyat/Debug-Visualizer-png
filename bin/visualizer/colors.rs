@@ -43,10 +43,10 @@ pub(crate) mod content {
     pub(crate) const BIN: Rgb<u8> = Rgb([57, 60, 65]);
     /// Bank color (marble white)
     pub(crate) const BANK: Rgb<u8> = Rgb([227, 224, 205]);
-    /// Market color (Minecraft oak planks)
-    pub(crate) const MARKET: Rgb<u8> = Rgb([145, 117, 77]);
-    /// Fish color (red goldfish)
-    pub(crate) const FISH: Rgb<u8> = Rgb([240, 79, 40]);
+    /// Pink
+    pub(crate) const MARKET: Rgb<u8> = Rgb([255,105,180]);
+    /// Fish color (purple)
+    pub(crate) const FISH: Rgb<u8> = Rgb([127, 0, 255]);
     /// Building color (iron grey)
     pub(crate) const BUILDING: Rgb<u8> = Rgb([203, 205, 205]);
     /// Bush color (dark green)

@@ -13,7 +13,7 @@ pub mod fish;
 pub mod garbage;
 /// Contains structures and functions related to the spawn of tree and forests
 pub mod tree;
-/// Contains structures and functions related to the spawn of water flows
-pub mod water;
 /// Contains structures and functions related to the spawn of wood crate
 pub mod wood_crate;
+/// Contains structures and functions related to the spawn of market
+pub mod market;

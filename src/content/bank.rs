@@ -18,7 +18,7 @@ impl BankSettings {
     /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         BankSettings {
-            number_of_spawn_points: size * size / 50,
+            number_of_spawn_points: usize::pow(size, 2) / 100,
         }
     }
 
