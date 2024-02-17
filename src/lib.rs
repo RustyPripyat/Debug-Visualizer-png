@@ -13,12 +13,12 @@
 
 extern crate core;
 
-/// Contains a sub module for each tile content present in the common crate, each of which has a struct
+/// Contains a submodule for each tile content present in the common crate, each of which has a struct
 /// to define the behavior of how it is generated, such as quantity, probability and so on
 pub mod content;
 /// Contains the world generator settings and method to generate the world map
 pub mod generator;
-/// Contains a sub module for each tile type present in the common crate, each of which has a struct
+/// Contains a submodule for each tile type present in the common crate, each of which has a struct
 /// to define the behavior of how it is generated, such as number of lava spawn point, streets and so on
 pub mod tile_type;
 pub(crate) mod utils;

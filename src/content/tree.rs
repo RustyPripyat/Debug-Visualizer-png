@@ -45,8 +45,8 @@ impl BlobTrait for Tree {
 
 impl TreeSettings {
     pub fn default(size: usize) -> Self {
-        let radius_range = 5.0..size as f32 / 50.0;
-        let n_blob = 1..size / 125;
+        let radius_range = 1.0..(size as f32 / 50.0).min(4.0);
+        let n_blob = (size as f32 * 0.1) as usize..(size as f32 * 0.15) as usize;
         let n_tiles = 1..(radius_range.end.ceil().mul(2.0).pow(2) as usize) * n_blob.end;
         TreeSettings {
             settings: BlobSettings {

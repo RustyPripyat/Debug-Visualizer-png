@@ -33,8 +33,8 @@ pub(crate) mod content {
 
     /// Verde Scuro Italiano
     pub(crate) const TREE: Rgb<u8> = Rgb([0, 77, 0]);
-    /// Rock color (light brown)
-    pub(crate) const ROCK: Rgb<u8> = Rgb([240, 223, 206]);
+    /// Rock color (dark grey)
+    pub(crate) const ROCK: Rgb<u8> = Rgb([50, 50, 50]);
     /// Fire color (pastel orange)
     pub(crate) const FIRE: Rgb<u8> = Rgb([255, 0, 0]);
     /// Coin color (Nintendo gold coin)

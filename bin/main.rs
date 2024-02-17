@@ -9,6 +9,7 @@ use robotics_lib::world::World;
 
 use exclusion_zone::content::bank::BankSettings;
 use exclusion_zone::content::bin::BinSettings;
+use exclusion_zone::content::coin::CoinSettings;
 use exclusion_zone::content::fire::FireSettings;
 use exclusion_zone::content::garbage::GarbageSettings;
 use exclusion_zone::content::tree::TreeSettings;
@@ -52,7 +53,7 @@ fn main() {
     }
 
     let _r = MyRobot(Robot::new());
-    let size = 1000;
+    let size = 100;
     let mut generator = WorldGenerator::new(
         size,
         get_default_spawn_order(),
@@ -65,6 +66,7 @@ fn main() {
         GarbageSettings::default(size),
         FireSettings::default(size),
         TreeSettings::default(size),
+        CoinSettings::default(size),
     );
 
     let world = generator.gen();

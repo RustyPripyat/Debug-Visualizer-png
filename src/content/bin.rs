@@ -17,7 +17,7 @@ impl BinSettings {
     /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         BinSettings {
-            number_of_spawn_points: size / 25,
+            number_of_spawn_points: size * size / 25,
         }
     }
 

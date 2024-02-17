@@ -6,7 +6,7 @@ use noise::MultiFractal;
 use noise::NoiseFn;
 use noise::{Fbm, Perlin, RidgedMulti};
 use rand::seq::SliceRandom;
-use rand::{thread_rng, RngCore};
+use rand::{thread_rng, RngCore, Rng};
 use rayon::iter::IntoParallelIterator;
 use rayon::iter::*;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::content::bank::{spawn_bank, BankSettings};
 use crate::content::bin::{spawn_bin, BinSettings};
+use crate::content::coin::CoinSettings;
 use crate::content::fire::{spawn_fire, FireSettings};
 use crate::content::garbage::{spawn_garbage, GarbageSettings};
 use crate::content::tree::{spawn_tree, TreeSettings};
@@ -71,6 +72,7 @@ pub type SpawnOrder = Vec<Spawnables>;
 /// ```
 /// use exclusion_zone::content::bank::BankSettings;
 /// use exclusion_zone::content::bin::BinSettings;
+/// use exclusion_zone::content::coin::CoinSettings;
 /// use exclusion_zone::content::fire::FireSettings;
 /// use exclusion_zone::content::garbage::GarbageSettings;
 /// use exclusion_zone::content::tree::TreeSettings;
@@ -91,6 +93,7 @@ pub type SpawnOrder = Vec<Spawnables>;
 ///             garbage_settings: GarbageSettings::default(size),
 ///             fire_settings: FireSettings::default(size),
 ///             tree_settings: TreeSettings::default(size),
+///             coin_settings: CoinSettings::default(size)
 ///         };
 /// // The `spawn_order` now contains a randomized order of elements to be spawned.
 /// ```
@@ -297,6 +300,8 @@ pub struct WorldGenerator {
     pub fire_settings: FireSettings,
     /// define how trees will spawn
     pub tree_settings: TreeSettings,
+    // define how coins will spawn
+    pub coin_settings: CoinSettings
 }
 
 impl WorldGenerator {
@@ -316,6 +321,7 @@ impl WorldGenerator {
 
         for (y, row) in noise_map.iter().enumerate() {
             for (x, &value) in row.iter().enumerate() {
+
                 let tile_type = match value {
                     | v if v < percentage(self.thresholds.threshold_deep_water, min, max) => TileType::DeepWater,
                     | v if v < percentage(self.thresholds.threshold_shallow_water, min, max) => TileType::ShallowWater,
@@ -326,9 +332,28 @@ impl WorldGenerator {
                     | _ => TileType::Snow,
                 };
 
+                let rock_probability = match value {
+                    | v if v < percentage(self.thresholds.threshold_deep_water, min, max) => 0.0,
+                    | v if v < percentage(self.thresholds.threshold_shallow_water, min, max) => 0.0,
+                    | v if v < percentage(self.thresholds.threshold_sand, min, max) => 0.2,
+                    | v if v < percentage(self.thresholds.threshold_grass, min, max) => 0.4,
+                    | v if v < percentage(self.thresholds.threshold_hill, min, max) => 0.6,
+                    | v if v < percentage(self.thresholds.threshold_mountain, min, max) => 0.8,
+                    | _ => 0.9,
+                };
+
+                let rock = thread_rng().gen_bool(rock_probability);
+                let mut content = Content::None;
+
+                if rock {
+                    // random quantity of rock
+                    let qt = thread_rng().gen_range(0..=Content::Rock(0).properties().max());
+                    content = Content::Rock(qt);
+                }
+
                 world[y][x] = Tile {
                     tile_type,
-                    content: Content::None,
+                    content,
                     elevation: 0,
                 };
             }
@@ -381,6 +406,7 @@ impl WorldGenerator {
     ///
     /// ```
     /// use rand::{RngCore, thread_rng};
+    /// use exclusion_zone::content::coin::CoinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings, SpawnOrder, Spawnables};
@@ -412,7 +438,8 @@ impl WorldGenerator {
     /// let garbage_settings = GarbageSettings::default(world_size);
     /// let fire_settings = FireSettings::default(world_size);
     /// let tree_settings = TreeSettings::default(world_size);
-    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings);
+    /// let coin_settings = CoinSettings::default(world_size);
+    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings,coin_settings);
     /// ```
     pub fn new(
         size: usize,
@@ -426,6 +453,7 @@ impl WorldGenerator {
         garbage_settings: GarbageSettings,
         fire_settings: FireSettings,
         tree_settings: TreeSettings,
+        coin_settings: CoinSettings
     ) -> Self {
         Self {
             size,
@@ -439,6 +467,7 @@ impl WorldGenerator {
             garbage_settings,
             fire_settings,
             tree_settings,
+            coin_settings
         }
     }
 
@@ -472,6 +501,7 @@ impl WorldGenerator {
             garbage_settings: GarbageSettings::default(size),
             fire_settings: FireSettings::default(size),
             tree_settings: TreeSettings::default(size),
+            coin_settings :CoinSettings::default(size)
         }
     }
     /// Generates a new world based on the current settings and serializes it.
@@ -497,6 +527,7 @@ impl WorldGenerator {
     /// use robotics_lib::world::world_generator::Generator;
     /// use exclusion_zone::content::bank::BankSettings;
     /// use exclusion_zone::content::bin::BinSettings;
+    /// use exclusion_zone::content::coin::CoinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
@@ -518,6 +549,7 @@ impl WorldGenerator {
     ///     GarbageSettings::default(world_size),
     ///     FireSettings::default(world_size),
     ///     TreeSettings::default(world_size),
+    ///     CoinSettings::default(world_size)
     /// );
     /// world_generator.generate_and_save("file/path/name").expect("Unable to save the world");
     /// ```
@@ -561,6 +593,7 @@ impl WorldGenerator {
     /// use robotics_lib::world::world_generator::Generator;
     /// use exclusion_zone::content::bank::BankSettings;
     /// use exclusion_zone::content::bin::BinSettings;
+    /// use exclusion_zone::content::coin::CoinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
@@ -582,6 +615,7 @@ impl WorldGenerator {
     ///     GarbageSettings::default(world_size),
     ///     FireSettings::default(world_size),
     ///     TreeSettings::default(world_size),
+    ///     CoinSettings::default(world_size)
     /// );
     /// let world = world_generator.gen();
     /// /* do stuff with the world, like visualize etc...*/
@@ -675,6 +709,7 @@ impl Generator for WorldGenerator {
     /// use robotics_lib::world::world_generator::Generator;
     /// use exclusion_zone::content::bank::BankSettings;
     /// use exclusion_zone::content::bin::BinSettings;
+    /// use exclusion_zone::content::coin::CoinSettings;
     /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
@@ -696,11 +731,17 @@ impl Generator for WorldGenerator {
     ///     GarbageSettings::default(world_size),
     ///     FireSettings::default(world_size),
     ///     TreeSettings::default(world_size),
+    ///     CoinSettings::default(world_size)
     /// );
     ///
     /// let generated = world_generator.gen();
     /// ```
     fn gen(&mut self) -> GenResult {
+
+        if self.size < 100 {
+            panic!("The world size must be at least 100");
+        }
+
         let tot = Utc::now();
 
         debug_println!("Start: Noise map generation");
