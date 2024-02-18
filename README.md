@@ -6,4 +6,4 @@ This world generator allows for granular customisation of its content, it allows
 
 There are methods to **pre-generate the world**, save it as a binary file and load it later.
 
-We recommend a size of at least **1000**.
+We recommend a size of at least **1000**, **a dimension lower than 100 wil throw a panic**

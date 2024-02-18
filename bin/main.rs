@@ -13,6 +13,7 @@ use exclusion_zone::content::fire::FireSettings;
 use exclusion_zone::content::fish::FishSettings;
 use exclusion_zone::content::garbage::GarbageSettings;
 use exclusion_zone::content::market::MarketSettings;
+use exclusion_zone::content::rock::RockSettings;
 use exclusion_zone::content::tree::TreeSettings;
 use exclusion_zone::content::wood_crate::CrateSettings;
 use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -70,6 +71,7 @@ fn main() {
         CoinSettings::default(size),
         MarketSettings::default(size),
         FishSettings::default(size),
+        RockSettings::default(size)
     );
 
     let world = generator.gen();

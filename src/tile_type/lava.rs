@@ -28,8 +28,8 @@ impl LavaSettings {
     /// optimal parameters for the given world size
     pub fn default(size: usize) -> Self {
         LavaSettings {
-            number_of_spawn_points: size / 25,
-            lava_flow_range: 1..size / 25,
+            number_of_spawn_points: usize::pow(size,2)/ 500,
+            lava_flow_range: 1..usize::pow(size,2) / 25,
         }
     }
 

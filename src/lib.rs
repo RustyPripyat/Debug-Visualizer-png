@@ -9,6 +9,7 @@
 //! There are methods to pre-generate the world, save it as a binary file and load it later.
 //!
 //! We recommend a size of at least <b>1000</b>.
+//! Size lower than 100 will throw a panic
 //!
 
 extern crate core;

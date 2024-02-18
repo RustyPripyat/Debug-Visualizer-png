@@ -3,7 +3,7 @@ use std::io::{self, Read};
 
 use noise::Perlin;
 use rand::Rng;
-use robotics_lib::world::tile::Content;
+use robotics_lib::world::tile::{Content, TileType};
 use serde::{Deserialize, Serialize};
 use zstd::stream::copy_encode;
 use zstd::stream::read::Decoder;
@@ -151,7 +151,7 @@ pub(crate) fn map_value_to_range(value: f64, from: std::ops::Range<f64>, to: std
 pub(crate) fn spawn_content_randomly(world: &mut TileMatrix, mut number_of_spawn_points: usize, content: Content) -> Vec<Coordinate> {
     let mut rng = rand::thread_rng();
 
-    let mut spawn_points = Vec::new();
+    let mut spawn_points = Vec::with_capacity(number_of_spawn_points);
 
     while number_of_spawn_points > 0 {
         let c = Coordinate {
@@ -159,9 +159,11 @@ pub(crate) fn spawn_content_randomly(world: &mut TileMatrix, mut number_of_spawn
             col: rng.gen_range(0..world.len()),
         };
 
-        if world[c.row][c.col].tile_type.properties().can_hold(&content) && world[c.row][c.col].content == Content::None {
+        if world[c.row][c.col].tile_type.properties().can_hold(&content){
             number_of_spawn_points -= 1;
             spawn_points.push(c);
+        } else {
+            //println!("filtered {:?} on {:?}",content ,world[c.row][c.col].tile_type)
         }
     }
     spawn_points

@@ -47,10 +47,10 @@ impl FishSettings {
 
 pub(crate) fn spawn_fish(world: &mut TileMatrix, fish: FishSettings) {
     let max = Fish(0).properties().max();
-    let spawn_points = spawn_content_randomly(world, fish.number_of_spawn_points, Fish(0));
+    let spawn_points = spawn_content_randomly(world, fish.number_of_spawn_points, Fish(0).to_default());
 
     for c in spawn_points {
-        let random = thread_rng().gen_range(2..=max);
+        let random = thread_rng().gen_range(1..=max);
         world[c.row][c.col].content = Fish(random);
     }
 }

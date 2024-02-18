@@ -12,6 +12,7 @@ use rayon::iter::*;
 use robotics_lib::world::environmental_conditions::EnvironmentalConditions;
 use robotics_lib::world::environmental_conditions::WeatherType::{Foggy, Rainy, Sunny, TrentinoSnow, TropicalMonsoon};
 use robotics_lib::world::tile::{Content, Tile, TileType};
+use robotics_lib::world::tile::TileType::Teleport;
 use robotics_lib::world::world_generator::Generator;
 use serde::{Deserialize, Serialize};
 
@@ -22,6 +23,7 @@ use crate::content::fire::{spawn_fire, FireSettings};
 use crate::content::fish::{FishSettings, spawn_fish};
 use crate::content::garbage::{spawn_garbage, GarbageSettings};
 use crate::content::market::{MarketSettings, spawn_market};
+use crate::content::rock::{RockSettings, spawn_rock};
 use crate::content::tree::{spawn_tree, TreeSettings};
 use crate::content::wood_crate::{spawn_crate, CrateSettings};
 use crate::tile_type::lava::{spawn_lava, LavaSettings};
@@ -31,8 +33,6 @@ use crate::utils::{find_max_value, find_min_value, percentage, SerializedWorld};
 /// Contains the tile types and the content used to define generation order
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
 pub enum Spawnables {
-    Street,
-    Lava,
     Rock,
     Tree,
     Garbage,
@@ -42,10 +42,7 @@ pub enum Spawnables {
     Crate,
     Bank,
     Market,
-    Fish,
-    Building,
-    JollyBlock,
-    City,
+    Fish
 }
 
 /// Set of content and tile type defining the order of element generation,
@@ -79,6 +76,7 @@ pub type SpawnOrder = Vec<Spawnables>;
 /// use exclusion_zone::content::fish::FishSettings;
 /// use exclusion_zone::content::garbage::GarbageSettings;
 /// use exclusion_zone::content::market::MarketSettings;
+/// use exclusion_zone::content::rock::RockSettings;
 /// use exclusion_zone::content::tree::TreeSettings;
 /// use exclusion_zone::content::wood_crate::CrateSettings;
 /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -100,24 +98,23 @@ pub type SpawnOrder = Vec<Spawnables>;
 ///             coin_settings: CoinSettings::default(size),
 ///             market_settings: MarketSettings::default(size),
 ///             fish_settings: FishSettings::default(size),
+///             rock_settings: RockSettings::default(size),
 ///         };
 /// // The `spawn_order` now contains a randomized order of elements to be spawned.
 /// ```
 #[inline(always)]
 pub fn get_default_spawn_order() -> SpawnOrder {
     let mut elements = vec![
+        Spawnables::Rock,
+        Spawnables::Tree,
+        Spawnables::Fire,
         Spawnables::Bank,
         Spawnables::Bin,
         Spawnables::Coin,
         Spawnables::Crate,
-        Spawnables::Fire,
         Spawnables::Fish,
         Spawnables::Garbage,
-        Spawnables::Lava,
         Spawnables::Market,
-        Spawnables::Rock,
-        Spawnables::Street,
-        Spawnables::Tree,
     ];
     elements.shuffle(&mut thread_rng());
     elements
@@ -278,7 +275,7 @@ impl Thresholds {
     }
 }
 
-/// Groups all sub-module settings of the world generator, allowing the various aspects to be customised
+/// Groups all submodule settings of the world generator, allowing the various aspects to be customised
 #[derive(Serialize, Deserialize, Clone)]
 pub struct WorldGenerator {
     /// the world side dimension, final size will be size²
@@ -307,7 +304,10 @@ pub struct WorldGenerator {
     pub coin_settings: CoinSettings,
     /// define how the market will spawn
     pub market_settings: MarketSettings,
+    /// define how fish will spawn
     pub fish_settings: FishSettings,
+    /// define how rocks will spawn
+    pub rock_settings: RockSettings
 }
 
 impl WorldGenerator {
@@ -336,28 +336,9 @@ impl WorldGenerator {
                     | _ => TileType::Snow,
                 };
 
-                let rock_probability = match value {
-                    | v if v < percentage(self.thresholds.threshold_deep_water, min, max) => 0.0,
-                    | v if v < percentage(self.thresholds.threshold_shallow_water, min, max) => 0.0,
-                    | v if v < percentage(self.thresholds.threshold_sand, min, max) => 0.2,
-                    | v if v < percentage(self.thresholds.threshold_grass, min, max) => 0.4,
-                    | v if v < percentage(self.thresholds.threshold_hill, min, max) => 0.6,
-                    | v if v < percentage(self.thresholds.threshold_mountain, min, max) => 0.8,
-                    | _ => 0.9,
-                };
-
-                let rock = thread_rng().gen_bool(rock_probability);
-                let mut content = Content::None;
-
-                if rock {
-                    // random quantity of rock
-                    let qt = thread_rng().gen_range(0..=Content::Rock(0).properties().max());
-                    content = Content::Rock(qt);
-                }
-
                 world[y][x] = Tile {
                     tile_type,
-                    content,
+                    content: Content::None,
                     elevation: 0,
                 };
             }
@@ -414,11 +395,13 @@ impl WorldGenerator {
     /// use exclusion_zone::content::fire::FireSettings;
     /// use exclusion_zone::content::fish::FishSettings;
     /// use exclusion_zone::content::market::MarketSettings;
+    /// use exclusion_zone::content::rock::RockSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::generator::{WorldGenerator, NoiseSettings, Thresholds, LavaSettings, BankSettings, BinSettings, CrateSettings, GarbageSettings, SpawnOrder, Spawnables};
     ///
     /// let world_size = 1000;
     /// let spawn_order : SpawnOrder = vec![
+    ///         Spawnables::Rock,
     ///         Spawnables::Bank,
     ///         Spawnables::Bin,
     ///         Spawnables::Coin,
@@ -426,11 +409,8 @@ impl WorldGenerator {
     ///         Spawnables::Fire,
     ///         Spawnables::Fish,
     ///         Spawnables::Garbage,
-    ///         Spawnables::Lava,
     ///         Spawnables::Market,
-    ///         Spawnables::Rock,
-    ///         Spawnables::Street,
-    ///         Spawnables::Tree,
+    ///         Spawnables::Tree
     ///     ];
     /// let noise_settings = NoiseSettings::from_seed(thread_rng().next_u32());
     /// let thresholds = Thresholds::default();
@@ -444,7 +424,10 @@ impl WorldGenerator {
     /// let coin_settings = CoinSettings::default(world_size);
     /// let market_settings = MarketSettings::default(world_size);
     /// let fish_settings = FishSettings::default(world_size);
-    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings,coin_settings,market_settings,fish_settings);
+    /// let rock_settings = RockSettings::default(world_size);
+    /// let world = WorldGenerator::new(world_size,spawn_order,noise_settings,thresholds,lava_settings,
+    /// bank_settings,bin_settings,crate_settings,garbage_settings,fire_settings,tree_settings,
+    /// coin_settings,market_settings,fish_settings,rock_settings);
     /// ```
     pub fn new(
         size: usize,
@@ -461,6 +444,7 @@ impl WorldGenerator {
         coin_settings: CoinSettings,
         market_settings: MarketSettings,
         fish_settings: FishSettings,
+        rock_settings: RockSettings
     ) -> Self {
         Self {
             size,
@@ -477,6 +461,7 @@ impl WorldGenerator {
             coin_settings,
             market_settings,
             fish_settings,
+            rock_settings
         }
     }
 
@@ -513,6 +498,7 @@ impl WorldGenerator {
             coin_settings: CoinSettings::default(size),
             market_settings: MarketSettings::default(size),
             fish_settings: FishSettings::default(size),
+            rock_settings: RockSettings::default(size)
         }
     }
     /// Generates a new world based on the current settings and serializes it.
@@ -543,6 +529,7 @@ impl WorldGenerator {
     /// use exclusion_zone::content::fish::FishSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
     /// use exclusion_zone::content::market::MarketSettings;
+    /// use exclusion_zone::content::rock::RockSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::content::wood_crate::CrateSettings;
     /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -564,7 +551,8 @@ impl WorldGenerator {
     ///     TreeSettings::default(world_size),
     ///     CoinSettings::default(world_size),
     ///     MarketSettings::default(world_size),
-    ///     FishSettings::default(world_size)
+    ///     FishSettings::default(world_size),
+    ///     RockSettings::default(world_size)
     /// );
     /// world_generator.generate_and_save("file/path/name").expect("Unable to save the world");
     /// ```
@@ -613,6 +601,7 @@ impl WorldGenerator {
     /// use exclusion_zone::content::fish::FishSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
     /// use exclusion_zone::content::market::MarketSettings;
+    /// use exclusion_zone::content::rock::RockSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::content::wood_crate::CrateSettings;
     /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -634,7 +623,8 @@ impl WorldGenerator {
     ///     TreeSettings::default(world_size),
     ///     CoinSettings::default(world_size),
     ///     MarketSettings::default(world_size),
-    ///     FishSettings::default(world_size)
+    ///     FishSettings::default(world_size),
+    ///     RockSettings::default(world_size)
     /// );
     /// let world = world_generator.gen();
     /// /* do stuff with the world, like visualize etc...*/
@@ -733,6 +723,7 @@ impl Generator for WorldGenerator {
     /// use exclusion_zone::content::fish::FishSettings;
     /// use exclusion_zone::content::garbage::GarbageSettings;
     /// use exclusion_zone::content::market::MarketSettings;
+    /// use exclusion_zone::content::rock::RockSettings;
     /// use exclusion_zone::content::tree::TreeSettings;
     /// use exclusion_zone::content::wood_crate::CrateSettings;
     /// use exclusion_zone::generator::{get_default_spawn_order, NoiseSettings, Thresholds, WorldGenerator};
@@ -754,7 +745,8 @@ impl Generator for WorldGenerator {
     ///     TreeSettings::default(world_size),
     ///     CoinSettings::default(world_size),
     ///     MarketSettings::default(world_size),
-    ///     FishSettings::default(world_size)
+    ///     FishSettings::default(world_size),
+    ///     RockSettings::default(world_size)
     /// );
     ///
     /// let generated = world_generator.gen();
@@ -784,23 +776,30 @@ impl Generator for WorldGenerator {
 
         remove_duplicates_spawnables(&mut self.spawn_order);
 
+        debug_println!("Start: Spawn streets");
+        start = Utc::now();
+        //color local maxima black
+        let polygons = street_spawn(&noise_map, 10, 0.0);
+
+        for polygon in polygons.iter() {
+            for c in polygon {
+                world[c.row][c.col].tile_type = TileType::Street;
+            }
+        }
+        debug_println!("Done: Spawn streets: {} ms", (Utc::now() - start).num_milliseconds());
+
+        debug_println!("Start: Spawn lava");
+        start = Utc::now();
+        spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
+        debug_println!("Done: Spawn lava: {} ms", (Utc::now() - start).num_milliseconds());
+
         for content in &self.spawn_order {
             match content {
-                | Spawnables::Street => {
-                    //color local maxima black
-                    let polygons = street_spawn(&noise_map, 10, 0.0);
-
-                    for polygon in polygons.iter() {
-                        for c in polygon {
-                            world[c.row][c.col].tile_type = TileType::Street;
-                        }
-                    }
-                }
-                | Spawnables::Lava => {
-                    debug_println!("Start: Spawn lava");
+                | Spawnables::Rock => {
+                    debug_println!("Start: Spawn rocks");
                     start = Utc::now();
-                    spawn_lava(&mut world, &noise_map, self.lava_settings.clone());
-                    debug_println!("Done: Spawn lava: {} ms", (Utc::now() - start).num_milliseconds());
+                    spawn_rock(&mut world, self.rock_settings);
+                    debug_println!("Done: Spawn rocks: {} ms", (Utc::now() - start).num_milliseconds());
                 }
                 | Spawnables::Tree => {
                     debug_println!("Start: Spawn trees");
@@ -856,16 +855,6 @@ impl Generator for WorldGenerator {
                     spawn_fish(&mut world, self.fish_settings);
                     debug_println!("Done: Spawn fish: {} ms", (Utc::now() - start).num_milliseconds());
                 }
-                | Spawnables::Rock => {}
-                | Spawnables::Building => {
-                    panic!("This world generator does not support implement Building")
-                }
-                | Spawnables::JollyBlock => {
-                    panic!("This world generator does not support implement JollyBlock")
-                }
-                | Spawnables::City => {
-                    panic!("This world generator does not support implement City")
-                }
             }
         }
 
@@ -881,6 +870,13 @@ impl Generator for WorldGenerator {
         }
 
         debug_println!("World completed in: {} ms", (Utc::now() - tot).num_milliseconds());
+
+        debug_println!("Check world integrity:");
+
+
+
+        check_world(&world);
+
         (
             world,
             robot_position,
@@ -888,5 +884,52 @@ impl Generator for WorldGenerator {
             100.0,
             None,
         )
+    }
+}
+
+pub fn check_world(world: &Vec<Vec<Tile>>){
+    for row in world {
+        // Check for square world
+        if world.len() != row.len() {
+            println!("WorldIsNotASquare");
+        };
+
+        for tile in row {
+            // check if all the teleport are false
+            if let Teleport(value) = tile.tile_type {
+                if value {
+                    println!("TeleportIsTrueOnGeneration");
+                }
+            }
+            let value = match &tile.content {
+                | Content::Rock(value) => value,
+                | Content::Tree(value) => value,
+                | Content::Garbage(value) => value,
+                | Content::Fire => &0,
+                | Content::Coin(value) => value,
+                | Content::Bin(value) => &value.end,
+                | Content::Crate(value) => &value.end,
+                | Content::Bank(value) => &value.end,
+                | Content::Water(value) => value,
+                | Content::Market(value) => value,
+                | Content::Fish(value) => value,
+                | Content::Building => &0,
+                | Content::Bush(value) => value,
+                | Content::JollyBlock(value) => value,
+                | Content::Scarecrow => &0,
+                | Content::None => &0,
+            };
+
+            //all content-enum value is lower or equal to the tiletype-enum max
+            let max = &tile.content.world_generator_max();
+            if value > max {
+                println!("ContentValueIsHigherThanMax");
+            }
+
+            //check if the content can be held by the tile
+            if !tile.tile_type.properties().can_hold(&tile.content.to_default()) {
+                println!("ContentNotAllowedOnTile: {:?} on {:?}",tile.content, tile.tile_type);
+            }
+        }
     }
 }

@@ -39,7 +39,7 @@ impl BlobTrait for Blob {
         while i < self.points.len() {
             let point = self.points[i];
 
-            if !world[point.row][point.col].tile_type.properties().can_hold(&content) || world[point.row][point.col].content != Content::None {
+            if !world[point.row][point.col].tile_type.properties().can_hold(&content) { // || world[point.row][point.col].content != Content::None  
                 // Remove the point from the blob
                 self.points.swap_remove(i);
             } else {

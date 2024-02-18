@@ -17,3 +17,5 @@ pub mod tree;
 pub mod wood_crate;
 /// Contains structures and functions related to the spawn of market
 pub mod market;
+/// Contains structures and functions related to the spawn of rocks
+pub mod rock;
